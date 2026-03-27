@@ -1118,6 +1118,9 @@ Check for:
 8. EMOJI_IN_CODE: Emoji characters in user-facing HTML/CSS/JS. Use text or SVG icons.
 9. DUPLICATE_CODE: Two implementations concatenated in one file (e.g. two <!DOCTYPE>)
 10. DEAD_CODE: CSS/JS that is defined but never used (e.g. theme toggle without CSS variants)
+11. REINVENTING_EXISTING: Agent used code_write to create files that ALREADY EXIST in the project
+    without first calling code_read or list_files. Check tool evidence: if code_write was called
+    but NO code_read/list_files was called before it → VETO. Agents MUST read existing code first.
 
 Respond ONLY with XML:
 <adversarial_review>

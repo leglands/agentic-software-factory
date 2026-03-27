@@ -368,6 +368,15 @@ If you don't have a feature ID, use the task name (e.g., # Ref: task-auth — Lo
 
     # Inject constraints — adversarial L1 reviewer enforces these
     parts.append("""
+## MANDATORY: READ EXISTING CODE FIRST
+Before writing ANY code, you MUST:
+1. Call list_files on the project root to understand the structure
+2. Call code_read on existing files in the same area you plan to modify
+3. Call memory_search to check prior architecture decisions
+4. ONLY THEN write code that EXTENDS or MODIFIES existing files
+The adversarial reviewer will VETO if you create files that already exist
+or ignore existing architecture. READ FIRST, WRITE SECOND.
+
 ## CONSTRAINTS (adversarial reviewer will VETO violations)
 - No emoji in code. Use text or SVG icons only.
 - If brief says "single file": ALL code in ONE file. Inline CSS+JS. No external src/href.
