@@ -1,0 +1,162 @@
+id: refactoring-sprint
+name: Refactoring Sprint — Full Codebase Hardening
+description: >
+  Comprehensive post-sprint refactoring: perf optimization, dead code removal,
+  dependency cleanup, code simplification, security hardening, test coverage.
+  Runs after N feature sprints to prevent tech debt accumulation.
+
+  Inspired by: Extreme Software Optimization (Criterion before/after, isomorphism proof).
+  Rule: READ existing code/benchmarks first. Prove no regression. Measure everything.
+icon: tool
+is_builtin: true
+phases:
+
+# ── Phase 1: Discovery — read everything before touching anything ────────
+- id: refactor-discovery
+  pattern_id: parallel
+  name: Codebase Audit (4 axes)
+  description: >
+    4 agents audit the codebase IN PARALLEL. Each agent MUST call list_files
+    and code_read before producing findings. No guessing.
+
+    Axes:
+    1. PERFORMANCE: identify hot paths via existing benchmarks (bench/, benches/,
+       criterion/). If no benchmarks exist, identify functions with O(n²) or worse
+       complexity, unnecessary allocations, missing inline hints.
+    2. DEAD CODE: unreachable functions, unused imports, commented-out blocks,
+       TODO/FIXME older than 30 days, empty catch/except blocks.
+    3. ARCHITECTURE: God files (>500 LOC), high coupling (>10 imports), deep nesting
+       (>4 levels), cyclomatic complexity >15, SOLID violations.
+    4. DEPENDENCIES: outdated deps, unused deps, duplicate deps, known CVEs,
+       missing lock files.
+
+    Output per agent: scored list of findings (file, line, severity, fix suggestion).
+  gate: 4 audit reports produced with file-level specificity
+  config:
+    agents:
+    - performance_engineer
+    - qa_lead
+    - architecte
+    - securite
+
+# ── Phase 2: Performance Optimization ────────────────────────────────────
+- id: refactor-perf
+  pattern_id: adversarial-pair
+  name: Performance Hardening
+  description: >
+    ONLY if benchmarks exist (bench/, benches/, criterion/, pytest-benchmark).
+    If no benchmarks: SKIP this phase.
+
+    Developer applies optimizations from Phase 1 performance findings:
+    - Buffer reuse (eliminate per-call allocations)
+    - Inline hot functions (#[inline], inline annotations)
+    - Zero-copy moves (into_ methods, avoid clone)
+    - Streaming processing (avoid collect→process→collect)
+    - Batch operations (N queries → 1 query)
+
+    Critic verifies:
+    - Benchmark BEFORE vs AFTER (must show measurable speedup)
+    - Isomorphism proof: existing tests MUST pass unchanged
+    - No new unsafe blocks without justification
+    - VETO if speedup < 1.2x or any test fails
+  gate: no_veto
+  config:
+    max_iterations: 5
+    agents:
+    - lead_dev
+    - performance_engineer
+    skip_condition: "no benchmark directory found"
+
+# ── Phase 3: Dead Code & Simplification ──────────────────────────────────
+- id: refactor-simplify
+  pattern_id: hierarchical
+  name: Dead Code Removal & Simplification
+  description: >
+    Lead dev supervises cleanup based on Phase 1 findings:
+    - Delete dead code (unreachable functions, unused imports)
+    - Resolve or delete TODO/FIXME older than 30 days
+    - Extract God files into focused modules (max 300 LOC per file)
+    - Flatten deep nesting (early returns, guard clauses)
+    - Replace complex conditionals with polymorphism or lookup tables
+    - Remove empty catch/except blocks (add proper error handling or remove try)
+
+    RULES:
+    - Atomic commits per file (one file per commit)
+    - NEVER change public API signatures
+    - NEVER delete tests
+    - Run tests after each file change
+    - git diff must show more deletions than additions
+  gate: Tests green + net LOC reduction
+  config:
+    agents:
+    - lead_dev
+    skill_agents:
+    - dev_backend
+    - dev_frontend
+
+# ── Phase 4: Dependency Audit & Update ───────────────────────────────────
+- id: refactor-deps
+  pattern_id: sequential
+  name: Dependency Cleanup
+  description: >
+    1. Remove unused dependencies (cargo unused-deps, depcheck, pip-audit)
+    2. Update outdated deps to latest stable (not bleeding edge)
+    3. Check for known CVEs (cargo audit, npm audit, safety)
+    4. Consolidate duplicate deps (e.g. two HTTP clients, two JSON parsers)
+    5. Verify lock files are committed and up to date
+
+    RULES:
+    - One dep update per commit
+    - Run full test suite after each update
+    - Rollback immediately if tests fail
+    - Document breaking changes in CHANGELOG
+  gate: Zero known CVEs + tests green
+  config:
+    agents:
+    - securite
+    - devops
+
+# ── Phase 5: Test Coverage Gaps ──────────────────────────────────────────
+- id: refactor-tests
+  pattern_id: adversarial-pair
+  name: Test Coverage Hardening
+  description: >
+    Developer writes tests for uncovered critical paths.
+    Critic reviews test quality (no assert True, no test.skip, no mock-only tests).
+
+    Priority:
+    1. Public API endpoints without tests
+    2. Error paths (what happens on bad input, network failure, DB down)
+    3. Edge cases identified in Phase 1 audit
+    4. Security-sensitive paths (auth, RBAC, input validation)
+
+    Target: coverage delta > +5% or all critical paths covered.
+  gate: no_veto
+  config:
+    max_iterations: 5
+    agents:
+    - testeur
+    - code-critic
+
+# ── Phase 6: Final Verification ──────────────────────────────────────────
+- id: refactor-verify
+  pattern_id: sequential
+  name: Final Verification & Report
+  description: >
+    1. Run full test suite (must be green)
+    2. Run benchmarks if they exist (compare to Phase 2 baseline)
+    3. Run linter (zero warnings)
+    4. Generate diff stats (LOC added vs removed, files changed)
+    5. Produce refactoring report:
+       - Performance: before/after benchmarks
+       - Dead code: LOC removed
+       - Dependencies: CVEs fixed, deps removed
+       - Tests: coverage delta
+       - Architecture: complexity reduction
+
+    VETO if tests fail or net LOC increased.
+  gate: Tests green + report produced
+  config:
+    agents:
+    - lead_dev
+    - qa_lead
