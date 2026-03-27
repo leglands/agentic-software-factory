@@ -373,9 +373,12 @@ Before writing ANY code, you MUST:
 1. Call list_files on the project root to understand the structure
 2. Call code_read on existing files in the same area you plan to modify
 3. Call memory_search to check prior architecture decisions
-4. ONLY THEN write code that EXTENDS or MODIFIES existing files
+4. Call skill_read("relevant-skill-name") to load patterns for your stack
+5. ONLY THEN write code that EXTENDS or MODIFIES existing files
 The adversarial reviewer will VETO if you create files that already exist
 or ignore existing architecture. READ FIRST, WRITE SECOND.
+
+Your available skills (call skill_read for full content):
 
 ## CONSTRAINTS (adversarial reviewer will VETO violations)
 - No emoji in code. Use text or SVG icons only.
