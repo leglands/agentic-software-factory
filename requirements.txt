@@ -38,7 +38,7 @@ opentelemetry-instrumentation-fastapi==0.60b1
 opentelemetry-proto==1.39.1
 opentelemetry-sdk==1.39.1
 opentelemetry-semantic-conventions==0.60b1
-opentelemetry-util-http==0.60b1
+opentelemetry-util-http==0.61b0
 packaging==26.0
 propcache==0.4.1
 protobuf==6.33.5
