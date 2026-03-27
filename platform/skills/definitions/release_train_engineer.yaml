@@ -28,6 +28,7 @@ system_prompt: |
 skills:
   - project-management
   - data-analysis
+  - pm-workflow-playbook
 
 tools:
   - code_read
