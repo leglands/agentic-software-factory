@@ -159,14 +159,14 @@ def format_skill_tiered(
 
     if tier == ContextTier.L0:
         summary = l0_summary or extract_l0_summary(content, name)
-        return f"- **{name}**: {summary}"
+        return f"- **{name}**: {summary} → call skill_read(\"{name}\") for full content"
 
     if tier == ContextTier.L1:
         truncated = _smart_truncate(content, budget)
         header = f"### {name}"
         if relevance > 0:
             header += f" (relevance: {relevance:.2f})"
-        return f"{header}\n{truncated}"
+        return f"{header}\n{truncated}\n> Full content: skill_read(\"{name}\")"
 
     # L2 — full content (current behavior)
     truncated = content[:budget] + ("..." if len(content) > budget else "")

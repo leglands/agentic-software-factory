@@ -198,6 +198,20 @@ def _core_schemas() -> list[dict]:
         {
             "type": "function",
             "function": {
+                "name": "skill_read",
+                "description": "Read full content of a skill by name. Use when the skill summary in your prompt is not enough — lazy-loads the complete skill with all patterns, examples, and code.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Skill name (e.g. rust-refactoring, pm-workflow-playbook)"},
+                    },
+                    "required": ["name"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
                 "name": "memory_search",
                 "description": "Search project memory for stored knowledge, facts, and context.",
                 "parameters": {

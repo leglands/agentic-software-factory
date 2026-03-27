@@ -475,6 +475,19 @@ async def _tool_list_files(args: dict) -> str:
     return "\n".join(lines[:200]) or "Empty directory"
 
 
+async def _tool_skill_read(args: dict) -> str:
+    """Return full content of a skill by name. Used by agents to lazy-load skill details."""
+    name = args.get("name", "").strip()
+    if not name:
+        return "Error: name required"
+    from ..skills.library import get_skill_library
+    lib = get_skill_library()
+    skill = lib.get(name)
+    if skill and skill.content:
+        return f"# {skill.name}\n\n{skill.content}"
+    return f"Skill '{name}' not found. Use list_files on /app/skills/ to see available skills."
+
+
 async def _tool_memory_search(args: dict, ctx: ExecutionContext) -> str:
     """Search project + session memory (scoped to project_id — agents cannot cross-project)."""
     from ..memory.manager import get_memory_manager
@@ -2379,6 +2392,8 @@ async def _execute_tool(
     # Handle built-in tools that don't go through registry
     if name == "list_files":
         return await _tool_list_files(args)
+    if name == "skill_read":
+        return await _tool_skill_read(args)
     if name == "memory_search":
         return await _tool_memory_search(args, ctx)
     if name == "memory_store":
