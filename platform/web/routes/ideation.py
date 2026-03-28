@@ -608,7 +608,7 @@ async def ideation_create_epic(request: Request):
 
     # Smart workflow routing: detect epic type from brief/stack and pick adapted workflow
     # Prevents force-fitting full-stack workflows on backend-only or refactoring epics
-    _brief_lower = (brief or idea or "").lower()
+    _brief_lower = (idea or "").lower() + " " + (findings or "").lower()[:500]
     _stack_lower = " ".join(s.lower() for s in stack)
     _is_backend_only = (
         any(k in _brief_lower for k in ("backend", "grpc", "api ", "interceptor", "middleware", "migration db", "rust only", "no frontend", "no ui"))
