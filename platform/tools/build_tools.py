@@ -7,10 +7,63 @@ Uses Docker sandbox for isolation when SANDBOX_ENABLED=true.
 
 from __future__ import annotations
 
+import os
 import subprocess
 from ..models import AgentInstance
 from .registry import BaseTool
 from .sandbox import get_sandbox
+
+
+# ── Data-driven build detection (single source of truth) ─────────
+# Replaces 4 hardcoded copies across pm_checkpoint, workflows/store,
+# epic_context, and hierarchical pattern.
+# Manifest file → (build_cmd, test_cmd, run_cmd)
+_BUILD_MANIFEST_MAP = {
+    "Cargo.toml":       (["cargo", "check"], ["cargo", "test"], ["cargo", "run"]),
+    "package.json":     (["npm", "install"], ["npm", "test"], ["npm", "start"]),
+    "go.mod":           (["go", "build", "./..."], ["go", "test", "./..."], ["go", "run", "."]),
+    "pyproject.toml":   (["python3", "-m", "build"], ["python3", "-m", "pytest"], ["python3", "-m", "uvicorn"]),
+    "requirements.txt": (["pip", "install", "-r", "requirements.txt"], ["python3", "-m", "pytest"], []),
+    "Package.swift":    (["/usr/bin/swift", "build"], ["/usr/bin/swift", "test"], ["/usr/bin/swift", "run"]),
+    "build.gradle.kts": (["./gradlew", "assembleDebug"], ["./gradlew", "test"], []),
+    "build.gradle":     (["./gradlew", "assembleDebug"], ["./gradlew", "test"], []),
+    "pom.xml":          (["mvn", "-q", "compile", "-DskipTests"], ["mvn", "test"], []),
+    "Makefile":         (["make"], ["make", "test"], []),
+    "Dockerfile":       (["docker", "build", "-t", "app", "."], [], ["docker", "run", "app"]),
+    "mix.exs":          (["mix", "compile"], ["mix", "test"], ["mix", "run"]),
+    "Gemfile":          (["bundle", "install"], ["bundle", "exec", "rspec"], []),
+    "composer.json":    (["composer", "install"], ["vendor/bin/phpunit"], []),
+    "CMakeLists.txt":   (["cmake", "--build", "."], ["ctest"], []),
+}
+
+
+def detect_build_commands(workspace: str) -> dict:
+    """Detect build/test/run commands from workspace manifests.
+
+    Returns {"build": [...], "test": [...], "run": [...], "manifests": [...]}
+    Scans root + 1 level deep for monorepo support.
+    """
+    result = {"build": [], "test": [], "run": [], "manifests": []}
+    if not workspace or not os.path.isdir(workspace):
+        return result
+
+    for manifest, (build, test, run) in _BUILD_MANIFEST_MAP.items():
+        # Check root
+        if os.path.isfile(os.path.join(workspace, manifest)):
+            result["manifests"].append(manifest)
+            if build and not result["build"]:
+                result["build"] = build
+            if test and not result["test"]:
+                result["test"] = test
+            if run and not result["run"]:
+                result["run"] = run
+        # Check 1 level deep (monorepo)
+        for entry in os.listdir(workspace):
+            sub = os.path.join(workspace, entry, manifest)
+            if os.path.isfile(sub):
+                result["manifests"].append(f"{entry}/{manifest}")
+
+    return result
 
 
 class BuildTool(BaseTool):

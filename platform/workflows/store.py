@@ -519,35 +519,9 @@ async def _sandbox_build_check(project_id: str, session_id: str) -> tuple[bool, 
 
 
 def _detect_build_cmd(workspace: str) -> list[str]:
-    """Detect the build system from workspace files."""
-    import os
-
-    if os.path.isfile(os.path.join(workspace, "Package.swift")):
-        # Use full path to Apple Swift (avoid OpenStack swift CLI)
-        swift_bin = "/usr/bin/swift" if os.path.isfile("/usr/bin/swift") else "swift"
-        return [swift_bin, "build"]
-    if os.path.isfile(os.path.join(workspace, "package.json")):
-        # Check if node_modules exists (deps installed)
-        if os.path.isdir(os.path.join(workspace, "node_modules")):
-            return ["npm", "run", "build", "--if-present"]
-        return ["npm", "install", "--ignore-scripts"]
-    if os.path.isfile(os.path.join(workspace, "requirements.txt")):
-        return ["python3", "-m", "py_compile", _find_main_py(workspace)]
-    if os.path.isfile(os.path.join(workspace, "Cargo.toml")):
-        return ["cargo", "check"]
-    if os.path.isfile(os.path.join(workspace, "pom.xml")):
-        return ["mvn", "-q", "compile", "-DskipTests"]
-    if os.path.isfile(os.path.join(workspace, "build.gradle")) or os.path.isfile(
-        os.path.join(workspace, "build.gradle.kts")
-    ):
-        return ["gradle", "compileJava"]
-    if os.path.isfile(os.path.join(workspace, "go.mod")):
-        return ["go", "build", "./..."]
-    if os.path.isfile(os.path.join(workspace, "Makefile")):
-        return ["make", "-n"]  # dry-run to check Makefile syntax
-    if os.path.isfile(os.path.join(workspace, "Dockerfile")):
-        return ["docker", "build", "--check", "."]
-    return []
+    """Detect the build system from workspace files (delegates to canonical source)."""
+    from ..tools.build_tools import detect_build_commands
+    return detect_build_commands(workspace).get("build", [])
 
 
 def _find_main_py(workspace: str) -> str:

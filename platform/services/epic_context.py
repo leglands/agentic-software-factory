@@ -697,50 +697,18 @@ class EpicContextBuilder:
                 detected = "web-docker" if "docker" in brief_lower else "web-node"
         result["project_type"] = detected
 
-        if detected in ("macos-native", "ios-native"):
-            if (ws / "Package.swift").exists():
-                result["build_cmd"] = "swift build"
-                result["run_cmd"] = "swift run"
-                result["launch_cmd"] = "open -a Simulator && swift run"
-            elif (ws / "project.yml").exists():
-                scheme = "App"
-                try:
-                    import yaml as _y
-
-                    proj = _y.safe_load((ws / "project.yml").read_text())
-                    scheme = proj.get("name", "App")
-                except Exception:
-                    pass
-                result["build_cmd"] = (
-                    f"xcodegen generate && xcodebuild -scheme {scheme} -configuration Debug build"
-                )
-                result["run_cmd"] = f"open build/Debug/{scheme}.app"
-                result["launch_cmd"] = (
-                    f"xcodegen generate && xcodebuild -scheme {scheme} -configuration Debug build && open build/Debug/{scheme}.app"
-                )
-            else:
-                result["build_cmd"] = "swift build"
-                result["run_cmd"] = "swift run"
-                result["launch_cmd"] = "open -a Simulator && swift run"
-        elif detected == "android-native":
-            result["build_cmd"] = "./gradlew assembleDebug"
-            result["run_cmd"] = "./gradlew installDebug"
-            result["launch_cmd"] = "adb shell am start -n com.app/.MainActivity"
-        elif detected == "web-docker":
-            if (ws / "docker-compose.yml").exists():
-                result["build_cmd"] = "docker compose build"
-                result["run_cmd"] = "docker compose up"
-            else:
-                result["build_cmd"] = "docker build -t app ."
-                result["run_cmd"] = "docker run -p 8080:8080 app"
-            result["deploy_url"] = "http://localhost:8080"
-        elif detected == "web-node":
-            result["build_cmd"] = "npm install && npm run build"
-            result["run_cmd"] = "npm start"
-            result["deploy_url"] = "http://localhost:3000"
-        elif (ws / "Makefile").exists():
-            result["build_cmd"] = "make build"
-            result["run_cmd"] = "make run"
+        # Auto-detect build/test/run from workspace manifests (data-driven)
+        try:
+            from ..tools.build_tools import detect_build_commands
+            _cmds = detect_build_commands(str(ws))
+            if _cmds["build"]:
+                result["build_cmd"] = " ".join(_cmds["build"])
+            if _cmds["test"]:
+                result["test_cmd"] = " ".join(_cmds["test"])
+            if _cmds["run"]:
+                result["run_cmd"] = " ".join(_cmds["run"])
+        except Exception:
+            pass
 
         if detected.startswith("web") and not result["deploy_url"]:
             for env_file in (ws / "environments.md", ws / ".env", ws / "deploy.md"):

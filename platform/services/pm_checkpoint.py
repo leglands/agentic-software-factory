@@ -123,24 +123,9 @@ def _evaluate_ko_drift(project_id: str, evidence_text: str) -> tuple[bool, list[
 
 
 def _detect_build_cmd(workspace: str) -> list[str]:
-    """Detect build command from workspace files. Mirrors workflows/store.py."""
-    if os.path.isfile(os.path.join(workspace, "Package.swift")):
-        return ["/usr/bin/swift", "build"]
-    if os.path.isfile(os.path.join(workspace, "package.json")):
-        if os.path.isdir(os.path.join(workspace, "node_modules")):
-            return ["npm", "run", "build", "--if-present"]
-        return ["npm", "install", "--ignore-scripts"]
-    if os.path.isfile(os.path.join(workspace, "Cargo.toml")):
-        return ["cargo", "check"]
-    if os.path.isfile(os.path.join(workspace, "requirements.txt")):
-        for f in ("main.py", "app.py", "server.py"):
-            if os.path.isfile(os.path.join(workspace, f)):
-                return ["python3", "-m", "py_compile", os.path.join(workspace, f)]
-    if os.path.isfile(os.path.join(workspace, "go.mod")):
-        return ["go", "build", "./..."]
-    if os.path.isfile(os.path.join(workspace, "pom.xml")):
-        return ["mvn", "-q", "compile", "-DskipTests"]
-    return []
+    """Detect build command from workspace files (delegates to canonical source)."""
+    from ..tools.build_tools import detect_build_commands
+    return detect_build_commands(workspace).get("build", [])
 
 
 async def run_build_gate(workspace: str, timeout: int = 300) -> BuildResult:
