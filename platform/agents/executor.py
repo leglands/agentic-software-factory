@@ -1792,8 +1792,7 @@ class AgentExecutor:
                     messages.append(
                         LLMMessage(
                             role="system",
-                            content="⚠️ STOP reading. Call code_write NOW.\n"
-                            'code_write(path="src/index.ts", content="// your code here\\n...")',
+                            content="You have been reading without writing. Use code_write or code_edit now to produce concrete changes in the project's actual language and directory structure.",
                         )
                     )
                 elif (
