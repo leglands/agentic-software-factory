@@ -610,9 +610,11 @@ async def ideation_create_epic(request: Request):
     # Prevents force-fitting full-stack workflows on backend-only or refactoring epics
     _brief_lower = (idea or "").lower() + " " + (findings or "").lower()[:500]
     _stack_lower = " ".join(s.lower() for s in stack)
+    # Strip "no frontend"/"no ui"/"no ux" before checking for frontend keywords
+    _clean_brief = _brief_lower.replace("no frontend", "").replace("no ui", "").replace("no ux", "").replace("not frontend", "").replace("without ui", "")
     _is_backend_only = (
         any(k in _brief_lower for k in ("backend", "grpc", "api ", "interceptor", "middleware", "migration db", "rust only", "no frontend", "no ui"))
-        and not any(k in _brief_lower for k in ("frontend", "ui ", "ux ", "design", "css", "html", "react", "vue", "next"))
+        and not any(k in _clean_brief for k in ("frontend", "ui ", "ux ", "design", "css", "html", "react", "vue", "next"))
     )
     _is_refactoring = any(k in _brief_lower for k in ("refactor", "cleanup", "dead code", "tech debt", "optimize", "performance"))
     _is_security = any(k in _brief_lower for k in ("security", "audit", "pentest", "vulnerability", "cve"))
