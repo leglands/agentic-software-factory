@@ -229,7 +229,7 @@ class _RateLimiter:
 
 # Global rate limiter (shared across all agents in this process)
 _rate_limiter = _RateLimiter(
-    max_requests=int(os.environ.get("LLM_RATE_LIMIT_RPM", "15")),
+    max_requests=int(os.environ.get("LLM_RATE_LIMIT_RPM", "60")),
     window_seconds=60.0,
 )
 
@@ -344,8 +344,8 @@ class LLMClient:
                 # MiniMax M2.7 needs >60s to start streaming when body is large.
                 timeout=httpx.Timeout(connect=30.0, read=300.0, write=60.0, pool=15.0),
                 limits=httpx.Limits(
-                    max_connections=30,
-                    max_keepalive_connections=5,
+                    max_connections=100,
+                    max_keepalive_connections=20,
                     keepalive_expiry=30.0,
                 ),
             )
