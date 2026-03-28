@@ -147,6 +147,16 @@ _TEST_CHEAT_PATTERNS = [
         r"except\s+(?:Exception|BaseException|AssertionError)\s*:\s*\n\s+pass\s*$",
         "except Exception: pass in test — silences assertion failures",
     ),
+    # Trivial arithmetic/tautology assertions — test proves nothing about the system
+    (r"assert_eq!\s*\(\s*\d+\s*\+\s*\d+\s*,\s*\d+\s*\)", "assert_eq!(N+N, N) — trivial arithmetic, tests nothing"),
+    (r"assert_eq!\s*\(\s*\d+\s*\*\s*\d+\s*,\s*\d+\s*\)", "assert_eq!(N*N, N) — trivial arithmetic, tests nothing"),
+    (r"assert!\s*\(\s*true\s*\)", "assert!(true) — trivially passes, tests nothing"),
+    (r"assert!\s*\(\s*\d+\s*==\s*\d+\s*\)", "assert!(N==N) — tautology, tests nothing"),
+    (r'assert!\s*\(\s*"\w+"\.contains\s*\(\s*[\'"]', "assert!(str.contains()) — trivial string check, not testing system logic"),
+    (r'assert!\s*\(\s*!\s*"\w+"\.is_empty\s*\(\s*\)\s*\)', "assert!(!str.is_empty()) — trivial non-empty check, not testing system logic"),
+    (r"assert_eq!\s*\(\s*\"[^\"]+\"\s*,\s*\"[^\"]+\"\s*\)", "assert_eq!(literal, literal) — comparing two hardcoded strings"),
+    (r"expect\s*\(\s*\d+\s*\+\s*\d+\s*\)\s*\.toBe\s*\(\s*\d+\s*\)", "expect(N+N).toBe(N) — trivial arithmetic"),
+    (r"assert\s+\d+\s*\+\s*\d+\s*==\s*\d+", "assert N+N==N — trivial arithmetic in Python test"),
     # Coverage configuration lowered to pass
     (r"--cov-fail-under\s*=\s*0\b", "Coverage threshold set to 0 — defeats coverage"),
     (r"fail_under\s*=\s*0\b", "fail_under=0 in coverage config — defeats coverage"),
@@ -540,6 +550,11 @@ def check_l0(
                 issues.append(f"MOCK_IN_CODE: {desc} in {file_path}")
                 score += 3
                 break  # one mock per file is enough
+        # Check parasitic files — .bak, .tmp, __init__.py in non-Python projects
+        if file_path.endswith((".bak", ".tmp", ".orig", ".swp")):
+            issues.append(f"PARASITIC_FILE: {file_path} — backup/temp file should not be committed")
+            score += 3
+
         # Check test cheating patterns — only in test files
         is_test_file = any(
             kw in file_path.lower()
@@ -1020,6 +1035,11 @@ def check_l0(
     except Exception:
         pass  # config unavailable — keep default threshold
 
+    # STACK_MISMATCH is an absolute VETO — no threshold scaling can save it
+    has_stack_mismatch = any("STACK_MISMATCH" in i for i in issues)
+    if has_stack_mismatch:
+        return GuardResult(passed=False, score=score, issues=issues, level="L0")
+
     return GuardResult(
         passed=score < threshold,
         score=score,
@@ -1162,13 +1182,21 @@ Respond ONLY with XML:
         ]
         verdict = (root.findtext("verdict") or "APPROVE").strip()
 
-        # HALLUCINATION/SLOP/STACK_MISMATCH in issues = reject UNLESS:
+        # STACK_MISMATCH = immediate VETO — writing code in wrong language is never OK
+        # even if agent used code_write (that's the problem: they wrote wrong-language code)
+        has_stack_mismatch = any(
+            "STACK_MISMATCH" in i.upper() for i in l1_issues
+        )
+        if has_stack_mismatch:
+            l1_score = max(l1_score, 9)  # hard reject, no override
+            verdict = "REJECT"
+
+        # HALLUCINATION/SLOP in issues = reject UNLESS:
         # - agent used code_write/code_edit (wrote real code)
         # - agent is in hierarchical pattern and is a lead/tester (references others' work)
         has_critical = any(
             "HALLUCINATION" in i.upper()
             or "SLOP" in i.upper()
-            or "STACK_MISMATCH" in i.upper()
             for i in l1_issues
         )
         # If agent actually wrote code, don't auto-reject for hallucination claims

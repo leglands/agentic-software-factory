@@ -77,37 +77,52 @@ async def launch_mission_workflow(request: Request, epic_id: str):
         )
     )
 
-    # Create workspace directory for agent tools (code, git, docker)
+    # Resolve workspace: use project's real path if it exists, else create blank
     import subprocess
+    from pathlib import Path as _WsPath2
 
     from ....config import DATA_DIR
+    from ....projects.manager import get_project_store as _get_ps_ws2
 
-    workspace_root = DATA_DIR / "workspaces" / session.id
-    workspace_root.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["git", "init"], cwd=str(workspace_root), capture_output=True)
-    subprocess.run(
-        ["git", "config", "user.email", "agents@macaron.ai"],
-        cwd=str(workspace_root),
-        capture_output=True,
-    )
-    subprocess.run(
-        ["git", "config", "user.name", "Macaron Agents"],
-        cwd=str(workspace_root),
-        capture_output=True,
-    )
-    readme = workspace_root / "README.md"
     task_desc = mission.goal or mission.description or mission.name
-    readme.write_text(f"# {wf.name}\n\n{task_desc}\n\nMission ID: {epic_id}\n")
-    gitignore = workspace_root / ".gitignore"
-    gitignore.write_text(
-        "node_modules/\ndist/\nbuild/\n.env\n*.bak\n__pycache__/\n.DS_Store\n"
-    )
-    subprocess.run(["git", "add", "."], cwd=str(workspace_root), capture_output=True)
-    subprocess.run(
-        ["git", "commit", "-m", "Initial commit — mission workspace"],
-        cwd=str(workspace_root),
-        capture_output=True,
-    )
+    _real_ws2 = None
+    if mission.project_id:
+        try:
+            _proj2 = _get_ps_ws2().get(mission.project_id)
+            if _proj2 and getattr(_proj2, "path", "") and _WsPath2(_proj2.path).exists():
+                _real_ws2 = _WsPath2(_proj2.path)
+        except Exception:
+            pass
+
+    if _real_ws2:
+        workspace_root = _real_ws2
+    else:
+        workspace_root = DATA_DIR / "workspaces" / session.id
+        workspace_root.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["git", "init"], cwd=str(workspace_root), capture_output=True)
+        subprocess.run(
+            ["git", "config", "user.email", "agents@macaron.ai"],
+            cwd=str(workspace_root),
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "Macaron Agents"],
+            cwd=str(workspace_root),
+            capture_output=True,
+        )
+        readme = workspace_root / "README.md"
+        task_desc = mission.goal or mission.description or mission.name
+        readme.write_text(f"# {wf.name}\n\n{task_desc}\n\nMission ID: {epic_id}\n")
+        gitignore = workspace_root / ".gitignore"
+        gitignore.write_text(
+            "node_modules/\ndist/\nbuild/\n.env\n*.bak\n__pycache__/\n.DS_Store\n"
+        )
+        subprocess.run(["git", "add", "."], cwd=str(workspace_root), capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "Initial commit — mission workspace"],
+            cwd=str(workspace_root),
+            capture_output=True,
+        )
 
     # Auto-start workflow execution — agents will dialogue via patterns
 
@@ -152,13 +167,16 @@ async def launch_mission_workflow(request: Request, epic_id: str):
     # Register project in project store with workspace path so tools_enabled works
     _proj_id = mission.project_id or epic_id
     try:
+        from pathlib import Path as _PPath
         from ....projects.manager import Project, get_project_store
 
         _p_store = get_project_store()
         _existing = _p_store.get(_proj_id)
         if _existing:
-            _existing.path = str(workspace_root)
-            _p_store.update(_existing)
+            # Only update path if project has no real path yet
+            if not _existing.path or not _PPath(_existing.path).exists():
+                _existing.path = str(workspace_root)
+                _p_store.update(_existing)
         else:
             _p_store.create(
                 Project(id=_proj_id, name=mission.name, path=str(workspace_root))
@@ -282,38 +300,51 @@ async def api_mission_start(request: Request):
 
     epic_id = uuid.uuid4().hex[:8]
 
-    # Create workspace directory for agent tools (code, git, docker)
+    # Resolve workspace: use project's real path if it exists, else create blank
     import subprocess
+    from pathlib import Path as _WsPath
 
     from ....config import DATA_DIR
+    from ....projects.manager import get_project_store as _get_ps_ws
 
-    workspace_root = DATA_DIR / "workspaces" / epic_id
-    workspace_root.mkdir(parents=True, exist_ok=True)
-    # Init git repo + README with brief
-    subprocess.run(["git", "init"], cwd=str(workspace_root), capture_output=True)
-    subprocess.run(
-        ["git", "config", "user.email", "agents@macaron.ai"],
-        cwd=str(workspace_root),
-        capture_output=True,
-    )
-    subprocess.run(
-        ["git", "config", "user.name", "Macaron Agents"],
-        cwd=str(workspace_root),
-        capture_output=True,
-    )
-    readme = workspace_root / "README.md"
-    readme.write_text(f"# {wf.name}\n\n{brief}\n\nMission ID: {epic_id}\n")
-    # Add .gitignore to prevent node_modules/dist/build from being committed
-    gitignore = workspace_root / ".gitignore"
-    gitignore.write_text(
-        "node_modules/\ndist/\nbuild/\n.env\n*.bak\n__pycache__/\n.DS_Store\n"
-    )
-    subprocess.run(["git", "add", "."], cwd=str(workspace_root), capture_output=True)
-    subprocess.run(
-        ["git", "commit", "-m", "Initial commit — mission workspace"],
-        cwd=str(workspace_root),
-        capture_output=True,
-    )
+    _real_ws = None
+    if project_id:
+        try:
+            _proj = _get_ps_ws().get(project_id)
+            if _proj and getattr(_proj, "path", "") and _WsPath(_proj.path).exists():
+                _real_ws = _WsPath(_proj.path)
+                logger.warning("WORKSPACE: using project path %s (not blank)", _real_ws)
+        except Exception:
+            pass
+
+    if _real_ws:
+        workspace_root = _real_ws
+    else:
+        workspace_root = DATA_DIR / "workspaces" / epic_id
+        workspace_root.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["git", "init"], cwd=str(workspace_root), capture_output=True)
+        subprocess.run(
+            ["git", "config", "user.email", "agents@macaron.ai"],
+            cwd=str(workspace_root),
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "config", "user.name", "Macaron Agents"],
+            cwd=str(workspace_root),
+            capture_output=True,
+        )
+        readme = workspace_root / "README.md"
+        readme.write_text(f"# {wf.name}\n\n{brief}\n\nMission ID: {epic_id}\n")
+        gitignore = workspace_root / ".gitignore"
+        gitignore.write_text(
+            "node_modules/\ndist/\nbuild/\n.env\n*.bak\n__pycache__/\n.DS_Store\n"
+        )
+        subprocess.run(["git", "add", "."], cwd=str(workspace_root), capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "Initial commit — mission workspace"],
+            cwd=str(workspace_root),
+            capture_output=True,
+        )
     workspace_path = str(workspace_root)
 
     # Determine orchestrator agent (workflow config or default CDP)

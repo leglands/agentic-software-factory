@@ -1989,6 +1989,87 @@ This is BLOCKING: developers cannot start without your design tokens."""
     return content
 
 
+def _generate_project_brief(workspace_path: str) -> str:
+    """Generate a raw workspace scan for the LLM to reason about.
+
+    NOT an interpretation — just facts: dirs, files, manifests, extensions.
+    The LLM (or a dedicated scan phase) builds the actual SPECS.md from this.
+    Cached in memory_project as project_brief.
+    """
+    import subprocess
+    from pathlib import Path
+
+    ws = workspace_path
+    if not ws or not Path(ws).exists():
+        return ""
+
+    parts = [f"WORKSPACE: {ws}"]
+
+    # 1. Top-level directories
+    try:
+        dirs = subprocess.run(
+            ["find", ws, "-maxdepth", "1", "-type", "d", "-not", "-name", ".*",
+             "-not", "-name", "node_modules", "-not", "-name", "target",
+             "-not", "-name", "__pycache__"],
+            capture_output=True, text=True, timeout=3,
+        )
+        top_dirs = sorted([d.replace(ws + "/", "") for d in dirs.stdout.strip().split("\n") if d and d != ws])[:15]
+        if top_dirs:
+            parts.append(f"Dirs: {', '.join(top_dirs)}")
+    except Exception:
+        pass
+
+    # 2. Build manifests found (raw — no interpretation)
+    try:
+        manifests = subprocess.run(
+            ["find", ws, "-maxdepth", "3", "-type", "f",
+             "-not", "-path", "*/.git/*", "-not", "-path", "*/node_modules/*",
+             "-not", "-path", "*/target/*"],
+            capture_output=True, text=True, timeout=5,
+        )
+        _build_files = [
+            f.replace(ws + "/", "") for f in manifests.stdout.strip().split("\n")
+            if f and f.split("/")[-1] in (
+                "Cargo.toml", "package.json", "go.mod", "pyproject.toml",
+                "build.gradle.kts", "build.gradle", "Package.swift", "composer.json",
+                "Gemfile", "mix.exs", "pom.xml", "Makefile", "Dockerfile",
+                "setup.py", "CMakeLists.txt",
+            )
+        ]
+        if _build_files:
+            parts.append(f"Build manifests: {', '.join(_build_files[:15])}")
+    except Exception:
+        pass
+
+    # 3. File extension counts (raw data)
+    try:
+        all_files = subprocess.run(
+            ["find", ws, "-maxdepth", "5", "-type", "f",
+             "-not", "-path", "*/.git/*", "-not", "-path", "*/node_modules/*",
+             "-not", "-path", "*/target/*", "-not", "-path", "*/.build/*"],
+            capture_output=True, text=True, timeout=5,
+        ).stdout.strip().split("\n")
+        exts = {}
+        for f in all_files:
+            if not f:
+                continue
+            name = f.split("/")[-1]
+            if "." in name:
+                ext = name.rsplit(".", 1)[-1]
+                if len(ext) <= 6:
+                    exts[ext] = exts.get(ext, 0) + 1
+        top = sorted(exts.items(), key=lambda x: -x[1])[:8]
+        if top:
+            parts.append(f"Files: {len([f for f in all_files if f])} | " + " ".join(f".{e}:{n}" for e, n in top))
+    except Exception:
+        pass
+
+    # 4. Instruction
+    parts.append("RULE: list_files + code_read BEFORE any code_write. Modify existing files, don't recreate.")
+
+    return "\n".join(parts)
+
+
 async def _build_node_context(agent: AgentDef, run: PatternRun) -> ExecutionContext:
     """Build execution context for a node's agent."""
     store = get_session_store()
@@ -2073,6 +2154,28 @@ async def _build_node_context(agent: AgentDef, run: PatternRun) -> ExecutionCont
     project_context = ""
     vision = ""
     project_path = ""
+
+    # ── PROJECT_BRIEF: progressive disclosure L0 (~200 tokens) ──
+    # Inspired by napkin (Michaelliv/napkin): every agent gets a compact
+    # project fingerprint so they know the stack, structure, and key files
+    # WITHOUT needing to call list_files() first.
+    _project_brief = ""
+    _ws_path = run.project_path or ""
+    if _ws_path:
+        try:
+            # Check cache in project memory first
+            _cached = get_memory_manager().project_retrieve(run.project_id, "project_brief") if run.project_id else None
+            if _cached and _cached.get("value"):
+                _project_brief = _cached["value"]
+            else:
+                _project_brief = _generate_project_brief(_ws_path)
+                if _project_brief and run.project_id:
+                    get_memory_manager().project_store(
+                        run.project_id, "project_brief", _project_brief,
+                        category="context", source="system", confidence=0.9, is_pinned=True,
+                    )
+        except Exception as _pb_exc:
+            logger.debug("project_brief generation failed: %s", _pb_exc)
 
     if run.project_id:
         try:
@@ -2244,6 +2347,10 @@ async def _build_node_context(agent: AgentDef, run: PatternRun) -> ExecutionCont
 
     # Role-based tool filtering — each agent only sees tools relevant to their role
     allowed_tools = _get_tools_for_agent(agent) if tools_for_agent else None
+
+    # Prepend PROJECT_BRIEF (L0 progressive disclosure — always visible)
+    if _project_brief:
+        project_context = f"## PROJECT BRIEF\n{_project_brief}\n\n{project_context}" if project_context else f"## PROJECT BRIEF\n{_project_brief}"
 
     # Enrich project_context with lessons and SI blueprint
     if lessons_prompt:

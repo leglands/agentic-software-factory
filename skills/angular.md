@@ -43,6 +43,129 @@ eval_cases:
   tags:
   - angular
   - antipatterns
+- id: angular-signals-reactive-patterns
+  prompt: How do I use Angular Signals for reactive state management?
+  checks:
+  - length_min: 120
+  - has_keyword: signal
+  - has_keyword: computed
+  expectations:
+  - Explains signal creation with signal()
+  - Shows computed derived values
+  - Demonstrates effect() for side effects
+- id: angular-standalone-components-migration
+  prompt: How do I migrate from NgModules to standalone components?
+  checks:
+  - length_min: 100
+  - has_keyword: standalone
+  - has_keyword: imports
+  expectations:
+  - Describes standalone component creation
+  - Explains direct imports pattern
+  - Mentions bootstrapApplication
+- id: angular-zoneless-change-detection
+  prompt: What is Zoneless Angular and how do I enable it?
+  checks:
+  - length_min: 80
+  - has_keyword: provideZonelessChangeDetection
+  - has_keyword: OnPush
+  expectations:
+  - Explains zoneless benefits
+  - Shows enablement configuration
+  - Mentions performance gains
+- id: angular-ssr-hydration-setup
+  prompt: How do I set up SSR with hydration in Angular?
+  checks:
+  - length_min: 100
+  - has_keyword: provideClientHydration
+  - has_keyword: withEventReplay
+  expectations:
+  - Describes SSR CLI setup
+  - Shows hydration configuration
+  - Explains defer blocks
+- id: angular-functional-route-guards
+  prompt: How do I implement route guards with functional patterns?
+  checks:
+  - length_min: 80
+  - has_keyword: CanActivateFn
+  - has_keyword: inject
+  expectations:
+  - Shows functional guard implementation
+  - Demonstrates router.createUrlTree
+  - Explains auth pattern
+- id: angular-inject-function-di
+  prompt: How do I use the modern inject() function for dependency injection?
+  checks:
+  - length_min: 70
+  - has_keyword: inject
+  - has_keyword: InjectionToken
+  expectations:
+  - Shows inject() usage
+  - Explains injection tokens
+  - Compares to constructor injection
+- id: angular-signal-inputs-outputs
+  prompt: How do I use signal-based inputs and outputs in Angular?
+  checks:
+  - length_min: 90
+  - has_keyword: input
+  - has_keyword: output
+  - has_keyword: model
+  expectations:
+  - Shows input.required<T>() pattern
+  - Demonstrates output<T>() usage
+  - Explains model() for two-way binding
+- id: angular-component-store-pattern
+  prompt: How do I implement a component store with Signals?
+  checks:
+  - length_min: 100
+  - has_keyword: signal
+  - has_keyword: computed
+  - has_keyword: Injectable
+  expectations:
+  - Shows private writable signals
+  - Demonstrates public computed selectors
+  - Explains actions pattern
+- id: angular-defer-loading
+  prompt: How do I use @defer blocks for lazy loading components?
+  checks:
+  - length_min: 80
+  - has_keyword: '@defer'
+  - has_keyword: viewport
+  expectations:
+  - Shows defer syntax
+  - Explains hydration triggers
+  - Demonstrates placeholder/loading states
+- id: angular-onpush-change-detection
+  prompt: How do I optimize Angular change detection with OnPush?
+  checks:
+  - length_min: 70
+  - has_keyword: ChangeDetectionStrategy
+  - has_keyword: OnPush
+  expectations:
+  - Explains OnPush strategy
+  - Shows signal integration
+  - Lists trigger conditions
+- id: angular-testing-signals
+  prompt: How do I test Angular components that use Signals?
+  checks:
+  - length_min: 80
+  - has_keyword: setInput
+  - has_keyword: signal
+  expectations:
+  - Shows TestBed configuration
+  - Demonstrates signal testing
+  - Explains detectChanges behavior
+- id: angular-signal-vs-rxjs
+  prompt: When should I use Signals vs RxJS in Angular?
+  checks:
+  - length_min: 100
+  - has_keyword: signal
+  - has_keyword: RxJS
+  - has_keyword: Observable
+  expectations:
+  - Lists signal use cases
+  - Lists RxJS use cases
+  - Provides comparison guidance
 ---
 # angular
 
@@ -856,3 +979,15 @@ describe("UserCardComponent", () => {
 | Circular dependency            | Use `inject()` with `forwardRef`                    |
 | Zoneless not detecting changes | Trigger via signal updates, not mutations           |
 | SSR fetch fails                | Use `TransferState` or `withFetch()`                |
+
+---
+
+## Live Documentation
+
+When working on tasks covered by this skill, use fetch_url to get current docs:
+- fetch_url(https://angular.dev)
+- fetch_url(https://angular.dev/guide/signals)
+- fetch_url(https://angular.dev/guide/ssr)
+- fetch_url(https://angular.dev/update-guide)
+- fetch_url(https://blog.angular.dev)
+- Always verify SDK versions against live docs

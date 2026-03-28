@@ -356,6 +356,17 @@ async def lifespan(app: FastAPI):
         except Exception as _e:
             logger.warning("Memory seeding skipped: %s", _e)
 
+        # Decay sweep: recalculate relevance scores (ICM pattern)
+        from .memory.manager import get_memory_manager as _get_mm
+
+        try:
+            _mm = _get_mm()
+            _n_decayed = await _loop.run_in_executor(None, _mm.decay_sweep)
+            if _n_decayed:
+                logger.info("Memory decay sweep: %d entries updated", _n_decayed)
+        except Exception as _e:
+            logger.debug("Memory decay sweep skipped: %s", _e)
+
     _asyncio.create_task(_bg_heal_and_seed())
 
     # Seed org tree (Portfolio → ART → Team)

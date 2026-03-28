@@ -43,6 +43,114 @@ eval_cases:
   tags:
   - angular
   - antipatterns
+- id: angular-signal-service-implementation
+  prompt: Implement a signal-based service for managing authentication state in Angular
+  checks:
+  - regex: signal|signal\(|computed\(
+  - length_min: 200
+  - has_keyword: '@Injectable'
+  expectations:
+  - Uses Angular signals for reactive state management
+  - Implements authentication state with proper signal patterns
+- id: angular-ngrx-store-setup
+  prompt: How do I set up NgRx store in an Angular application with feature reducers?
+  checks:
+  - regex: provideStore|reducers|createReducer
+  - length_min: 150
+  - has_keyword: '@ngrx'
+  expectations:
+  - Provides NgRx store configuration with feature slices
+  - Shows proper provider setup in bootstrapApplication
+- id: angular-component-store-pattern
+  prompt: When should I use ComponentStore versus NgRx Store for Angular state management?
+  checks:
+  - regex: ComponentStore|component store|feature state
+  - length_min: 120
+  - has_keyword: ComponentStore
+  expectations:
+  - Differentiates between ComponentStore and NgRx Store use cases
+  - Explains when ComponentStore is appropriate
+- id: angular-signalstore-ngrx
+  prompt: How do I create a signal store using @ngrx/signals with computed properties?
+  checks:
+  - regex: signalStore|withState|withComputed|patchState
+  - length_min: 150
+  - has_keyword: '@ngrx/signals'
+  expectations:
+  - Demonstrates signalStore pattern with proper features
+  - Shows computed selectors and methods
+- id: angular-signal-rxjs-bridging
+  prompt: How can I convert observables to signals and signals to observables in Angular?
+  checks:
+  - regex: toSignal|toObservable
+  - length_min: 100
+  - has_keyword: toSignal
+  expectations:
+  - Shows bidirectional conversion between Signals and RxJS
+  - Demonstrates practical integration patterns
+- id: angular-optimistic-updates
+  prompt: Implement optimistic UI updates with rollback in Angular using signals
+  checks:
+  - regex: optimistic|rollback|previousData
+  - length_min: 150
+  - has_keyword: optimistic
+  expectations:
+  - Demonstrates optimistic update pattern
+  - Shows rollback mechanism on error
+- id: angular-state-migration-behavioral-subject
+  prompt: Migrate a BehaviorSubject-based service to Angular signals
+  checks:
+  - regex: BehaviorSubject|signal\.set|asReadonly
+  - length_min: 120
+  - has_keyword: BehaviorSubject
+  expectations:
+  - Shows migration path from RxJS to Signals
+  - Maintains same API surface with new implementation
+- id: angular-ngrx-effects-http
+  prompt: Implement NgRx effects for handling HTTP requests with proper error handling
+  checks:
+  - regex: createEffect|switchMap|catchError
+  - length_min: 150
+  - has_keyword: '@ngrx/effects'
+  expectations:
+  - Shows effect pattern for async operations
+  - Includes proper error handling with catchError
+- id: angular-signal-computed-derive
+  prompt: How do I create computed signals that derive state from other signals?
+  checks:
+  - regex: computed\(|derived|memoized
+  - length_min: 80
+  - has_keyword: computed
+  expectations:
+  - Demonstrates computed signal for derived state
+  - Explains memoization benefits
+- id: angular-global-vs-local-state
+  prompt: When should I use global state versus local component state in Angular?
+  checks:
+  - regex: global state|local state|Signal
+  - length_min: 120
+  - has_keyword: global
+  expectations:
+  - Provides decision framework for state scope
+  - Lists criteria for choosing global vs local
+- id: angular-selectors-pattern
+  prompt: How do I create efficient NgRx selectors with memoization?
+  checks:
+  - regex: createSelector|createFeatureSelector
+  - length_min: 100
+  - has_keyword: selector
+  expectations:
+  - Shows selector creation patterns
+  - Explains memoization benefits
+- id: angular-state-debugging
+  prompt: What tools and techniques are available for debugging Angular state management?
+  checks:
+  - regex: devtools|StoreDevtools|debug
+  - length_min: 100
+  - has_keyword: devtools
+  expectations:
+  - Lists debugging tools for Angular state
+  - Shows store devtools integration
 ---
 # angular-state-management
 

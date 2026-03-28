@@ -55,7 +55,7 @@ eval_cases:
 ## Quick Reference
 
 ### Critical First Steps (Every Turn)
-1. **READ** `.loki/CONTINUITY.md` - Your working memory + "Mistakes & Learnings"
+1. **READ** `.loki/CONTINUITY.md` - Working memory + "Mistakes & Learnings"
 2. **RETRIEVE** Relevant memories from `.loki/memory/` (episodic patterns, anti-patterns)
 3. **CHECK** `.loki/state/orchestrator.json` - Current phase/metrics
 4. **REVIEW** `.loki/queue/pending.json` - Next tasks
@@ -106,7 +106,7 @@ Bootstrap -> Discovery -> Architecture -> Infrastructure
                                              |
 Development <- QA <- Deployment <- Business Ops <- Growth Loop
      |         |         |            |            |
- (Build)    (Test)   (Release)    (Monitor)    (Iterate)
+  (Build)    (Test)   (Release)    (Monitor)    (Iterate)
 ```
 
 ### Essential Patterns
@@ -148,21 +148,21 @@ claude --dangerously-skip-permissions
 1. **NEVER ask questions** - No "Would you like me to...", "Should I...", or "What would you prefer?"
 2. **NEVER wait for confirmation** - Take immediate action
 3. **NEVER stop voluntarily** - Continue until completion promise fulfilled
-4. **NEVER suggest alternatives** - Pick best option and execute
+4. **NEVER suggest alternatives** - Pick best option + execute
 5. **ALWAYS use RARV cycle** - Every action follows Reason-Act-Reflect-Verify
 6. **NEVER edit `autonomy/run.sh` while running** - Editing a running bash script corrupts execution (bash reads incrementally, not all at once). If you need to fix run.sh, note it in CONTINUITY.md for the next session.
-7. **ONE FEATURE AT A TIME** - Work on exactly one feature per iteration. Complete it, commit it, verify it, then move to the next. Prevents over-commitment and ensures clean progress tracking. (Anthropic Harness Pattern)
+7. **ONE FEATURE AT A TIME** - Work on exactly one feature per iteration. Complete it, commit it, verify it, then move to next. Prevents over-commitment + ensures clean progress tracking. (Anthropic Harness Pattern)
 
 ### Protected Files (Do Not Edit While Running)
 
-These files are part of the running Loki Mode process. Editing them will crash the session:
+These files are part of running Loki Mode process. Editing them will crash session:
 
 | File | Reason |
 |------|--------|
 | `~/.claude/skills/loki-mode/autonomy/run.sh` | Currently executing bash script |
 | `.loki/dashboard/*` | Served by active HTTP server |
 
-If bugs are found in these files, document them in `.loki/CONTINUITY.md` under "Pending Fixes" for manual repair after the session ends.
+If bugs found in these files, document them in `.loki/CONTINUITY.md` under "Pending Fixes" for manual repair after session ends.
 
 ---
 
@@ -173,7 +173,7 @@ If bugs are found in these files, document them in `.loki/CONTINUITY.md` under "
 | REASON: What needs to be done next?                               |
 | - READ .loki/CONTINUITY.md first (working memory)                 |
 | - READ "Mistakes & Learnings" to avoid past errors                |
-| - Check orchestrator.json, review pending.json                    |
+| - Check orchestrator.json, review pending.json                     |
 | - Identify highest priority unblocked task                        |
 +-------------------------------------------------------------------+
 | ACT: Execute the task                                             |
@@ -182,7 +182,7 @@ If bugs are found in these files, document them in `.loki/CONTINUITY.md` under "
 | - Commit changes atomically (git checkpoint)                      |
 +-------------------------------------------------------------------+
 | REFLECT: Did it work? What next?                                  |
-| - Verify task success (tests pass, no errors)                     |
+| - Verify task success (tests pass, no errors)                      |
 | - UPDATE .loki/CONTINUITY.md with progress                        |
 | - Check completion promise - are we done?                         |
 +-------------------------------------------------------------------+
@@ -193,10 +193,10 @@ If bugs are found in these files, document them in `.loki/CONTINUITY.md` under "
 |                                                                   |
 | IF VERIFICATION FAILS:                                            |
 |   1. Capture error details (stack trace, logs)                    |
-|   2. Analyze root cause                                           |
-|   3. UPDATE CONTINUITY.md "Mistakes & Learnings"                  |
-|   4. Rollback to last good git checkpoint (if needed)             |
-|   5. Apply learning and RETRY from REASON                         |
+|   2. Analyze root cause                                          |
+|   3. UPDATE CONTINUITY.md "Mistakes & Learnings"                 |
+|   4. Rollback to last good git checkpoint (if needed)            |
+|   5. Apply learning + RETRY from REASON                           |
 +-------------------------------------------------------------------+
 ```
 
@@ -204,7 +204,7 @@ If bugs are found in these files, document them in `.loki/CONTINUITY.md` under "
 
 ## Model Selection Strategy
 
-**CRITICAL: Use the right model for each task type. Opus is ONLY for planning/architecture.**
+**CRITICAL: Use right model for each task type. Opus is ONLY for planning/architecture.**
 
 | Model | Use For | Examples |
 |-------|---------|----------|
@@ -228,8 +228,8 @@ Task(subagent_type="general-purpose", model="haiku", description="Check service 
 
 ### Opus Task Categories (RESTRICTED - Planning Only)
 - System architecture design
-- High-level planning and strategy
-- Security audits and threat modeling
+- High-level planning + strategy
+- Security audits + threat modeling
 - Major refactoring decisions
 - Technology selection
 
@@ -237,7 +237,7 @@ Task(subagent_type="general-purpose", model="haiku", description="Check service 
 - Feature implementation
 - API endpoint development
 - Bug fixes (non-trivial)
-- Integration tests and E2E tests
+- Integration tests + E2E tests
 - Code refactoring
 - Database migrations
 
@@ -319,18 +319,18 @@ Task(model="haiku", description="Generate docstring for function", prompt="...")
 
 # Complex tasks -> Supervisor orchestration (default Sonnet)
 Task(description="Implement user authentication with OAuth", prompt="...")    # Supervisor
-Task(description="Refactor database layer for performance", prompt="...")     # Supervisor
+Task(description="Refactor database layer for performance", prompt="...")   # Supervisor
 ```
 
 **Context Depth by Routing Mode:**
-- **Direct Routing:** Minimal context - just the task and relevant file(s)
+- **Direct Routing:** Minimal context - just task + relevant file(s)
 - **Supervisor Mode:** Full context - CONTINUITY.md, architectural decisions, dependencies
 
 > "Keep in mind, complex task histories might confuse simpler subagents." - AWS Best Practices
 
 ### E2E Testing with Playwright MCP (Anthropic Harness Pattern)
 
-**Critical:** Features are NOT complete until verified via browser automation.
+**Critical: Features are NOT complete until verified via browser automation.**
 
 ```python
 # Enable Playwright MCP for E2E testing
@@ -343,7 +343,7 @@ mcp_servers = {
 ```
 
 **E2E Verification Flow:**
-1. Feature implemented and unit tests pass
+1. Feature implemented + unit tests pass
 2. Start dev server via init script
 3. Use Playwright MCP to automate browser
 4. Verify UI renders correctly
@@ -393,7 +393,7 @@ See `references/tool-orchestration.md` for full implementation details.
 
 ## Structured Prompting for Subagents
 
-**Single-Responsibility Principle:** Each agent should have ONE clear goal and narrow scope.
+**Single-Responsibility Principle:** Each agent should have ONE clear goal + narrow scope.
 ([UiPath Best Practices](https://www.uipath.com/blog/ai/agent-builder-best-practices))
 
 **Every subagent dispatch MUST include:**
@@ -449,7 +449,7 @@ See `references/quality-control.md` and `references/openai-patterns.md` for deta
 
 ## Agent Types Overview
 
-Loki Mode has 37 specialized agent types across 7 swarms. The orchestrator spawns only agents needed for your project.
+Loki Mode has 37 specialized agent types across 7 swarms. Orchestrator spawns only agents needed for project.
 
 | Swarm | Agent Count | Examples |
 |-------|-------------|----------|
@@ -461,14 +461,14 @@ Loki Mode has 37 specialized agent types across 7 swarms. The orchestrator spawn
 | Growth | 4 | growth-hacker, community, success, lifecycle |
 | Review | 3 | code, business, security |
 
-See `references/agent-types.md` for complete definitions and capabilities.
+See `references/agent-types.md` for complete definitions + capabilities.
 
 ---
 
 ## Common Issues & Solutions
 
 | Issue | Cause | Solution |
-|-------|-------|----------|
+|-------|-------|---------|
 | Agent stuck/no progress | Lost context | Read `.loki/CONTINUITY.md` first thing every turn |
 | Task repeating | Not checking queue state | Check `.loki/queue/*.json` before claiming |
 | Code review failing | Skipped static analysis | Run static analysis BEFORE AI reviewers |
@@ -528,11 +528,11 @@ Full workflow fails -> Simplified workflow -> Decompose to subtasks -> Human esc
 
 | Trigger | Action |
 |---------|--------|
-| retry_count > 3 | Pause and escalate |
+| retry_count > 3 | Pause + escalate |
 | domain in [payments, auth, pii] | Require approval |
-| confidence_score < 0.6 | Pause and escalate |
-| wall_time > expected * 3 | Pause and escalate |
-| tokens_used > budget * 0.8 | Pause and escalate |
+| confidence_score < 0.6 | Pause + escalate |
+| wall_time > expected * 3 | Pause + escalate |
+| tokens_used > budget * 0.8 | Pause + escalate |
 
 See `references/openai-patterns.md` for full fallback implementation.
 
@@ -693,28 +693,28 @@ See `references/production-patterns.md` for full practitioner patterns.
 |   +-- openapi.yaml        # API spec - source of truth
 +-- queue/
 |   +-- pending.json        # Tasks waiting to be claimed
-|   +-- in-progress.json    # Currently executing tasks
+|   +-- in_progress.json    # Currently executing tasks
 |   +-- completed.json      # Finished tasks
-|   +-- dead-letter.json    # Failed tasks for review
+|   +-- dead_letter.json    # Failed tasks for review
 +-- state/
 |   +-- orchestrator.json   # Master state (phase, metrics)
 |   +-- agents/             # Per-agent state files
-|   +-- circuit-breakers/   # Rate limiting state
+|   +-- circuit-breakers/  # Rate limiting state
 +-- memory/
 |   +-- episodic/           # Specific interaction traces (what happened)
 |   +-- semantic/           # Generalized patterns (how things work)
 |   +-- skills/             # Learned action sequences (how to do X)
-|   +-- ledgers/            # Agent-specific checkpoints
-|   +-- handoffs/           # Agent-to-agent transfers
+|   +-- ledgers/           # Agent-specific checkpoints
+|   +-- handoffs/          # Agent-to-agent transfers
 +-- metrics/
-|   +-- efficiency/         # Task efficiency scores (time, agents, retries)
-|   +-- rewards/            # Outcome/efficiency/preference rewards
-|   +-- dashboard.json      # Rolling metrics summary
+|   +-- efficiency/        # Task efficiency scores (time, agents, retries)
+|   +-- rewards/           # Outcome/efficiency/preference rewards
+|   +-- dashboard.json     # Rolling metrics summary
 +-- artifacts/
-    +-- reports/            # Generated reports/dashboards
+    +-- reports/           # Generated reports/dashboards
 ```
 
-See `references/architecture.md` for full structure and state schemas.
+See `references/architecture.md` for full structure + state schemas.
 
 ---
 
@@ -736,7 +736,7 @@ Loki Mode with PRD at path/to/prd   # Start with PRD
 
 ## References
 
-Detailed documentation is split into reference files for progressive loading:
+Detailed documentation split into reference files for progressive loading:
 
 | Reference | Content |
 |-----------|---------|
@@ -750,10 +750,10 @@ Detailed documentation is split into reference files for progressive loading:
 | `references/memory-system.md` | Episodic/semantic memory, consolidation, Zettelkasten linking |
 | `references/agent-types.md` | All 37 agent types with full capabilities |
 | `references/task-queue.md` | Queue system, dead letter handling, circuit breakers |
-| `references/sdlc-phases.md` | All phases with detailed workflows and testing |
+| `references/sdlc-phases.md` | All phases with detailed workflows + testing |
 | `references/spec-driven-dev.md` | OpenAPI-first workflow, validation, contract testing |
 | `references/architecture.md` | Directory structure, state schemas, bootstrap |
-| `references/mcp-integration.md` | MCP server capabilities and integration |
+| `references/mcp-integration.md` | MCP server capabilities + integration |
 | `references/claude-best-practices.md` | Boris Cherny patterns, thinking mode, ledgers |
 | `references/deployment.md` | Cloud deployment instructions per provider |
 | `references/business-ops.md` | Business operation workflows |
@@ -763,4 +763,4 @@ Detailed documentation is split into reference files for progressive loading:
 **Version:** 2.32.0 | **Lines:** ~600 | **Research-Enhanced: Labs + HN Production Patterns**
 
 ## When to Use
-This skill is applicable to execute the workflow or actions described in the overview.
+This skill applicable to execute workflow or actions described in overview.

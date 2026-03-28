@@ -53,7 +53,7 @@ Migrate hardcoded values:
 
 ## Dead CSS Elimination
 
-Detect and remove unused selectors:
+Detect + remove unused selectors:
 
 1. **Static analysis**: Use PurgeCSS, uncss, or csscss
 2. **Coverage tool**: Chrome DevTools Coverage tab
@@ -87,7 +87,7 @@ nav ul li a { }
 Eliminate `!important`:
 1. Increase specificity naturally
 2. Use CSS custom properties for overrides
-3. Cascade with later rules
+3. Cascade w/ later rules
 
 BEM naming:
 ```

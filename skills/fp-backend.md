@@ -46,13 +46,13 @@ eval_cases:
 
 # fp-ts Backend Patterns
 
-Functional programming patterns for building type-safe, testable backend services using fp-ts.
+FP patterns for building type-safe, testable backend services using fp-ts.
 
 ## Core Concepts
 
 ### ReaderTaskEither (RTE)
 
-The `ReaderTaskEither<R, E, A>` type is the backbone of functional backend development:
+`ReaderTaskEither<R, E, A>` = backbone of functional backend dev:
 - **R** (Reader): Dependencies/environment (database, config, logger)
 - **E** (Either left): Error type
 - **A** (Either right): Success value
@@ -62,21 +62,18 @@ import * as RTE from 'fp-ts/ReaderTaskEither'
 import * as TE from 'fp-ts/TaskEither'
 import { pipe } from 'fp-ts/function'
 
-// Define your dependencies
 type Deps = {
   db: DatabaseClient
   logger: Logger
   config: Config
 }
 
-// Define domain errors
 type AppError =
   | { _tag: 'NotFound'; resource: string; id: string }
   | { _tag: 'ValidationError'; message: string }
   | { _tag: 'DatabaseError'; cause: unknown }
   | { _tag: 'Unauthorized'; reason: string }
 
-// A service function
 const getUser = (id: string): RTE.ReaderTaskEither<Deps, AppError, User> =>
   pipe(
     RTE.ask<Deps>(),
@@ -119,7 +116,6 @@ type UserError =
   | { _tag: 'EmailExists'; email: string }
   | { _tag: 'InvalidPassword' }
 
-// Create user
 export const create = (
   input: CreateUserInput
 ): RTE.ReaderTaskEither<UserDeps, UserError, User> =>
@@ -127,7 +123,6 @@ export const create = (
     RTE.ask<UserDeps>(),
     RTE.flatMap(({ db, hasher }) =>
       pipe(
-        // Check email uniqueness
         checkEmailUnique(input.email),
         RTE.flatMap(() =>
           RTE.fromTaskEither(hasher.hash(input.password))
@@ -144,7 +139,6 @@ export const create = (
     )
   )
 
-// Find by ID
 export const findById = (
   id: string
 ): RTE.ReaderTaskEither<UserDeps, UserError, User> =>
@@ -162,7 +156,6 @@ export const findById = (
     )
   )
 
-// Find many with pagination
 export const findMany = (
   params: PaginationParams
 ): RTE.ReaderTaskEither<UserDeps, UserError, PaginatedResult<User>> =>
@@ -225,14 +218,12 @@ export const createOrder = (
 ): RTE.ReaderTaskEither<OrderDeps, OrderError, Order> =>
   pipe(
     RTE.Do,
-    // Validate user exists
     RTE.bind('user', () =>
       pipe(
         UserService.findById(userId),
         RTE.mapLeft(toOrderError)
       )
     ),
-    // Validate and get products
     RTE.bind('products', () =>
       pipe(
         items,
@@ -242,18 +233,15 @@ export const createOrder = (
         RTE.mapLeft(toOrderError)
       )
     ),
-    // Calculate total
     RTE.bind('total', ({ products }) =>
       RTE.right(calculateTotal(products, items))
     ),
-    // Process payment
     RTE.bind('payment', ({ user, total }) =>
       pipe(
         PaymentService.charge(user, total),
         RTE.mapLeft(toOrderError)
       )
     ),
-    // Create order
     RTE.flatMap(({ user, products, total, payment }) =>
       createOrderRecord(user, products, items, total, payment)
     )
@@ -372,7 +360,7 @@ export const destroyDeps = (deps: AppDeps): TE.TaskEither<Error, void> =>
   )
 ```
 
-### Running Programs with Dependencies
+### Running Programs w/ Dependencies
 
 ```typescript
 // src/main.ts
@@ -398,7 +386,6 @@ const main = async () => {
       pipe(
         program(deps),
         TE.tap(() => TE.fromIO(() => console.log('Server running'))),
-        // Cleanup on exit
         TE.tapError(() => destroyDeps(deps))
       )
     )
@@ -429,7 +416,6 @@ type DbError =
   | { _tag: 'ForeignKeyViolation'; field: string }
   | { _tag: 'UnknownDbError'; cause: unknown }
 
-// Wrap Prisma operations
 const wrapPrisma = <A>(
   operation: () => Promise<A>
 ): TE.TaskEither<DbError, A> =>
@@ -457,7 +443,6 @@ const wrapPrisma = <A>(
     return { _tag: 'UnknownDbError', cause: error }
   })
 
-// Repository factory
 export const createRepository = <
   Model,
   CreateInput,
@@ -503,7 +488,6 @@ export const createRepository = <
     wrapPrisma(() => delegate.count({ where })),
 })
 
-// Usage
 const userRepo = createRepository(prisma, prisma.user)
 ```
 
@@ -523,7 +507,6 @@ type TxClient = Omit<
 
 type TxDeps = { tx: TxClient }
 
-// Transaction wrapper
 export const withTransaction = <R extends { db: PrismaClient }, E, A>(
   program: RTE.ReaderTaskEither<R & TxDeps, E, A>
 ): RTE.ReaderTaskEither<R, E | DbError, A> =>
@@ -536,12 +519,11 @@ export const withTransaction = <R extends { db: PrismaClient }, E, A>(
             deps.db.$transaction(async tx => {
               const result = await program({ ...deps, tx })()
               if (result._tag === 'Left') {
-                throw result.left // Rollback
+                throw result.left
               }
               return result.right
             }),
           (error): E | DbError => {
-            // Re-throw domain errors
             if (typeof error === 'object' && error !== null && '_tag' in error) {
               return error as E
             }
@@ -552,7 +534,6 @@ export const withTransaction = <R extends { db: PrismaClient }, E, A>(
     )
   )
 
-// Usage in service
 export const transferFunds = (
   fromId: string,
   toId: string,
@@ -570,7 +551,6 @@ export const transferFunds = (
     )
   )
 
-// Inside transaction, use tx instead of db
 const debitAccount = (
   accountId: string,
   amount: number
@@ -611,7 +591,6 @@ import * as RTE from 'fp-ts/ReaderTaskEither'
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 
-// Convert RTE handler to Express middleware
 export const toHandler =
   <R, E, A>(
     getDeps: (req: Request) => R,
@@ -631,7 +610,6 @@ export const toHandler =
     )
   }
 
-// Error handler
 const handleError = (error: AppError, res: Response): void => {
   switch (error._tag) {
     case 'NotFound':
@@ -648,7 +626,6 @@ const handleError = (error: AppError, res: Response): void => {
   }
 }
 
-// Usage
 const getUserHandler = toHandler(
   req => req.app.locals.deps as AppDeps,
   req => UserService.findById(req.params.id),
@@ -667,21 +644,18 @@ import * as RTE from 'fp-ts/ReaderTaskEither'
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 
-// Store deps in context
 declare module 'hono' {
   interface ContextVariableMap {
     deps: AppDeps
   }
 }
 
-// Dependency injection middleware
 export const withDeps = (deps: AppDeps): MiddlewareHandler =>
   async (c, next) => {
     c.set('deps', deps)
     await next()
   }
 
-// Convert RTE to Hono handler
 export const toHonoHandler =
   <E, A>(
     handler: (c: Context) => RTE.ReaderTaskEither<AppDeps, E, A>,
@@ -700,7 +674,6 @@ export const toHonoHandler =
     )
   }
 
-// Validation middleware
 export const validate =
   <T>(schema: z.ZodSchema<T>): MiddlewareHandler =>
   async (c, next) => {
@@ -718,7 +691,6 @@ export const validate =
     await next()
   }
 
-// Auth middleware using RTE
 export const requireAuth: MiddlewareHandler = async (c, next) => {
   const deps = c.get('deps')
   const token = c.req.header('Authorization')?.replace('Bearer ', '')
@@ -740,7 +712,6 @@ export const requireAuth: MiddlewareHandler = async (c, next) => {
   await next()
 }
 
-// Usage
 const app = new Hono()
 
 app.use('*', withDeps(deps))
@@ -767,7 +738,6 @@ app.get(
 import * as RTE from 'fp-ts/ReaderTaskEither'
 import { pipe } from 'fp-ts/function'
 
-// Request-scoped context
 type RequestContext = {
   requestId: string
   userId: O.Option<string>
@@ -776,7 +746,6 @@ type RequestContext = {
 
 type ContextDeps = AppDeps & { ctx: RequestContext }
 
-// Logging with context
 const logWithContext =
   (level: 'info' | 'warn' | 'error') =>
   (message: string, meta?: object): RTE.ReaderTaskEither<ContextDeps, never, void> =>
@@ -797,7 +766,6 @@ export const log = {
   error: logWithContext('error'),
 }
 
-// Middleware to create context
 export const withContext: MiddlewareHandler = async (c, next) => {
   const deps = c.get('deps')
   const ctx: RequestContext = {
@@ -808,7 +776,6 @@ export const withContext: MiddlewareHandler = async (c, next) => {
 
   c.set('deps', { ...deps, ctx })
 
-  // Log request start
   deps.logger.info('Request started', {
     requestId: ctx.requestId,
     method: c.req.method,
@@ -817,7 +784,6 @@ export const withContext: MiddlewareHandler = async (c, next) => {
 
   await next()
 
-  // Log request end
   deps.logger.info('Request completed', {
     requestId: ctx.requestId,
     status: c.res.status,
@@ -835,7 +801,6 @@ export const withContext: MiddlewareHandler = async (c, next) => {
 import * as E from 'fp-ts/Either'
 import * as O from 'fp-ts/Option'
 
-// Base error types
 type DomainError =
   | NotFoundError
   | ValidationError
@@ -874,7 +839,6 @@ type InfrastructureError = {
   cause: unknown
 }
 
-// Smart constructors
 export const notFound = (resource: string, id: string): NotFoundError => ({
   _tag: 'NotFoundError',
   resource,
@@ -903,7 +867,6 @@ export const conflict = (
   value,
 })
 
-// Error to HTTP status mapping
 export const toHttpStatus = (error: DomainError): number => {
   switch (error._tag) {
     case 'NotFoundError':
@@ -925,7 +888,6 @@ export const toHttpStatus = (error: DomainError): number => {
   }
 }
 
-// Error to response body
 export const toResponseBody = (
   error: DomainError
 ): { error: string; details?: unknown } => {
@@ -961,7 +923,6 @@ import * as RTE from 'fp-ts/ReaderTaskEither'
 import * as TE from 'fp-ts/TaskEither'
 import { pipe } from 'fp-ts/function'
 
-// Retry with exponential backoff
 export const withRetry =
   <R, E, A>(
     maxAttempts: number,
@@ -995,7 +956,6 @@ export const withRetry =
       })
     )
 
-// Fallback to cached value
 export const withFallback =
   <R extends { cache: CacheClient }, E, A>(
     cacheKey: string,
@@ -1009,11 +969,9 @@ export const withFallback =
       RTE.flatMap(({ cache, ...rest }) =>
         pipe(
           operation,
-          // On success, cache the result
           RTE.tap(result =>
             RTE.fromTaskEither(cache.set(cacheKey, result, ttlSeconds))
           ),
-          // On failure, try to get cached value
           RTE.orElse(error =>
             pipe(
               RTE.fromTaskEither(cache.get<A>(cacheKey)),
@@ -1026,7 +984,6 @@ export const withFallback =
       )
     )
 
-// Circuit breaker
 type CircuitState = 'closed' | 'open' | 'half-open'
 
 export const createCircuitBreaker = <E>(
@@ -1044,7 +1001,6 @@ export const createCircuitBreaker = <E>(
     pipe(
       RTE.ask<R>(),
       RTE.flatMap(deps => {
-        // Check if circuit should reset
         if (
           state === 'open' &&
           Date.now() - lastFailure > resetTimeoutMs
@@ -1093,7 +1049,6 @@ import * as O from 'fp-ts/Option'
 import { describe, it, expect, vi } from 'vitest'
 import * as UserService from '../user.service'
 
-// Create mock dependencies
 const createMockDeps = (overrides: Partial<UserDeps> = {}): UserDeps => ({
   db: {
     users: {
@@ -1114,7 +1069,7 @@ const createMockDeps = (overrides: Partial<UserDeps> = {}): UserDeps => ({
 
 describe('UserService', () => {
   describe('create', () => {
-    it('should create a user with hashed password', async () => {
+    it('should create user w/ hashed password', async () => {
       const deps = createMockDeps()
       const input = {
         email: 'test@example.com',
@@ -1189,7 +1144,7 @@ describe('UserService', () => {
 })
 ```
 
-### Integration Testing with Test Containers
+### Integration Testing w/ Test Containers
 
 ```typescript
 // src/__tests__/integration/user.integration.test.ts
@@ -1207,10 +1162,8 @@ describe('UserService Integration', () => {
   let deps: AppDeps
 
   beforeAll(async () => {
-    // Start PostgreSQL container
     container = await new PostgreSqlContainer().start()
 
-    // Build real dependencies with test database
     process.env.DATABASE_URL = container.getConnectionUri()
 
     const depsResult = await buildDeps()()
@@ -1219,9 +1172,7 @@ describe('UserService Integration', () => {
     }
     deps = depsResult.right
 
-    // Run migrations
     await deps.db.$executeRaw`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`
-    // ... run Prisma migrations
   }, 60000)
 
   afterAll(async () => {
@@ -1229,8 +1180,7 @@ describe('UserService Integration', () => {
     await container.stop()
   })
 
-  it('should create and retrieve a user', async () => {
-    // Create user
+  it('should create + retrieve a user', async () => {
     const createResult = await UserService.create({
       email: 'integration@test.com',
       password: 'password123',
@@ -1242,7 +1192,6 @@ describe('UserService Integration', () => {
 
     const user = createResult.right
 
-    // Retrieve user
     const findResult = await UserService.findById(user.id)(deps)()
 
     expect(E.isRight(findResult)).toBe(true)
@@ -1301,7 +1250,7 @@ describe('Validation Properties', () => {
 })
 ```
 
-## Quick Reference
+## Quick Ref
 
 ### Common Imports
 
@@ -1331,18 +1280,16 @@ import { pipe, flow } from 'fp-ts/function'
 | `RTE.tap(f)` | Side effect on success |
 | `RTE.tapError(f)` | Side effect on error |
 | `RTE.orElse(f)` | Recover from error |
-| `RTE.getOrElse(f)` | Extract with fallback |
+| `RTE.getOrElse(f)` | Extract w/ fallback |
 
 ### Service Template
 
 ```typescript
-// Template for a new service
 import * as RTE from 'fp-ts/ReaderTaskEither'
 import { pipe } from 'fp-ts/function'
 
 type MyServiceDeps = {
   db: DatabaseClient
-  // ... other dependencies
 }
 
 type MyServiceError =
@@ -1355,7 +1302,6 @@ export const myOperation = (
   pipe(
     RTE.ask<MyServiceDeps>(),
     RTE.flatMap(deps =>
-      // Your implementation here
       RTE.right(output)
     )
   )

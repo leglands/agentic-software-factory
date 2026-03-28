@@ -42,6 +42,261 @@ eval_cases:
   tags:
   - skill
   - antipatterns
+- id: skill-creator-ms-authentication-patterns
+  prompt: How do I implement authentication in Azure SDK skills using DefaultAzureCredential?
+  checks:
+  - regex: DefaultAzureCredential
+  - length_min: 120
+  - has_keyword: credential
+  expectations:
+  - Explains DefaultAzureCredential usage across Python, C#, Java, TypeScript
+  - Shows proper credential initialization pattern
+  - Warns against hardcoded credentials
+- id: skill-creator-ms-skill-structure
+  prompt: What is the required directory structure for creating a new Azure SDK skill?
+  checks:
+  - regex: SKILL\.md|\.github/skills
+  - length_min: 100
+  - has_keyword: bundled resources
+  expectations:
+  - Describes SKILL.md as required component
+  - Lists optional bundled resources (scripts, references, assets)
+  - Explains skill naming convention
+- id: skill-creator-ms-core-principles
+  prompt: What are the core principles for creating effective skills according to
+    this guide?
+  checks:
+  - regex: Concise|Fresh Documentation|Degrees of Freedom|Progressive Disclosure
+  - length_min: 150
+  - has_keyword: context window
+  expectations:
+  - Lists all four core principles
+  - Emphasizes concise is key
+  - Explains progressive disclosure levels
+- id: skill-creator-ms-azure-sdk-section-order
+  prompt: What is the recommended section order for an Azure SDK skill document?
+  checks:
+  - regex: Installation|Environment Variables|Authentication|Core Workflow|Feature
+      Tables|Best Practices
+  - length_min: 80
+  - has_keyword: Authentication
+  expectations:
+  - Lists correct section order for Azure SDK skills
+  - Includes at least Installation, Authentication, Core Workflow
+- id: skill-creator-ms-antipatterns-list
+  prompt: What are the anti-patterns to avoid when creating Azure SDK skills?
+  checks:
+  - regex: anti-pattern|hardcode|outdated|skip
+  - length_min: 100
+  - has_keyword: hardcode
+  expectations:
+  - Lists at least 5 anti-patterns
+  - Warns against hardcoded credentials
+  - Mentions skipping authentication or tests
+- id: skill-creator-ms-symlink-categorization
+  prompt: How do I categorize a new skill using symlinks and what naming convention
+    should I follow?
+  checks:
+  - regex: symlink|categor|skills/.*foundry|data|messaging
+  - length_min: 100
+  - has_keyword: ln -s
+  expectations:
+  - Explains symlink creation pattern
+  - Shows category structure (foundry, data, messaging, etc.)
+  - Describes naming convention
+- id: skill-creator-ms-testing-requirements
+  prompt: What testing components are required for every skill and how do I create
+    them?
+  checks:
+  - regex: acceptance-criteria|scenarios\.yaml|mock
+  - length_min: 120
+  - has_keyword: test scenario
+  expectations:
+  - Mentions acceptance-criteria.md
+  - Explains scenarios.yaml format
+  - Describes expected and forbidden patterns
+- id: skill-creator-ms-skill-creation-process
+  prompt: Describe the step-by-step process for creating an Azure SDK skill from scratch
+  checks:
+  - regex: Gather|Understand|Plan|Create|Categorize|Test|Document|Iterate
+  - length_min: 150
+  - has_keyword: SDK package
+  expectations:
+  - Lists all 8 steps in order
+  - Emphasizes SDK context as required input
+  - Mentions microsoft-docs MCP for verification
+- id: skill-creator-ms-progressive-disclosure
+  prompt: How does progressive disclosure work and what are the three loading levels?
+  checks:
+  - regex: Metadata|SKILL\.md body|References|500 lines
+  - length_min: 80
+  - has_keyword: Progressive Disclosure
+  expectations:
+  - Explains three levels of skill loading
+  - Mentions word count limits for each level
+  - Notes SKILL.md should stay under 500 lines
+- id: skill-creator-ms-documentation-update
+  prompt: After creating a new skill, what documentation updates are required?
+  checks:
+  - regex: README\.md|Skill Catalog|skills\.json|GitHub Pages
+  - length_min: 100
+  - has_keyword: extract-skills
+  expectations:
+  - Mentions README.md skill catalog updates
+  - Explains docs-site extraction script
+  - Lists specific line counts to update
+- id: skill-creator-ms-required-context
+  prompt: What required context must a user provide before I can create an Azure SDK
+    skill?
+  checks:
+  - regex: SDK package name|documentation URL|repository|REQUIRED
+  - length_min: 80
+  - has_keyword: SDK Package
+  expectations:
+  - Lists SDK package as required
+  - Mentions documentation URL or repo
+  - Explains what to prompt if missing
+- id: skill-creator-ms-azure-sdk-verb-patterns
+  prompt: What are the standard verb patterns used across Azure SDKs and their behaviors?
+  checks:
+  - regex: create|upsert|get|list|delete|begin
+  - length_min: 80
+  - has_keyword: long-running
+  expectations:
+  - Lists all six verb patterns
+  - Explains behavior for each verb
+  - Mentions begin for long-running operations
+- id: skill-creator-ms-credential-security
+  prompt: Why should credentials never be hardcoded in Azure SDK skills and what pattern
+    should be used instead?
+  checks:
+  - regex: DefaultAzureCredential|environment variable|security
+  - length_min: 100
+  - has_keyword: hardcode
+  expectations:
+  - Explains security risks of hardcoded credentials
+  - Recommends DefaultAzureCredential pattern
+  - Mentions environment variables for configuration
+- id: skill-creator-ms-symlink-creation
+  prompt: Show me the exact bash command to create a symlink for azure-ai-projects-py
+    in skills/python/foundry/
+  checks:
+  - regex: ln -s|skills/python/foundry|\.github/skills
+  - length_min: 80
+  - has_keyword: ln -s
+  expectations:
+  - Provides correct ln -s command
+  - Shows proper path structure with ../../../ prefix
+  - Explains naming convention (removing azure- prefix and -py suffix)
+- id: skill-creator-ms-reference-files-limit
+  prompt: What is the recommended line limit for SKILL.md and what should you do when
+    approaching it?
+  checks:
+  - regex: 500 lines|split|references
+  - length_min: 80
+  - has_keyword: Progressive Disclosure
+  expectations:
+  - Mentions 500 lines as the limit
+  - Advises splitting into reference files when approaching limit
+  - Links to progressive disclosure pattern
+- id: skill-creator-ms-azure-sdk-verb-behavior
+  prompt: What happens when you use the delete verb versus the create verb in Azure
+    SDKs?
+  checks:
+  - regex: delete.*succeed|create.*fail|upsert|begin
+  - length_min: 80
+  - has_keyword: long-running
+  expectations:
+  - Explains delete succeeds even if resource missing
+  - Explains create fails if resource exists
+  - Mentions upsert as create-or-update alternative
+  - Notes begin starts long-running operations
+- id: skill-creator-ms-mcp-verification
+  prompt: How should you verify Azure SDK API patterns before writing a skill?
+  checks:
+  - regex: microsoft-docs MCP|search|verify|documentation
+  - length_min: 100
+  - has_keyword: SDK package
+  expectations:
+  - Instructs to use microsoft-docs MCP
+  - Recommends searching for current API patterns
+  - Emphasizes verifying parameters against installed SDK version
+- id: skill-creator-ms-fresh-documentation
+  prompt: Why is fresh documentation important for Azure SDK skills and how should
+    skills instruct agents about it?
+  checks:
+  - regex: Azure SDKs change|verify|documentation
+  - length_min: 100
+  - has_keyword: context window
+  expectations:
+  - Explains Azure SDKs change constantly
+  - Emphasizes agents should verify documentation
+  - Warns against outdated patterns
+- id: skill-creator-ms-product-area-categorization
+  prompt: How do I categorize a skill for Azure Event Hubs and what product area should
+    it belong to?
+  checks:
+  - regex: messaging|Event Hubs|EventGrid|ServiceBus
+  - length_min: 80
+  - has_keyword: category
+  expectations:
+  - Identifies messaging as the product area
+  - Lists Event Hubs, Service Bus, Event Grid as examples
+  - Explains category determination from service family
+- id: skill-creator-ms-acceptance-criteria-location
+  prompt: Where should acceptance criteria be stored and what format should they follow?
+  checks:
+  - regex: acceptance-criteria\.md|CORRECT|INCORRECT
+  - length_min: 100
+  - has_keyword: test scenario
+  expectations:
+  - Specifies location in references/acceptance-criteria.md
+  - Uses CORRECT/INCORRECT pattern format
+  - Documents import paths and authentication patterns
+- id: skill-creator-ms-context-window
+  prompt: How does the context window principle apply when creating skills?
+  checks:
+  - regex: context window|shared resource|token cost
+  - length_min: 80
+  - has_keyword: Concise
+  expectations:
+  - Treats context window as shared resource
+  - Challenges each piece for token justification
+  - Emphasizes agents already know common patterns
+- id: skill-creator-ms-degrees-of-freedom
+  prompt: When should you provide high degrees of freedom versus low degrees of freedom
+    in skill instructions?
+  checks:
+  - regex: specificity|task fragility|High|Medium|Low
+  - length_min: 100
+  - has_keyword: Pseudocode
+  expectations:
+  - Matches specificity to task fragility
+  - High freedom for text guidelines
+  - Low freedom for specific scripts
+  - Medium for pseudocode patterns
+- id: skill-creator-ms-sdk-package-requirement
+  prompt: What three pieces of information MUST a user provide before you can create
+    an Azure SDK skill?
+  checks:
+  - regex: SDK package|documentation URL|repository|REQUIRED
+  - length_min: 80
+  - has_keyword: SDK Package
+  expectations:
+  - Lists SDK package name as required
+  - Mentions documentation URL or repo
+  - Explains what to prompt if information missing
+- id: skill-creator-ms-language-paged-patterns
+  prompt: How do paged results work across different Azure SDK languages?
+  checks:
+  - regex: ItemPaged|Pageable|PagedIterable|PagedAsyncIterableIterator
+  - length_min: 100
+  - has_keyword: list
+  expectations:
+  - Python uses ItemPaged and LROPoller
+  - .NET uses Pageable and Operation
+  - Java uses PagedIterable and PagedFlux
+  - TypeScript uses PagedAsyncIterableIterator
 ---
 # skill-creator-ms
 

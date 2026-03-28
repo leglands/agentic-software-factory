@@ -42,6 +42,18 @@ eval_cases:
   tags:
   - security
   - antipatterns
+- id: security-auditor-sast-integration
+- id: security-auditor-dast-scanning
+- id: security-auditor-owasp-top10
+- id: security-auditor-zero-trust
+- id: security-auditor-oauth2-implementation
+- id: security-auditor-container-security
+- id: security-auditor-compliance-gdpr
+- id: security-auditor-threat-modeling
+- id: security-auditor-secrets-management
+- id: security-auditor-api-security
+- id: security-auditor-incident-response
+- id: security-auditor-cloud-hardening
 ---
 # security-auditor
 

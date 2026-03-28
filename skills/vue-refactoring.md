@@ -2,11 +2,12 @@
 name: vue-refactoring
 version: 1.0.0
 description: Refactor Vue.js 3 code from Options API to Composition API, extract composables,
-  optimize reactivity and performance, and integrate TypeScript. Use when modernizing Vue
-  2/3 codebases, improving component architecture, or optimizing Vue application performance.
+  optimize reactivity and performance, and integrate TypeScript. Use when modernizing
+  Vue 2/3 codebases, improving component architecture, or optimizing Vue application
+  performance.
 metadata:
   category: design
-  source: 'community'
+  source: community
   triggers:
   - migrating Vue.js Options API to Composition API
   - extracting reusable logic into Vue composables
@@ -14,7 +15,8 @@ metadata:
   - integrating TypeScript with Vue 3 Composition API
 eval_cases:
 - id: options-to-composition-migration
-  prompt: How do I migrate a Vue 2 Options API component to Vue 3 Composition API with script setup?
+  prompt: How do I migrate a Vue 2 Options API component to Vue 3 Composition API
+    with script setup?
   should_trigger: true
   checks:
   - length_min:200
@@ -31,7 +33,8 @@ eval_cases:
   - composition-api
   - migration
 - id: composable-extraction-pattern
-  prompt: Extract reusable logic from a Vue component into a composable for shared state and behavior
+  prompt: Extract reusable logic from a Vue component into a composable for shared
+    state and behavior
   should_trigger: true
   checks:
   - length_min:150
@@ -47,7 +50,8 @@ eval_cases:
   - composables
   - code-organization
 - id: reactivity-patterns-choice
-  prompt: When should I use ref() vs reactive() and how do I avoid unwanted deep reactivity in Vue 3?
+  prompt: When should I use ref() vs reactive() and how do I avoid unwanted deep reactivity
+    in Vue 3?
   should_trigger: true
   checks:
   - length_min:120
@@ -63,7 +67,8 @@ eval_cases:
   - reactivity
   - performance
 - id: vue-performance-optimization
-  prompt: How do I optimize a Vue component with large lists using v-once, v-memo, and shallowRef?
+  prompt: How do I optimize a Vue component with large lists using v-once, v-memo,
+    and shallowRef?
   should_trigger: true
   checks:
   - length_min:150
@@ -79,20 +84,163 @@ eval_cases:
   - performance
   - v-once
   - v-memo
+- id: pinia-composable-store
+  prompt: Convert a Vue Pinia store from Options API style to Composition API setup
+    function style with proper typing
+  checks:
+  - regex: defineStore.*setup|Composition API
+  - length_min: 150
+  - has_keyword: ref|reactive
+  expectations:
+  - Uses setup function syntax instead of options object
+  - Defines state with ref/reactive
+  - Converts actions to plain functions
+  - Returns reactive state and methods
+  - Demonstrates TypeScript typing
+- id: typescript-defineprops-emits
+  prompt: Add proper TypeScript types to a Vue 3 component using defineProps and defineEmits
+    with runtime validation
+  checks:
+  - regex: defineProps|defineEmits
+  - length_min: 120
+  - has_keyword: interface|type
+  expectations:
+  - Defines props interface with types
+  - Uses defineProps with generic syntax
+  - Typed emits with event payloads
+  - withDefaults for optional props
+  - Proper null handling
+- id: async-component-suspense
+  prompt: Implement async component loading with Vue Suspense and defineAsyncComponent
+    for code splitting
+  checks:
+  - regex: defineAsyncComponent|Suspense
+  - length_min: 130
+  - has_keyword: loadingComponent|errorComponent
+  expectations:
+  - Uses defineAsyncComponent with loader
+  - Implements Suspense with fallback
+  - Handles loading and error states
+  - Configures delay and timeout
+  - Demonstrates proper async setup
+- id: template-v-if-to-computed
+  prompt: Refactor complex v-if chains in a Vue template to use computed properties
+    for better readability
+  checks:
+  - regex: computed|v-if
+  - length_min: 100
+  - has_keyword: v-else-if|v-show
+  expectations:
+  - Identifies complex conditional logic
+  - Extracts to computed property
+  - Replaces v-if chain with single condition
+  - Improves template readability
+  - Maintains reactivity
+- id: component-splitting-large
+  prompt: Split a large Vue component over 400 lines into smaller subcomponents and
+    composables
+  checks:
+  - regex: import.*vue|<script setup
+  - length_min: 140
+  - has_keyword: extract|职责
+  expectations:
+  - Identifies logical sections
+  - Extracts child components
+  - Moves reusable logic to composables
+  - Keeps main component under 200 lines
+  - Maintains component communication
+- id: shallowref-performance
+  prompt: When should I use shallowRef instead of ref in Vue 3 and how to avoid deep
+    reactivity overhead
+  checks:
+  - regex: shallowRef|triggerUpdate
+  - length_min: 110
+  - has_keyword: .value|markRaw|toRaw
+  expectations:
+  - Explains shallowRef behavior
+  - Shows when shallowRef is preferable
+  - Demonstrates manual triggerUpdate pattern
+  - Compares with markRaw and toRaw
+  - Provides performance guidance
+- id: lifecycle-hooks-migration
+  prompt: Map Vue 2 lifecycle hooks (beforeCreate, created, mounted, updated) to Vue
+    3 Composition API equivalents
+  checks:
+  - regex: onMounted|onUpdated|onUnmounted
+  - length_min: 100
+  - has_keyword: setup|beforeCreate
+  expectations:
+  - Maps beforeCreate to setup()
+  - Maps mounted to onMounted()
+  - Maps updated to onUpdated()
+  - Maps unmounted to onUnmounted()
+  - Handles errorCaptured hook
+- id: generic-components-ts
+  prompt: Create a generic Vue 3 component with TypeScript that accepts a typed item
+    list and render function
+  checks:
+  - regex: generic|<script setup lang="ts"
+  - length_min: 100
+  - has_keyword: extends|interface
+  expectations:
+  - Uses generic type parameter
+  - Defines item interface constraint
+  - Generic render item pattern
+  - Props typing with generics
+  - Template type safety
+- id: composable-async-fetch
+  prompt: Create an async composable for data fetching with loading, error, and data
+    states
+  checks:
+  - regex: shallowRef|async.*function
+  - length_min: 130
+  - has_keyword: loading|error|data
+  expectations:
+  - Creates reactive state for data/error/loading
+  - Implements async fetch function
+  - Proper try-catch error handling
+  - Returns tuple with destructuring
+  - Handles cleanup appropriately
+- id: vite-manual-chunks
+  prompt: Configure Vite to split vendor chunks for Vue, Vue Router, and Pinia in
+    production builds
+  checks:
+  - regex: manualChunks|vite\.config
+  - length_min: 90
+  - has_keyword: vendor|build
+  expectations:
+  - Configures manualChunks in rollupOptions
+  - Separates Vue core vendor chunk
+  - Separates router and state management
+  - Optimizes bundle size
+  - Improves caching strategy
+- id: reactive-destructuring-toref
+  prompt: How to properly destructure reactive objects and props while maintaining
+    reactivity in Vue 3
+  checks:
+  - regex: toRefs|toRaw|reactive
+  - length_min: 100
+  - has_keyword: destructure|spread
+  expectations:
+  - Uses toRefs for props destructuring
+  - Maintains reactivity on destructured refs
+  - Explains toRaw for raw access
+  - Avoids destructuring reactive directly
+  - Shows proper usage patterns
 ---
 
 # vue-refactoring
 
 # Vue.js 3 Refactoring
 
-Master migration from Options API to Composition API, composable extraction, reactivity patterns, performance optimization, and TypeScript integration for Vue 3.
+Master migration from Options API to Composition API, composable extraction, reactivity patterns, performance optimization, + TypeScript integration for Vue 3.
 
 ## Use this skill when
 
 - Migrating Vue 2 Options API code to Vue 3 Composition API
 - Extracting reusable logic into composables
-- Optimizing Vue component reactivity and render performance
-- Integrating TypeScript with Vue 3 defineProps and defineEmits
+- Optimizing Vue component reactivity + render performance
+- Integrating TypeScript with Vue 3 defineProps + defineEmits
 - Refactoring large Vue components into smaller pieces
 - Implementing Pinia stores with composable patterns
 
@@ -104,13 +252,13 @@ Master migration from Options API to Composition API, composable extraction, rea
 
 ## Instructions
 
-1. Assess component complexity and identify migration/refactoring goals.
+1. Assess component complexity + identify migration/refactoring goals.
 2. Convert Options API to Composition API using script setup where possible.
 3. Extract reusable logic into composables.
 4. Apply reactivity best practices (ref vs reactive, shallowRef).
-5. Optimize template with v-once, v-memo, and computed properties.
-6. Add TypeScript types with defineProps and defineEmits.
-7. Validate with type checking and tests.
+5. Optimize template with v-once, v-memo, + computed properties.
+6. Add TypeScript types with defineProps + defineEmits.
+7. Validate with type checking + tests.
 
 ---
 
@@ -248,7 +396,7 @@ const emit = defineEmits<{
 
 ## 2. Composables: Extract Reusable Logic
 
-Composables extract and share reusable logic between components.
+Composables extract + share reusable logic between components.
 
 ### Composable Structure
 
@@ -441,7 +589,7 @@ console.log(title.value)
 
 ### v-once for Static Content
 
-Render once and never update.
+Render once + never update.
 
 ```vue
 <template>
@@ -660,7 +808,7 @@ export const useAuthStore = defineStore('auth', () => {
 
 ### Avoiding Store Bloat
 
-**Problem:** Store with too many state properties and actions.
+**Problem:** Store with too many state properties + actions.
 
 **Solution: Split into Domain Stores**
 

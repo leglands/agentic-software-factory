@@ -184,3 +184,10 @@ Use query params for filtering/sorting. Avoid filter DSLs in URLs.
 - [ ] Versioning strategy documented
 - [ ] Auth required on all non-public endpoints
 - [ ] `created_at`/`updated_at` on all resources
+
+---
+
+## Live Documentation
+
+When working on tasks covered by this skill, use fetch_url to get current docs:
+- Always verify SDK versions against live docs

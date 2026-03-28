@@ -49,6 +49,129 @@ eval_cases:
       - "eval_feedback flags this assertion as trivially satisfied"
       - "suggests a more specific replacement assertion"
     tags: ["meta-grader", "assertion-critique"]
+  - id: grade-exceeding-expectations
+    prompt: "Grade: expectation='migration file has CREATE TABLE statement'. Output='Created users table with columns: id (UUID PK), email (VARCHAR UNIQUE NOT NULL), created_at (TIMESTAMP). Added index on email. File: /migrations/001_create_users.sql'"
+    checks:
+      - "regex:PASS|pass"
+      - "regex:CREATE TABLE|CREATE TABLE|evidence|quoted|actual|columns"
+      - "no_placeholder"
+    expectations:
+      - "verdict is PASS"
+      - "notes that output exceeds the basic expectation (provides columns and index)"
+      - "evidence cites specific content from output (table name, column names, index)"
+    tags: ["exceeds", "bonus"]
+  - id: grade-false-positive
+    prompt: "Grade: expectation='output does NOT contain TODO or pass'. Output='The migration script looks good. TODO: handle edge cases later.'"
+    checks:
+      - "regex:FAIL|fail"
+      - "regex:TODO|pass|FAIL|weak|assertion|trivially"
+      - "no_placeholder"
+    expectations:
+      - "verdict is FAIL because output contains TODO"
+      - "reason explains the assertion was violated"
+      - "eval_feedback flags this as a concrete failure, not a close call"
+    tags: ["false-positive", "anti-slop"]
+  - id: grade-missing-coverage
+    prompt: "Grade: expectation='migration has a down.sql file'. Output='Created migration file: /migrations/001_create_users.sql with CREATE TABLE users...' — no mention of down.sql"
+    checks:
+      - "regex:down\\.sql|missing|coverage|no.*down|FAIL|fail"
+      - "no_placeholder"
+    expectations:
+      - "verdict is FAIL because down.sql is not mentioned or created"
+      - "reason clearly states the missing coverage"
+      - "eval_feedback suggests adding an assertion for down.sql"
+    tags: ["missing", "coverage"]
+  - id: grade-hallucinated-evidence
+    prompt: "Grade: expectation='output identifies the slow query'. Output='The slow query is in /api/users at line 87 — it does a full table scan. Fixed by adding an index.' Evidence cited: 'line 87' does not appear in the actual output. Output only says 'query is slow at /api/users'."
+    checks:
+      - "regex:hallucin|fabricat|cite|cited|evidence|FAIL|fail|line 87"
+      - "no_placeholder"
+    expectations:
+      - "verdict is FAIL or flags hallucination"
+      - "reason identifies that the grader cited 'line 87' which is not in the output"
+      - "eval_feedback flags hallucination as a serious quality issue in the grading itself"
+    tags: ["hallucination", "quality"]
+  - id: grade-empty-output
+    prompt: "Grade: expectation='output contains a summary'. Output=''"
+    checks:
+      - "regex:FAIL|fail|empty|no.content|missing.summary"
+      - "no_placeholder"
+    expectations:
+      - "verdict is FAIL"
+      - "reason clearly states the output is empty and summary assertion cannot be satisfied"
+      - "eval_feedback notes this is a stub/null output case"
+    tags: ["stub", "empty"]
+  - id: grade-partial-delivery
+    prompt: "Grade: expectation='output contains 3 test cases'. Output='Test case 1: input validation — PASS. Test case 2: auth flow — PASS. Test case 3: <missing>'"
+    checks:
+      - "regex:FAIL|fail|partial|3.*case|case 3|missing|incomplete"
+      - "no_placeholder"
+    expectations:
+      - "verdict is FAIL because test case 3 is missing"
+      - "reason clearly identifies the incomplete delivery (only 2 of 3 cases)"
+      - "eval_feedback flags partial delivery as failing the quantity assertion"
+    tags: ["partial", "quantity"]
+  - id: grade-unverifiable-assertion
+    prompt: "Grade assertion 'output is helpful' against output='Here is the migration script you requested.'"
+    checks:
+      - "regex:unverif|helpful|cannot.verify|subjective|no.evidence|suggest"
+      - "no_placeholder"
+    expectations:
+      - "verdict is PASS (technically nothing is contradicted)"
+      - "eval_feedback flags the assertion 'output is helpful' as unverifiable"
+      - "suggests replacing with a concrete assertion (e.g., 'migration file contains UP keyword')"
+    tags: ["assertion-quality", "meta"]
+  - id: grade-stub-output
+    prompt: "Grade: expectation='skill body contains 3 rules'. Output='# My Skill\n\nRules:\n1. TODO\n2. TODO\n3. TODO'"
+    checks:
+      - "regex:FAIL|fail|stub|TODO|placeholder|not.implemented|incomplete"
+      - "no_placeholder"
+    expectations:
+      - "verdict is FAIL because TODO placeholders are not real rules"
+      - "reason clearly states that TODO placeholders fail the rule count assertion"
+      - "eval_feedback flags this as a stub output (same class as adversarial mock detection)"
+    tags: ["stub", "mock-detection"]
+  - id: grade-multiple-expectations-some-fail
+    prompt: "Grade: expectation=['has name field', 'has version field', 'has eval_cases']. Output='name: my-skill\nversion: \"1.0.0\"' (no eval_cases field)"
+    checks:
+      - "regex:FAIL|fail|partial|eval_cases|missing"
+      - "no_placeholder"
+    expectations:
+      - "verdict is FAIL (eval_cases is missing)"
+      - "grades each expectation separately: name=PASS, version=PASS, eval_cases=FAIL"
+      - "summary shows 2 passed, 1 failed"
+      - "eval_feedback flags the missing eval_cases field specifically"
+    tags: ["multiple", "partial-fail"]
+  - id: grade-correct-content-wrong-format
+    prompt: "Grade: expectation='frontmatter is valid YAML'. Output='name: my-skill version: \"1.0.0\"' (no line breaks between fields)"
+    checks:
+      - "regex:FAIL|fail|yaml|parse|format|valid|structure"
+      - "no_placeholder"
+    expectations:
+      - "verdict is FAIL because the YAML is not valid (missing newlines)"
+      - "reason explains the YAML parsing would fail"
+      - "eval_feedback flags the format issue as a structural problem"
+    tags: ["format", "yaml"]
+  - id: grade-version-bump-missing
+    prompt: "Grade: expectation='version is bumped after rule change'. Output='name: tdd\nversion: \"1.0.0\"\n# TDD Skill...' (skill body has new rules but version unchanged)"
+    checks:
+      - "regex:FAIL|fail|version|bump|unchanged|same|1\\.0\\.0|patch|minor"
+      - "no_placeholder"
+    expectations:
+      - "verdict is FAIL because version was not bumped after rule change"
+      - "reason explains that adding rules requires a minor version bump per semver"
+      - "eval_feedback flags this as a versioning discipline failure"
+    tags: ["versioning", "discipline"]
+  - id: grade-no-evidence-cited
+    prompt: "Grade: expectation='evidence is cited from the output'. Output='The migration is correct.'"
+    checks:
+      - "regex:FAIL|fail|no.evidence|cite|quoted|extract|from.output"
+      - "no_placeholder"
+    expectations:
+      - "verdict is FAIL because no evidence is cited"
+      - "reason states that claims must be supported by quoted evidence from output"
+      - "eval_feedback suggests citing exact quotes to support assertions"
+    tags: ["evidence", "citation"]
 ---
 
 # Skill Grader

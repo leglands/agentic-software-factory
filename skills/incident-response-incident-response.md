@@ -44,6 +44,121 @@ eval_cases:
   tags:
   - incident
   - antipatterns
+- id: incident-response-severity-classification
+  prompt: A P1 incident is affecting our user authentication service with 40% failure
+    rate. How should we classify and respond?
+  checks:
+  - length_min: 120
+  - has_keyword: P1|SEV-2|severity|classification
+  expectations:
+  - Identifies severity level correctly
+  - Outlines immediate response actions
+  - Mentions affected services and impact
+- id: incident-response-observability-sweep
+  prompt: Our API is responding with 500 errors. How do we perform a rapid observability
+    analysis?
+  checks:
+  - length_min: 100
+  - has_keyword: tracing|metrics|logs|ELK|Prometheus
+  expectations:
+  - References distributed tracing tools
+  - Mentions log aggregation analysis
+  - Includes metrics correlation approach
+- id: incident-response-initial-mitigation
+  prompt: A deployment caused immediate production issues. What immediate mitigation
+    steps should we take?
+  checks:
+  - length_min: 100
+  - has_keyword: rollback|feature flag|circuit breaker|traffic
+  expectations:
+  - Mentions rollback strategy
+  - Includes traffic rerouting options
+  - References feature flag disabling
+- id: incident-response-root-cause-debugging
+  prompt: We're seeing intermittent database timeouts. How do we conduct deep debugging
+    to find root cause?
+  checks:
+  - length_min: 120
+  - has_keyword: stack trace|query|lock|Five Whys|dependency
+  expectations:
+  - References stack trace analysis
+  - Mentions database query investigation
+  - Includes Five Whys methodology
+- id: incident-response-security-assessment
+  prompt: We detected unusual API traffic patterns. How do we assess security implications?
+  checks:
+  - length_min: 100
+  - has_keyword: DDoS|authentication|authorization|WAF|audit
+  expectations:
+  - Mentions DDoS indicators
+  - References authentication/authorization checks
+  - Includes audit trail review
+- id: incident-response-performance-bottleneck
+  prompt: Our service is experiencing high latency after a recent scale event. How
+    do we analyze performance?
+  checks:
+  - length_min: 100
+  - has_keyword: CPU|memory|cache|load balancer|autoscaling
+  expectations:
+  - References resource utilization analysis
+  - Mentions caching effectiveness
+  - Includes load balancer health checks
+- id: incident-response-fix-implementation
+  prompt: We identified the root cause as a memory leak in our worker process. How
+    do we implement a fix?
+  checks:
+  - length_min: 120
+  - has_keyword: rollback|canary|validation|health check
+  expectations:
+  - Mentions minimal viable fix approach
+  - References rollback capability
+  - Includes staged rollout plan
+- id: incident-response-deployment-validation
+  prompt: We need to deploy an emergency fix for a production outage. What is the
+    deployment process?
+  checks:
+  - length_min: 100
+  - has_keyword: blue-green|canary|monitoring|rollback|health
+  expectations:
+  - References deployment strategies
+  - Mentions progressive rollout
+  - Includes rollback triggers
+- id: incident-response-stakeholder-communication
+  prompt: We're in the middle of a P0 outage. How should we communicate with stakeholders?
+  checks:
+  - length_min: 100
+  - has_keyword: status page|executive|timeline|update
+  expectations:
+  - Mentions status page updates
+  - References executive summaries
+  - Includes timeline documentation
+- id: incident-response-customer-impact
+  prompt: How do we assess and document customer impact from a 2-hour service disruption?
+  checks:
+  - length_min: 100
+  - has_keyword: SLA|transaction|user segment|outreach
+  expectations:
+  - Mentions SLA violation analysis
+  - References affected user segments
+  - Includes customer outreach recommendations
+- id: incident-response-postmortem
+  prompt: The incident is resolved. How do we conduct a blameless postmortem?
+  checks:
+  - length_min: 120
+  - has_keyword: timeline|root cause|action items|lessons
+  expectations:
+  - Mentions timeline documentation
+  - References root cause analysis
+  - Includes action items with owners
+- id: incident-response-monitoring-enhancement
+  prompt: After resolving an incident, how do we enhance monitoring to prevent recurrence?
+  checks:
+  - length_min: 100
+  - has_keyword: alert|SLO|dashboard|runbook|chaos
+  expectations:
+  - Mentions new alert creation
+  - References SLO/SLI adjustments
+  - Includes runbook automation
 ---
 # incident-response-incident-response
 

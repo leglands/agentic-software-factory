@@ -44,33 +44,33 @@ eval_cases:
 ---
 # fp-data-transforms
 
-# Practical Data Transformations
+# Practical Data Transforms
 
-This skill covers the data transformations you do every day: working with arrays, reshaping objects, normalizing API responses, grouping data, and safely accessing nested values. Each section shows the imperative approach first, then the functional equivalent, with honest assessments of when each approach shines.
-
----
-
-## Table of Contents
-
-1. [Array Operations](#1-array-operations)
-2. [Object Transformations](#2-object-transformations)
-3. [Data Normalization](#3-data-normalization)
-4. [Grouping and Aggregation](#4-grouping-and-aggregation)
-5. [Null-Safe Access](#5-null-safe-access)
-6. [Real-World Examples](#6-real-world-examples)
-7. [When to Use What](#7-when-to-use-what)
+Daily data transforms: arrays, object reshaping, API normalization, grouping, null-safe access. Each section shows imperative first, then functional, w/ honest assessment when each shines.
 
 ---
 
-## 1. Array Operations
+## TOC
 
-Array operations are the bread and butter of data transformation. Let's replace verbose loops with expressive, chainable operations.
+1. [Array Ops](#1)
+2. [Object Transforms](#2)
+3. [Data Normalization](#3)
+4. [Grouping + Aggregation](#4)
+5. [Null-Safe Access](#5)
+6. [Real-World Examples](#6)
+7. [When to Use What](#7)
+
+---
+
+## 1. Array Ops <a name="1"></a>
+
+Array ops = bread + butter of data transform. Replace verbose loops w/ expressive, chainable ops.
 
 ### Map: Transform Every Element
 
-**The Task**: Convert an array of prices from cents to dollars.
+**Task**: Convert prices from cents to dollars.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 const pricesInCents = [999, 1499, 2999, 4999];
@@ -87,7 +87,7 @@ const dollars = convertToDollars(pricesInCents);
 // [9.99, 14.99, 29.99, 49.99]
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
 const pricesInCents = [999, 1499, 2999, 4999];
@@ -98,13 +98,13 @@ const dollars = pricesInCents.map(toDollars);
 // [9.99, 14.99, 29.99, 49.99]
 ```
 
-**Why functional is better here**: The intent is immediately clear. `map` says "transform each element." The transformation logic (`toDollars`) is named and reusable. No index management, no manual array building.
+**Why functional better**: Intent clear immediately. `map` = "transform each element." Transformation logic named + reusable. No index management, no manual array building.
 
 ### Filter: Keep What Matches
 
-**The Task**: Get all active users from a list.
+**Task**: Get all active users.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 interface User {
@@ -124,7 +124,7 @@ function getActiveUsers(users: User[]): User[] {
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
 const isActive = (user: User): boolean => user.isActive;
@@ -135,13 +135,13 @@ const activeUsers = users.filter(isActive);
 const activeUsers = users.filter(user => user.isActive);
 ```
 
-**Why functional is better here**: The predicate (`isActive`) is separated from the iteration logic. You can reuse, test, and compose predicates independently.
+**Why functional better**: Predicate (`isActive`) separated from iteration logic. Can reuse, test, compose predicates independently.
 
 ### Reduce: Accumulate Into Something New
 
-**The Task**: Calculate the total price of items in a cart.
+**Task**: Calculate total price of cart items.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 interface CartItem {
@@ -159,7 +159,7 @@ function calculateTotal(items: CartItem[]): number {
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
 const calculateTotal = (items: CartItem[]): number =>
@@ -168,20 +168,19 @@ const calculateTotal = (items: CartItem[]): number =>
     0
   );
 
-// Or break out the line total calculation
 const lineTotal = (item: CartItem): number => item.price * item.quantity;
 
 const calculateTotal = (items: CartItem[]): number =>
   items.map(lineTotal).reduce((a, b) => a + b, 0);
 ```
 
-**Honest assessment**: For simple sums, the imperative loop is actually quite readable. The functional version shines when you need to compose the accumulation with other transformations, or when the reduction logic is complex enough to benefit from being named.
+**Honest assessment**: For simple sums, imperative loop quite readable. Functional shines when composing w/ other transforms, or reduction logic complex enough to benefit from naming.
 
-### Chaining: Combine Operations
+### Chaining: Combine Ops
 
-**The Task**: Get the names of all active premium users, sorted alphabetically.
+**Task**: Get names of active premium users, sorted alphabetically.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 interface User {
@@ -203,7 +202,7 @@ function getActivePremiumNames(users: User[]): string[] {
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
 const getActivePremiumNames = (users: User[]): string[] =>
@@ -213,7 +212,7 @@ const getActivePremiumNames = (users: User[]): string[] =>
     .map(user => user.name)
     .sort((a, b) => a.localeCompare(b));
 
-// Or with named predicates for reuse
+// Or w/ named predicates for reuse
 const isActive = (user: User): boolean => user.isActive;
 const isPremium = (user: User): boolean => user.tier === 'premium';
 const getName = (user: User): string => user.name;
@@ -227,11 +226,9 @@ const getActivePremiumNames = (users: User[]): string[] =>
     .sort(alphabetically);
 ```
 
-**Why functional is better here**: Each step in the chain has a single responsibility. You can read the transformation as a series of steps: "filter active, filter premium, get names, sort." Adding or removing a step is trivial.
+**Why functional better**: Each step in chain has single responsibility. Read as series: "filter active, filter premium, get names, sort." Adding/removing step trivial.
 
 ### Using fp-ts Array Module
-
-fp-ts provides additional array utilities with better composition support:
 
 ```typescript
 import * as A from 'fp-ts/Array';
@@ -255,7 +252,7 @@ const third = pipe(
   A.lookup(2)
 ); // Some('c')
 
-// Find with predicate
+// Find w/ predicate
 const found = pipe(
   users,
   A.findFirst(user => user.id === 'abc123')
@@ -282,15 +279,15 @@ const uniqueTags = pipe(
 
 ---
 
-## 2. Object Transformations
+## 2. Object Transforms <a name="2"></a>
 
-Objects need reshaping constantly: picking fields, omitting sensitive data, merging settings, and updating nested values.
+Objects need reshaping constantly: picking fields, omitting sensitive data, merging settings, updating nested values.
 
 ### Pick: Select Specific Fields
 
-**The Task**: Extract only the public fields from a user object.
+**Task**: Extract public fields from user object.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 interface User {
@@ -310,10 +307,9 @@ function getPublicUser(user: User): { id: string; name: string; email: string } 
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
-// Generic pick utility
 const pick = <T extends object, K extends keyof T>(
   keys: K[]
 ) => (obj: T): Pick<T, K> =>
@@ -330,13 +326,13 @@ const getPublicUser = pick<User, 'id' | 'name' | 'email'>(['id', 'name', 'email'
 const publicUser = getPublicUser(user);
 ```
 
-**Why functional is better here**: The `pick` utility is reusable across your codebase. Type safety ensures you can only pick keys that exist.
+**Why functional better**: `pick` utility reusable across codebase. Type safety ensures only existing keys pickable.
 
 ### Omit: Remove Specific Fields
 
-**The Task**: Remove sensitive fields before logging.
+**Task**: Remove sensitive fields before logging.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 function sanitizeForLogging(user: User): Omit<User, 'passwordHash' | 'internalNotes'> {
@@ -345,10 +341,9 @@ function sanitizeForLogging(user: User): Omit<User, 'passwordHash' | 'internalNo
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
-// Generic omit utility
 const omit = <T extends object, K extends keyof T>(
   keys: K[]
 ) => (obj: T): Omit<T, K> => {
@@ -365,13 +360,13 @@ const sanitizeForLogging = omit<User, 'passwordHash' | 'internalNotes'>([
 ]);
 ```
 
-**Honest assessment**: For one-off omits, destructuring (the imperative approach) is perfectly fine and very readable. The functional `omit` utility pays off when you have many such transformations or need to compose them.
+**Honest assessment**: For one-off omits, destructuring perfectly fine + very readable. Functional `omit` pays off when many such transforms or need composition.
 
 ### Merge: Combine Objects
 
-**The Task**: Merge user settings with defaults.
+**Task**: Merge user settings w/ defaults.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 interface Settings {
@@ -396,7 +391,7 @@ function mergeSettings(
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
 const mergeSettings = (
@@ -407,7 +402,6 @@ const mergeSettings = (
   ...userSettings,
 });
 
-// Usage
 const defaults: Settings = {
   theme: 'light',
   fontSize: 14,
@@ -424,13 +418,13 @@ const finalSettings = mergeSettings(defaults, userPrefs);
 // { theme: 'dark', fontSize: 16, notifications: true, language: 'en' }
 ```
 
-**Why functional is better here**: Spread syntax is concise and handles any number of keys. Later spreads override earlier ones, giving you natural "defaults with overrides" behavior.
+**Why functional better**: Spread syntax concise + handles any number of keys. Later spreads override earlier → natural "defaults w/ overrides."
 
 ### Deep Merge: Nested Object Combination
 
-**The Task**: Merge nested configuration objects.
+**Task**: Merge nested config objects.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 interface Config {
@@ -462,10 +456,9 @@ function deepMerge(
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
-// Generic deep merge for one level of nesting
 const deepMerge = <T extends Record<string, object>>(
   target: T,
   source: { [K in keyof T]?: Partial<T[K]> }
@@ -481,7 +474,6 @@ const deepMerge = <T extends Record<string, object>>(
   return result;
 };
 
-// Usage
 const defaultConfig: Config = {
   api: { baseUrl: 'https://api.example.com', timeout: 5000, retries: 3 },
   ui: { theme: 'light', animations: true },
@@ -497,9 +489,9 @@ const customConfig = deepMerge(defaultConfig, {
 
 ### Immutable Updates: Change Nested Values
 
-**The Task**: Update a deeply nested value without mutation.
+**Task**: Update deeply nested value w/o mutation.
 
-#### Imperative (Mutating) Approach
+#### Imperative (Mutating)
 
 ```typescript
 interface State {
@@ -517,10 +509,9 @@ function updateTheme(state: State, newTheme: string): void {
 }
 ```
 
-#### Functional (Immutable) Approach
+#### Functional (Immutable)
 
 ```typescript
-// Manual spread nesting
 const updateTheme = (state: State, newTheme: string): State => ({
   ...state,
   user: {
@@ -535,7 +526,6 @@ const updateTheme = (state: State, newTheme: string): State => ({
   },
 });
 
-// With a lens-like helper
 const updatePath = <T, V>(
   obj: T,
   path: string[],
@@ -553,17 +543,17 @@ const updatePath = <T, V>(
 const newState = updatePath(state, ['user', 'profile', 'settings', 'theme'], 'dark');
 ```
 
-**Honest assessment**: The spread nesting is verbose but explicit. For deeply nested updates, consider using a library like `immer` or fp-ts lenses. The verbosity of the functional approach is the price of immutability.
+**Honest assessment**: Spread nesting verbose but explicit. For deeply nested updates, consider `immer` or fp-ts lenses. Verbosity = price of immutability.
 
 ---
 
-## 3. Data Normalization
+## 3. Data Normalization <a name="3"></a>
 
-API responses rarely match the shape your app needs. Normalization transforms nested, denormalized data into flat, indexed structures.
+API responses rarely match app shape. Normalization transforms nested, denormalized data → flat, indexed structures.
 
-### API Response to App State
+### API Response → App State
 
-**The Task**: Transform a nested API response into a normalized state.
+**Task**: Transform nested API response → normalized state.
 
 #### API Response (What You Get)
 
@@ -625,7 +615,7 @@ interface Product {
 }
 ```
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 function normalizeApiResponse(response: ApiResponse): NormalizedState {
@@ -646,7 +636,7 @@ function normalizeApiResponse(response: ApiResponse): NormalizedState {
       state.customers.allIds.push(order.customerId);
     }
 
-    // Extract products and build item IDs
+    // Extract products + build item IDs
     const itemIds: string[] = [];
     for (const item of order.items) {
       if (!state.products.byId[item.productId]) {
@@ -675,14 +665,13 @@ function normalizeApiResponse(response: ApiResponse): NormalizedState {
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
 import { pipe } from 'fp-ts/function';
 import * as A from 'fp-ts/Array';
 import * as R from 'fp-ts/Record';
 
-// Helper to create normalized collection
 interface NormalizedCollection<T extends { id: string }> {
   byId: Record<string, T>;
   allIds: string[];
@@ -701,7 +690,6 @@ const createNormalizedCollection = <T extends { id: string }>(
   allIds: items.map(item => item.id),
 });
 
-// Extract entities
 const extractCustomers = (orders: ApiResponse['orders']): Customer[] =>
   pipe(
     orders,
@@ -734,7 +722,6 @@ const extractOrders = (orders: ApiResponse['orders']): Order[] =>
     status: order.status,
   }));
 
-// Compose into final normalization
 const normalizeApiResponse = (response: ApiResponse): NormalizedState => ({
   orders: createNormalizedCollection(extractOrders(response.orders)),
   customers: createNormalizedCollection(extractCustomers(response.orders)),
@@ -742,11 +729,11 @@ const normalizeApiResponse = (response: ApiResponse): NormalizedState => ({
 });
 ```
 
-**Why functional is better here**: Each extraction is independent and testable. The `createNormalizedCollection` helper is reusable. Adding a new entity type means adding one new extraction function.
+**Why functional better**: Each extraction independent + testable. `createNormalizedCollection` reusable. Adding new entity type = adding one extraction fn.
 
-### Transform API Response to UI-Ready Data
+### Transform API Response → UI-Ready Data
 
-**The Task**: Convert API data to what your components need.
+**Task**: Convert API data to what components need.
 
 ```typescript
 // API gives you this
@@ -755,7 +742,7 @@ interface ApiUser {
   first_name: string;
   last_name: string;
   email_address: string;
-  created_at: string; // ISO string
+  created_at: string;
   avatar_url: string | null;
 }
 
@@ -764,12 +751,12 @@ interface DisplayUser {
   id: string;
   fullName: string;
   email: string;
-  memberSince: string; // "Jan 2024"
-  avatarUrl: string; // With fallback
+  memberSince: string;
+  avatarUrl: string;
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
 const formatDate = (isoString: string): string => {
@@ -787,22 +774,21 @@ const toDisplayUser = (apiUser: ApiUser): DisplayUser => ({
   avatarUrl: apiUser.avatar_url ?? DEFAULT_AVATAR,
 });
 
-// Transform array of users
 const toDisplayUsers = (apiUsers: ApiUser[]): DisplayUser[] =>
   apiUsers.map(toDisplayUser);
 ```
 
 ---
 
-## 4. Grouping and Aggregation
+## 4. Grouping + Aggregation <a name="4"></a>
 
-Grouping and aggregating data is essential for reports, dashboards, and analytics.
+Grouping + aggregating essential for reports, dashboards, analytics.
 
 ### GroupBy: Organize by Key
 
-**The Task**: Group orders by customer.
+**Task**: Group orders by customer.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 interface Order {
@@ -826,10 +812,9 @@ function groupByCustomer(orders: Order[]): Record<string, Order[]> {
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
-// Generic groupBy utility
 const groupBy = <T, K extends string | number>(
   getKey: (item: T) => K
 ) => (items: T[]): Record<K, T[]> =>
@@ -844,11 +829,9 @@ const groupBy = <T, K extends string | number>(
     {} as Record<K, T[]>
   );
 
-// Usage
 const groupByCustomer = groupBy<Order, string>(order => order.customerId);
 const ordersByCustomer = groupByCustomer(orders);
 
-// Or inline
 const ordersByStatus = groupBy((order: Order) => order.status)(orders);
 ```
 
@@ -858,18 +841,17 @@ const ordersByStatus = groupBy((order: Order) => order.status)(orders);
 import * as NEA from 'fp-ts/NonEmptyArray';
 import { pipe } from 'fp-ts/function';
 
-// NEA.groupBy guarantees non-empty arrays in result
 const ordersByCustomer = pipe(
-  orders as NEA.NonEmptyArray<Order>, // Must be non-empty
+  orders as NEA.NonEmptyArray<Order>,
   NEA.groupBy(order => order.customerId)
 ); // Record<string, NonEmptyArray<Order>>
 ```
 
 ### CountBy: Count Occurrences
 
-**The Task**: Count orders by status.
+**Task**: Count orders by status.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 function countByStatus(orders: Order[]): Record<string, number> {
@@ -883,10 +865,9 @@ function countByStatus(orders: Order[]): Record<string, number> {
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
-// Generic countBy utility
 const countBy = <T, K extends string>(
   getKey: (item: T) => K
 ) => (items: T[]): Record<K, number> =>
@@ -901,16 +882,15 @@ const countBy = <T, K extends string>(
     {} as Record<K, number>
   );
 
-// Usage
 const orderCountByStatus = countBy((order: Order) => order.status)(orders);
 // { pending: 5, shipped: 12, delivered: 8 }
 ```
 
 ### SumBy: Aggregate Numeric Values
 
-**The Task**: Calculate total revenue per product category.
+**Task**: Calculate total revenue per product category.
 
-#### Imperative Approach
+#### Imperative
 
 ```typescript
 interface Sale {
@@ -930,10 +910,9 @@ function sumByCategory(sales: Sale[]): Record<string, number> {
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
-// Generic sumBy utility
 const sumBy = <T, K extends string>(
   getKey: (item: T) => K,
   getValue: (item: T) => number
@@ -949,7 +928,6 @@ const sumBy = <T, K extends string>(
     {} as Record<K, number>
   );
 
-// Usage
 const revenueByCategory = sumBy(
   (sale: Sale) => sale.category,
   (sale: Sale) => sale.amount
@@ -959,7 +937,7 @@ const revenueByCategory = sumBy(
 
 ### Complex Aggregation Example
 
-**The Task**: Calculate totals from line items with quantity and unit price.
+**Task**: Calculate totals from line items w/ quantity + unit price.
 
 ```typescript
 interface LineItem {
@@ -976,7 +954,7 @@ interface Invoice {
 }
 ```
 
-#### Functional Approach
+#### Functional
 
 ```typescript
 const lineTotal = (item: LineItem): number =>
@@ -1003,7 +981,6 @@ const calculateInvoiceTotal = (invoice: Invoice): {
   };
 };
 
-// With fp-ts pipe for clarity
 import { pipe } from 'fp-ts/function';
 
 const calculateInvoiceTotal = (invoice: Invoice) => {
@@ -1023,9 +1000,9 @@ const calculateInvoiceTotal = (invoice: Invoice) => {
 
 ---
 
-## 5. Null-Safe Access
+## 5. Null-Safe Access <a name="5"></a>
 
-Stop writing `if (x && x.y && x.y.z)`. Safely navigate nested structures without runtime errors.
+Stop writing `if (x && x.y && x.y.z)`. Safely navigate nested structures w/o runtime errors.
 
 ### The Problem
 
@@ -1048,7 +1025,7 @@ interface Config {
 }
 ```
 
-#### Imperative (Verbose) Approach
+#### Imperative (Verbose)
 
 ```typescript
 function getDatabaseHost(config: Config): string {
@@ -1063,34 +1040,32 @@ function getDatabaseHost(config: Config): string {
 }
 ```
 
-#### Optional Chaining (Modern TypeScript)
+#### Optional Chaining (Modern TS)
 
 ```typescript
 const getDatabaseHost = (config: Config): string =>
   config.database?.connection?.host ?? 'localhost';
 ```
 
-**Honest assessment**: For simple access patterns, optional chaining (`?.`) is perfect. It's built into the language and very readable. Use fp-ts Option when you need to compose operations on potentially missing values.
+**Honest assessment**: For simple access patterns, optional chaining (`?.`) perfect. Built into language + very readable. Use fp-ts Option when chaining multiple ops on potentially missing values.
 
 ### When to Use Option Instead
 
 Use fp-ts Option when:
-- You need to chain multiple operations on potentially missing values
-- You want to distinguish "missing" from other falsy values
-- You're building a pipeline of transformations
+- Chaining multiple ops on potentially missing values
+- Distinguishing "missing" from other falsy values
+- Building pipeline of transforms
 
 ```typescript
 import * as O from 'fp-ts/Option';
 import { pipe } from 'fp-ts/function';
 
-// Safe property access that returns Option
 const prop = <T, K extends keyof T>(key: K) =>
   (obj: T | null | undefined): O.Option<T[K]> =>
     obj != null && key in obj
       ? O.some(obj[key] as T[K])
       : O.none;
 
-// Chain accesses with flatMap
 const getDatabaseHost = (config: Config): O.Option<string> =>
   pipe(
     O.some(config),
@@ -1099,7 +1074,6 @@ const getDatabaseHost = (config: Config): O.Option<string> =>
     O.flatMap(prop('host'))
   );
 
-// Extract with default
 const host = pipe(
   getDatabaseHost(config),
   O.getOrElse(() => 'localhost')
@@ -1113,11 +1087,11 @@ import * as A from 'fp-ts/Array';
 import * as O from 'fp-ts/Option';
 import { pipe } from 'fp-ts/function';
 
-// Imperative: throws if array is empty
-const first = items[0]; // Could be undefined!
+// Imperative: throws if empty
+const first = items[0];
 
 // Safe: returns Option
-const first = A.head(items); // Option<Item>
+const first = A.head(items);
 
 // Get first item's name, or default
 const firstName = pipe(
@@ -1136,7 +1110,7 @@ const third = pipe(
 );
 ```
 
-### Safe Record/Dictionary Access
+### Safe Record/Dict Access
 
 ```typescript
 import * as R from 'fp-ts/Record';
@@ -1149,10 +1123,10 @@ const users: Record<string, User> = {
 };
 
 // Imperative: could be undefined
-const user = users['user-3']; // User | undefined
+const user = users['user-3'];
 
 // Safe: returns Option
-const user = R.lookup('user-3')(users); // Option<User>
+const user = R.lookup('user-3')(users);
 
 // Get user email or default
 const email = pipe(
@@ -1165,7 +1139,7 @@ const email = pipe(
 
 ### Combining Multiple Optional Values
 
-**The Task**: Get a user's display name, which requires both first and last name.
+**Task**: Get user's display name requiring first + last name.
 
 ```typescript
 interface Profile {
@@ -1185,29 +1159,26 @@ function getDisplayName(profile: Profile): string {
   return 'Anonymous';
 }
 
-// Functional with Option
+// Functional w/ Option
 import * as O from 'fp-ts/Option';
 import { pipe } from 'fp-ts/function';
 
 const getDisplayName = (profile: Profile): string =>
   pipe(
-    // Try full name first
     O.Do,
     O.bind('first', () => O.fromNullable(profile.firstName)),
     O.bind('last', () => O.fromNullable(profile.lastName)),
     O.map(({ first, last }) => `${first} ${last}`),
-    // Fall back to nickname
     O.alt(() => O.fromNullable(profile.nickname)),
-    // Finally, default to Anonymous
     O.getOrElse(() => 'Anonymous')
   );
 ```
 
 ---
 
-## 6. Real-World Examples
+## 6. Real-World Examples <a name="6"></a>
 
-### Example 1: Transform API Response to UI-Ready Data
+### Example 1: API Response → UI-Ready Data
 
 ```typescript
 // API response
@@ -1227,7 +1198,7 @@ interface ApiOrder {
   status: 'pending' | 'processing' | 'shipped' | 'delivered';
 }
 
-// What the UI needs
+// What UI needs
 interface OrderSummary {
   id: string;
   customerName: string;
@@ -1239,7 +1210,6 @@ interface OrderSummary {
   statusColor: string;
 }
 
-// Transformation
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending: { label: 'Pending', color: 'yellow' },
   processing: { label: 'Processing', color: 'blue' },
@@ -1277,12 +1247,11 @@ const toOrderSummary = (order: ApiOrder): OrderSummary => {
   };
 };
 
-// Transform all orders
 const toOrderSummaries = (orders: ApiOrder[]): OrderSummary[] =>
   orders.map(toOrderSummary);
 ```
 
-### Example 2: Merge User Settings with Defaults
+### Example 2: Merge User Settings w/ Defaults
 
 ```typescript
 interface AppSettings {
@@ -1336,7 +1305,6 @@ const deepMergeSettings = (
   privacy: { ...defaults.privacy, ...user.privacy },
 });
 
-// Usage
 const userPreferences: DeepPartial<AppSettings> = {
   theme: { mode: 'dark' },
   notifications: { sms: true, frequency: 'daily' },
@@ -1345,7 +1313,7 @@ const userPreferences: DeepPartial<AppSettings> = {
 const finalSettings = deepMergeSettings(DEFAULT_SETTINGS, userPreferences);
 ```
 
-### Example 3: Group Orders by Customer with Totals
+### Example 3: Group Orders by Customer w/ Totals
 
 ```typescript
 interface Order {
@@ -1412,21 +1380,18 @@ interface AppConfig {
 import * as O from 'fp-ts/Option';
 import { pipe } from 'fp-ts/function';
 
-// Create a type-safe config accessor
 const getConfigValue = <T>(
   config: AppConfig,
   path: (config: AppConfig) => T | undefined,
   defaultValue: T
 ): T => path(config) ?? defaultValue;
 
-// Usage with optional chaining (simplest)
 const apiUsersEndpoint = getConfigValue(
   config,
   c => c.services?.api?.endpoints?.users,
   '/api/users'
 );
 
-// For more complex scenarios, use Option
 const getEndpoint = (config: AppConfig, name: 'users' | 'orders' | 'products'): string =>
   pipe(
     O.fromNullable(config.services),
@@ -1436,7 +1401,6 @@ const getEndpoint = (config: AppConfig, name: 'users' | 'orders' | 'products'): 
     O.getOrElse(() => `/api/${name}`)
   );
 
-// Reusable pattern for multiple values
 const getDbConfig = (config: AppConfig) => ({
   host: config.services?.database?.primary?.host ?? 'localhost',
   port: config.services?.database?.primary?.port ?? 5432,
@@ -1446,17 +1410,17 @@ const getDbConfig = (config: AppConfig) => ({
 
 ---
 
-## 7. When to Use What
+## 7. When to Use What <a name="7"></a>
 
 ### Use Native Methods When:
 
-- **Simple transformations**: `.map()`, `.filter()`, `.reduce()` are perfectly good
-- **No composition needed**: You're doing a one-off transformation
+- **Simple transforms**: `.map()`, `.filter()`, `.reduce()` perfectly good
+- **No composition needed**: One-off transform
 - **Team familiarity**: Everyone knows native methods
-- **Optional chaining suffices**: `obj?.prop?.value ?? default` handles your null-safety needs
+- **Optional chaining suffices**: `obj?.prop?.value ?? default` handles null-safety
 
 ```typescript
-// Native is fine here
+// Native fine here
 const activeUserNames = users
   .filter(u => u.isActive)
   .map(u => u.name);
@@ -1464,10 +1428,10 @@ const activeUserNames = users
 
 ### Use fp-ts When:
 
-- **Chaining operations that might fail**: Multiple steps where each can return nothing
-- **Composing transformations**: Building reusable transformation pipelines
-- **Type-safe error handling**: You want the compiler to track potential failures
-- **Complex data pipelines**: Many steps that benefit from explicit composition
+- **Chaining ops that might fail**: Multiple steps where each can return nothing
+- **Composing transforms**: Building reusable transformation pipelines
+- **Type-safe error handling**: Compiler tracks potential failures
+- **Complex data pipelines**: Many steps benefit from explicit composition
 
 ```typescript
 // fp-ts shines here
@@ -1483,9 +1447,9 @@ const result = pipe(
 
 ### Use Custom Utilities When:
 
-- **Domain-specific operations**: `groupBy`, `countBy`, `sumBy` for your data
-- **Repeated patterns**: You find yourself writing the same transformation many times
-- **Team conventions**: Establishing consistent patterns across the codebase
+- **Domain-specific ops**: `groupBy`, `countBy`, `sumBy` for your data
+- **Repeated patterns**: Writing same transform many times
+- **Team conventions**: Establishing consistent patterns
 
 ```typescript
 // Custom utility pays off when used repeatedly
@@ -1498,11 +1462,11 @@ const revenueByRegion = sumBy(
 ### Performance Considerations
 
 - **Chaining creates intermediate arrays**: `arr.filter().map()` creates one array, then another
-- **For hot paths, consider `reduce`**: One pass through the data
-- **Measure before optimizing**: The readability cost of optimization is often not worth it
+- **For hot paths, consider `reduce`**: One pass through data
+- **Measure before optimizing**: Readability cost often not worth it
 
 ```typescript
-// If performance matters (and you've measured!)
+// If performance matters (and measured!)
 const result = items.reduce((acc, item) => {
   if (item.isActive) {
     acc.push(item.name.toUpperCase());
@@ -1510,7 +1474,7 @@ const result = items.reduce((acc, item) => {
   return acc;
 }, [] as string[]);
 
-// vs the more readable (but 2-pass) version
+// vs more readable (but 2-pass) version
 const result = items
   .filter(item => item.isActive)
   .map(item => item.name.toUpperCase());
@@ -1522,24 +1486,24 @@ const result = items
 
 | Task | Imperative | Functional | Recommendation |
 |------|-----------|------------|----------------|
-| Transform array elements | for loop with push | `.map()` | Use map |
-| Filter array | for loop with condition | `.filter()` | Use filter |
-| Accumulate values | for loop with accumulator | `.reduce()` | Use reduce for complex, loop for simple |
-| Group by key | for loop with object | `groupBy` utility | Create reusable utility |
+| Transform array elements | for loop + push | `.map()` | Use map |
+| Filter array | for loop + condition | `.filter()` | Use filter |
+| Accumulate values | for loop + accumulator | `.reduce()` | Use reduce for complex, loop for simple |
+| Group by key | for loop + object | `groupBy` utility | Create reusable utility |
 | Pick object fields | manual property copy | `pick` utility | Use spread for one-off, utility for repeated |
 | Merge objects | property-by-property | spread syntax | Use spread |
-| Deep merge | nested conditionals | recursive utility | Use utility or library |
+| Deep merge | nested conditionals | recursive utility | Use utility or lib |
 | Null-safe access | `if (x && x.y)` | `?.` or Option | Use `?.` for simple, Option for composition |
-| Normalize API data | nested loops | extraction functions | Break into composable functions |
+| Normalize API data | nested loops | extraction fns | Break into composable fns |
 
-**The functional approach is better when:**
-- You need to compose operations
-- You want reusable transformations
-- You value explicit data flow over implicit state
+**Functional better when:**
+- Need to compose ops
+- Want reusable transforms
+- Value explicit data flow over implicit state
 - Type safety for missing values matters
 
-**The imperative approach is acceptable when:**
-- The transformation is a one-off
-- The logic is simple and linear
-- Performance is critical and you've measured
-- The team is more comfortable with it
+**Imperative acceptable when:**
+- One-off transform
+- Logic simple + linear
+- Performance critical + measured
+- Team more comfortable w/ it

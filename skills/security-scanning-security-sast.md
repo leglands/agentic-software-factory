@@ -46,6 +46,136 @@ eval_cases:
   tags:
   - security
   - antipatterns
+- id: sast-python-bandit-scan
+  prompt: Run a Bandit security scan on a Python codebase and show me how to filter
+    for high severity issues only
+  checks:
+  - regex: bandit.*-ll|bandit.*high|severity
+  - length_min: 120
+  - has_keyword: bandit
+  expectations:
+  - Explains Bandit installation and command usage
+  - Shows how to filter high/critical issues
+  - Mentions severity levels (B201, B301, etc.)
+- id: sast-semgrep-custom-rules
+  prompt: How do I write a custom Semgrep rule to detect hardcoded AWS credentials
+    in Python and JavaScript?
+  checks:
+  - regex: semgrep.*rule|pattern.*AKIA|metavariable-regex
+  - length_min: 150
+  - has_keyword: semgrep
+  expectations:
+  - Provides custom rule YAML structure
+  - Shows AWS credential pattern detection
+  - Covers multiple languages
+- id: sast-sql-injection-detection
+  prompt: What patterns indicate SQL injection vulnerabilities and how does parameterized
+    queries prevent them?
+  checks:
+  - regex: execute.*%s|cursor\.execute|parameterized
+  - length_min: 100
+  - has_keyword: SQL
+  expectations:
+  - Shows vulnerable string concatenation pattern
+  - Explains parameterized query usage
+  - Mentions CWE-89 or OWASP A03
+- id: sast-xss-prevention
+  prompt: How do I prevent XSS attacks in React when rendering user-provided content?
+  checks:
+  - regex: textContent|DOMPurify|auto-escape
+  - length_min: 100
+  - has_keyword: XSS
+  expectations:
+  - Warns against innerHTML with user input
+  - Recommends textContent for plain text
+  - Mentions DOMPurify for sanitization
+- id: sast-hardcoded-secrets
+  prompt: What is the secure way to handle API keys and passwords in Python applications?
+  checks:
+  - regex: os\.environ|getenv|os\.getenv
+  - length_min: 80
+  - has_keyword: secrets
+  expectations:
+  - Warns against hardcoding credentials
+  - Recommends environment variables
+  - Shows os.environ.get() pattern
+- id: sast-command-injection
+  prompt: How can command injection occur through subprocess calls and what is the
+    safe alternative?
+  checks:
+  - regex: shell=True|subprocess\.run|shlex\.quote
+  - length_min: 100
+  - has_keyword: command
+  expectations:
+  - Warns about os.system with shell=True
+  - Recommends list-based subprocess.run
+  - Mentions shlex.quote for validation
+- id: sast-ci-github-actions
+  prompt: Set up a GitHub Actions workflow to run SAST scans (Bandit and Semgrep)
+    on every pull request
+  checks:
+  - regex: actions/checkout|semgrep.*--json|bandit.*-f json
+  - length_min: 200
+  - has_keyword: github
+  expectations:
+  - Provides complete YAML workflow
+  - Shows installation of bandit and semgrep
+  - Includes artifact upload step
+- id: sast-path-traversal
+  prompt: How does path traversal vulnerability work and how should I validate file
+    paths in Flask?
+  checks:
+  - regex: realpath|os\.path\.join|startswith
+  - length_min: 100
+  - has_keyword: path
+  expectations:
+  - Explains path traversal attack
+  - Shows safe path joining with realpath
+  - Includes validation check before opening
+- id: sast-django-security
+  prompt: What Django security settings should I enable to protect against common
+    attacks in production?
+  checks:
+  - regex: SECURE_SSL_REDIRECT|CSRF|X_FRAME_OPTIONS
+  - length_min: 120
+  - has_keyword: django
+  expectations:
+  - Recommends SecurityMiddleware
+  - Enables HTTPS and secure cookies
+  - Sets X_FRAME_OPTIONS to DENY
+- id: sast-insecure-deserialization
+  prompt: Why is pickle.loads() dangerous and what safer alternatives exist for handling
+    untrusted data?
+  checks:
+  - regex: pickle\.loads|yaml\.safe_load|json\.loads
+  - length_min: 80
+  - has_keyword: deserializ
+  expectations:
+  - Warns about pickle and yaml.load insecurity
+  - Recommends json.loads for untrusted data
+  - Mentions yaml.safe_load as alternative
+- id: sast-multilanguage-scanner
+  prompt: How do I implement a multi-language SAST scanner that auto-detects the codebase
+    languages and runs appropriate tools?
+  checks:
+  - regex: detect_languages|run_semgrep|findings
+  - length_min: 150
+  - has_keyword: SAST
+  expectations:
+  - Shows language auto-detection logic
+  - Runs multiple tools based on detected languages
+  - Aggregates findings into unified report
+- id: sast-express-security
+  prompt: What Express.js middleware should I use to secure a production API against
+    common attacks?
+  checks:
+  - regex: helmet|cors|rateLimit
+  - length_min: 100
+  - has_keyword: express
+  expectations:
+  - Recommends helmet for security headers
+  - Warns against CORS wildcard
+  - Shows rate limiting configuration
 ---
 # security-scanning-security-sast
 

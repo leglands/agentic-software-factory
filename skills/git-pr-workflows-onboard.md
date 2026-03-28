@@ -42,6 +42,238 @@ eval_cases:
   tags:
   - git
   - antipatterns
+- id: git-pr-workflows-onboard-day1-checklist
+  prompt: What should a new engineer complete on their first day regarding git PR
+    workflows?
+  checks:
+  - regex: (PR|pull request|git|branch|review)
+  - length_min: 100
+  - has_keyword: first day
+  expectations:
+  - Mentions PR process introduction
+  - Covers git setup and configuration
+  - Includes branch strategy explanation
+- id: git-pr-workflows-onboard-first-pr
+  prompt: How does a new hire submit their first pull request correctly?
+  checks:
+  - regex: (PR|branch|commit|review|merge)
+  - length_min: 80
+  - has_keyword: first PR
+  expectations:
+  - Describes PR submission steps
+  - Mentions review culture
+  - Covers branch naming conventions
+- id: git-pr-workflows-onboard-buddy-system
+  prompt: How does the buddy system support PR workflow learning for newcomers?
+  checks:
+  - regex: (buddy|mentor|pair|review|guidance)
+  - length_min: 100
+  - has_keyword: buddy
+  expectations:
+  - Explains buddy responsibilities
+  - Mentions pair programming sessions
+  - Covers PR review participation
+- id: git-pr-workflows-onboard-code-review
+  prompt: What is the expected code review process for new team members?
+  checks:
+  - regex: (review|feedback|approve|comment|merge)
+  - length_min: 90
+  - has_keyword: code review
+  expectations:
+  - Describes review workflow
+  - Mentions feedback expectations
+  - Covers approval process
+- id: git-pr-workflows-onboard-branch-strategy
+  prompt: Explain the branching strategy a new developer should follow.
+  checks:
+  - regex: (branch|feature|main|develop|commit)
+  - length_min: 80
+  - has_keyword: branching
+  expectations:
+  - Describes branch types
+  - Mentions naming conventions
+  - Covers merge workflow
+- id: git-pr-workflows-onboard-milestone-30day
+  prompt: What git-related milestones should a new engineer achieve by day 30?
+  checks:
+  - regex: (PR|commit|merge|review|branch)
+  - length_min: 80
+  - has_keyword: 30-day
+  expectations:
+  - Lists commit expectations
+  - Mentions PR merge goals
+  - Covers review participation
+- id: git-pr-workflows-onboard-ci-cd-intro
+  prompt: How does CI/CD integrate with the PR workflow for new team members?
+  checks:
+  - regex: (CI|CD|pipeline|automated|test)
+  - length_min: 70
+  - has_keyword: CI/CD
+  expectations:
+  - Explains pipeline integration
+  - Mentions automated testing
+  - Covers deployment process
+- id: git-pr-workflows-onboard-remote-pr
+  prompt: How should remote employees handle async PR reviews effectively?
+  checks:
+  - regex: (async|remote|review|comment|timezone)
+  - length_min: 90
+  - has_keyword: remote
+  expectations:
+  - Describes async practices
+  - Mentions documentation
+  - Covers communication norms
+- id: git-pr-workflows-onboard-senior-accelerated
+  prompt: How should a senior engineer approach git workflows during accelerated onboarding?
+  checks:
+  - regex: (senior|lead|architect|PR|review)
+  - length_min: 80
+  - has_keyword: senior
+  expectations:
+  - Describes accelerated expectations
+  - Mentions technical leadership
+  - Covers mentorship involvement
+- id: git-pr-workflows-onboard-documentation-pr
+  prompt: How does documentation fit into the PR workflow for new contributors?
+  checks:
+  - regex: (document|wiki|readme|PR|update)
+  - length_min: 70
+  - has_keyword: documentation
+  expectations:
+  - Explains doc contribution process
+  - Mentions wiki updates
+  - Covers PR requirements
+- id: git-pr-workflows-onboard-90day-mastery
+  prompt: What git and PR workflow proficiency should a new engineer demonstrate by
+    day 90?
+  checks:
+  - regex: (independent|mentor|review|lead|master)
+  - length_min: 80
+  - has_keyword: 90-day
+  expectations:
+  - Describes autonomous capability
+  - Mentions mentorship role
+  - Covers advanced workflows
+- id: git-pr-workflows-onboard-git-setup
+  prompt: What git configuration and SSH key setup is required for new team members?
+  checks:
+  - regex: (git|SSH|config|key|setup)
+  - length_min: 70
+  - has_keyword: git setup
+  expectations:
+  - Describes SSH key generation
+  - Mentions git config requirements
+  - Covers identity setup
+- id: git-pr-workflows-onboard-commit-messages
+  prompt: What are the commit message conventions new engineers should follow?
+  checks:
+  - regex: (commit|message|convention|format|branch)
+  - length_min: 80
+  - has_keyword: commit message
+  expectations:
+  - Describes message format
+  - Mentions conventional commits
+  - Covers subject/body structure
+- id: git-pr-workflows-onboard-pr-template
+  prompt: How should new contributors use PR templates effectively?
+  checks:
+  - regex: (PR|template|checklist|description|fill)
+  - length_min: 70
+  - has_keyword: PR template
+  expectations:
+  - Explains template sections
+  - Mentions checklist completion
+  - Covers description writing
+- id: git-pr-workflows-onboard-merge-conflicts
+  prompt: How do new engineers resolve merge conflicts in pull requests?
+  checks:
+  - regex: (conflict|merge|resolve|branch|conflict)
+  - length_min: 80
+  - has_keyword: merge conflict
+  expectations:
+  - Describes conflict identification
+  - Mentions resolution steps
+  - Covers tools and commands
+- id: git-pr-workflows-onboard-rebase-vs-merge
+  prompt: What is the difference between rebasing and merging in our workflow?
+  checks:
+  - regex: (rebase|merge|branch|history|commit)
+  - length_min: 80
+  - has_keyword: rebase
+  expectations:
+  - Explains rebase concept
+  - Mentions merge alternatives
+  - Covers team workflow preferences
+- id: git-pr-workflows-onboard-stale-pr
+  prompt: How does the team handle stale or long-running pull requests?
+  checks:
+  - regex: (stale|PR|review|close|rebase|refresh)
+  - length_min: 70
+  - has_keyword: stale
+  expectations:
+  - Describes stale PR policy
+  - Mentions refresh procedures
+  - Covers closure or update process
+- id: git-pr-workflows-onboard-draft-pr
+  prompt: When should new contributors use draft pull requests?
+  checks:
+  - regex: (draft|WIP|PR|review|ready|submit)
+  - length_min: 60
+  - has_keyword: draft
+  expectations:
+  - Explains draft PR purpose
+  - Mentions WIP usage
+  - Covers conversion to ready
+- id: git-pr-workflows-onboard-commit-squashing
+  prompt: What is the policy on squashing commits before merging?
+  checks:
+  - regex: (squash|commit|merge|history|rebase)
+  - length_min: 70
+  - has_keyword: squash
+  expectations:
+  - Describes squash workflow
+  - Mentions history rewriting
+  - Covers team conventions
+- id: git-pr-workflows-onboard-review-etiquette
+  prompt: What code review etiquette should new team members follow?
+  checks:
+  - regex: (review|feedback|comment|respect|constructive)
+  - length_min: 80
+  - has_keyword: review etiquette
+  expectations:
+  - Describes respectful feedback
+  - Mentions review tone
+  - Covers response expectations
+- id: git-pr-workflows-onboard-force-push
+  prompt: What is the policy on force pushing to shared branches?
+  checks:
+  - regex: (force|push|branch|shared|never)
+  - length_min: 60
+  - has_keyword: force push
+  expectations:
+  - States force push policy
+  - Mentions protected branches
+  - Covers alternative solutions
+- id: git-pr-workflows-onboard-tools-overview
+  prompt: What development tools and IDE setup should new engineers configure?
+  checks:
+  - regex: (IDE|tool|plugin|extension|setup|config)
+  - length_min: 80
+  - has_keyword: tools
+  expectations:
+  - Lists required IDE setup
+  - Mentions required plugins
+  - Covers tool configuration
+- id: git-pr-workflows-onboard-ceremonies
+  prompt: What team ceremonies should new engineers attend during onboarding?
+  checks:
+  - regex: (standup|retro|planning|ceremony|attend)
+  - length_min: 70
+  - has_keyword: ceremonies
+  expectations:
+  - Lists key ceremonies
+  - Mentions participation expectations
+  - Covers ceremony schedule
 ---
 # git-pr-workflows-onboard
 

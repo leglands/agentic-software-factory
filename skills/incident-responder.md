@@ -41,6 +41,135 @@ eval_cases:
   tags:
   - incident
   - antipatterns
+- id: incident-responder-severity-assessment
+  prompt: A P0 incident just started - our payment service is completely down. How
+    do I assess and classify this?
+  checks:
+  - regex: P0|SEV-1|critical|impact
+    length_min: 180
+  - has_keyword: incident commander
+  expectations:
+  - Demonstrates severity classification knowledge
+  - Mentions P0/SEV-1 response requirements
+  - Includes impact assessment steps
+- id: incident-responder-first-five-minutes
+  prompt: Production system is experiencing an outage. Walk me through exactly what
+    to do in the first 5 minutes.
+  checks:
+  - regex: assess|stabilize|command|war.room
+    length_min: 200
+  - has_keyword: severity
+  expectations:
+  - Covers immediate assessment actions
+  - Mentions incident command structure
+  - Includes stabilization steps
+- id: incident-responder-observability-tools
+  prompt: I'm investigating a cascading failure. What observability tools and techniques
+    should I use?
+  checks:
+  - regex: tracing|metrics|logs|APM
+    length_min: 150
+  - has_keyword: OpenTelemetry
+  expectations:
+  - Lists distributed tracing options
+  - Mentions log aggregation approaches
+  - Includes metrics correlation techniques
+- id: incident-responder-communication-plan
+  prompt: We have a P1 incident affecting 30% of users. How should I communicate with
+    stakeholders?
+  checks:
+  - regex: status|update|stakeholder|internal
+    length_min: 140
+  - has_keyword: 15 minutes
+  expectations:
+  - Covers communication frequency
+  - Differentiates internal vs external communication
+  - Mentions status page updates
+- id: incident-responder-rollback-decision
+  prompt: After a recent deployment, error rates spiked. Should I rollback and how
+    do I decide?
+  checks:
+  - regex: rollback|assessment|risk|deployment
+    length_min: 160
+  - has_keyword: quick wins
+  expectations:
+  - Covers rollback assessment criteria
+  - Mentions risk assessment steps
+  - Includes stabilization options
+- id: incident-responder-postmortem-process
+  prompt: The incident is resolved. What does a proper blameless post-mortem involve?
+  checks:
+  - regex: timeline|root.cause|five.whys|action.items
+    length_min: 180
+  - has_keyword: blameless
+  expectations:
+  - Covers timeline analysis
+  - Mentions root cause techniques
+  - Includes action item tracking
+- id: incident-responder-error-budgets
+  prompt: How do error budgets work and how should they influence our deployment decisions?
+  checks:
+  - regex: burn.rate|SLI|SLO|error.budget
+    length_min: 150
+  - has_keyword: reliability
+  expectations:
+  - Explains error budget concept
+  - Covers burn rate analysis
+  - Links to deployment decisions
+- id: incident-responder-circuit-breaker
+  prompt: A downstream service is failing and causing our API to hang. How do circuit
+    breakers help?
+  checks:
+  - regex: circuit.breaker|isolation|failure|graceful
+    length_min: 140
+  - has_keyword: cascading
+  expectations:
+  - Explains circuit breaker pattern
+  - Mentions cascading failure prevention
+  - Covers graceful degradation
+- id: incident-responder-recovery-validation
+  prompt: We just deployed a fix. How do I validate that the service is fully recovered?
+  checks:
+  - regex: SLI|SLO|health|monitoring|validation
+    length_min: 150
+  - has_keyword: dependency
+  expectations:
+  - Covers service health checks
+  - Mentions SLI/SLO validation
+  - Includes dependency verification
+- id: incident-responder-automation-opportunities
+  prompt: We had the same incident twice this month. What can we automate to prevent
+    recurrence?
+  checks:
+  - regex: automation|runbook|self.healing|alerts
+    length_min: 140
+  - has_keyword: continuous improvement
+  expectations:
+  - Covers runbook automation
+  - Mentions self-healing patterns
+  - Includes alerting improvements
+- id: incident-responder-mttr-metrics
+  prompt: How do we measure incident response effectiveness? What metrics should we
+    track?
+  checks:
+  - regex: MTTR|MTTD|incident.frequency|metrics
+    length_min: 130
+  - has_keyword: MTTR
+  expectations:
+  - Defines MTTR and related metrics
+  - Mentions incident frequency tracking
+  - Covers continuous improvement through metrics
+- id: incident-responder-acknowledgment-sla
+  prompt: What's the expected acknowledgment and resolution time for different severity
+    levels?
+  checks:
+  - regex: P0|P1|P2|P3|acknowledgment|resolution|SLA
+    length_min: 160
+  - has_keyword: SEV
+  expectations:
+  - Covers all severity levels P0-P3
+  - Lists acknowledgment time requirements
+  - Includes resolution SLA expectations
 ---
 # incident-responder
 

@@ -42,6 +42,262 @@ eval_cases:
   tags:
   - docker
   - antipatterns
+- id: docker-multi-stage-optimization
+  prompt: Explain how to optimize a Node.js Dockerfile using multi-stage builds to
+    minimize production image size.
+  checks:
+  - regex: FROM.*AS
+  - length_min: 200
+  - has_keyword: multi-stage
+  expectations:
+  - Demonstrates multi-stage build pattern with separate dep/build/prod stages
+  - Shows only necessary artifacts copied to final stage
+  - Mentions layer caching optimization
+- id: docker-security-nonroot-user
+  prompt: How do I configure a Docker container to run as a non-root user with specific
+    UID/GID?
+  checks:
+  - regex: (adduser|addgroup|UID|GID|User)
+  - length_min: 150
+  - has_keyword: non-root
+  expectations:
+  - Shows proper user creation with specific UID/GID
+  - Demonstrates USER directive usage
+  - Mentions security benefits
+- id: docker-healthcheck-configuration
+  prompt: Configure a health check for a web application container in Docker Compose.
+  checks:
+  - regex: (HEALTHCHECK|healthcheck|curl|pg_isready)
+  - length_min: 120
+  - has_keyword: healthcheck
+  expectations:
+  - Shows health check configuration syntax
+  - Includes interval, timeout, retries parameters
+  - Demonstrates proper test command for the service
+- id: docker-compose-service-dependencies
+  prompt: Set up service dependencies in Docker Compose with proper startup ordering
+    using health checks.
+  checks:
+  - regex: (depends_on|condition|service_healthy)
+  - length_min: 150
+  - has_keyword: depends_on
+  expectations:
+  - Uses depends_on with condition: service_healthy
+  - Shows db service with healthcheck
+  - Demonstrates proper startup sequence
+- id: docker-image-size-reduction
+  prompt: How can I reduce a Python Docker image from 1.2GB to under 200MB?
+  checks:
+  - regex: (distroless|alpine|multi-stage|no-cache)
+  - length_min: 180
+  - has_keyword: size
+  expectations:
+  - Recommends minimal base images (distroless/alpine)
+  - Suggests multi-stage build approach
+  - Mentions removing build tools and cache
+- id: docker-build-cache-optimization
+  prompt: Optimize Docker build cache for a project with frequent package.json changes.
+  checks:
+  - regex: (cache|mount|target=)
+  - length_min: 140
+  - has_keyword: cache
+  expectations:
+  - Explains layer ordering for cache efficiency
+  - Shows COPY package*.json before COPY source
+  - Mentions BuildKit cache mount for npm/pip
+- id: docker-secrets-management
+  prompt: How should I manage database credentials in Docker Compose for production?
+  checks:
+  - regex: (secrets|POSTGRES_PASSWORD_FILE|_FILE)
+  - length_min: 130
+  - has_keyword: secrets
+  expectations:
+  - Uses Docker secrets with _FILE pattern
+  - Avoids plain text environment variables
+  - Shows external secrets configuration
+- id: docker-resource-limits
+  prompt: Configure CPU and memory limits for a container in Docker Compose.
+  checks:
+  - regex: (cpus|memory|limits|reservations)
+  - length_min: 120
+  - has_keyword: resources
+  expectations:
+  - Shows deploy.resources.limits configuration
+  - Includes both cpus and memory constraints
+  - Mentions reservations for guaranteed resources
+- id: docker-development-workflow
+  prompt: Set up a development workflow with hot reloading and debug port for a Node.js
+    app.
+  checks:
+  - regex: (volumes|hot.?reload|9229|command)
+  - length_min: 140
+  - has_keyword: development
+  expectations:
+  - Shows volume mounting with proper node_modules handling
+  - Exposes debug port (9229)
+  - Demonstrates development target override
+- id: docker-networking-internal
+  prompt: Configure internal-only networking for a database service in Docker Compose.
+  checks:
+  - regex: (networks|internal|bridge|backend)
+  - length_min: 120
+  - has_keyword: network
+  expectations:
+  - Creates custom bridge network
+  - Uses internal: true for database isolation
+  - Properly assigns services to networks
+- id: docker-buildkit-secrets
+  prompt: How do I pass build-time secrets (API keys) to a Dockerfile without exposing
+    them in layers?
+  checks:
+  - regex: (BuildKit|secret|mount|type=secret)
+  - length_min: 130
+  - has_keyword: secret
+  expectations:
+  - Uses BuildKit --mount=type=secret syntax
+  - Avoids ENV vars for sensitive data
+  - Explains how to pass secrets at build time
+- id: docker-troubleshoot-build-failure
+  prompt: Diagnose why a Docker build is slow and cache is frequently invalidated.
+  checks:
+  - regex: (context|.dockerignore|layer|cache)
+  - length_min: 150
+  - has_keyword: build
+  expectations:
+  - Recommends .dockerignore optimization
+  - Suggests proper layer ordering (deps before source)
+  - Mentions multi-stage build for cache optimization
+- id: docker-volume-persistence
+  prompt: How do I configure persistent data storage for a PostgreSQL container with
+    named volumes?
+  checks:
+  - regex: (volumes|named|postgres_data)
+  - length_min: 130
+  - has_keyword: volume
+  expectations:
+  - Uses named volumes for data persistence
+  - Shows proper volume mounting syntax
+  - Demonstrates data backup considerations
+- id: docker-logging-configuration
+  prompt: Configure JSON logging driver for a production container to integrate with
+    log aggregation.
+  checks:
+  - regex: (logging|driver|json-file|json)
+  - length_min: 120
+  - has_keyword: logging
+  expectations:
+  - Configures logging driver in docker-compose
+  - Shows json-file or fluentd driver options
+  - Mentions log rotation settings
+- id: docker-restart-policies
+  prompt: Set up restart policies for a production web application container to handle
+    failures gracefully.
+  checks:
+  - regex: (restart|on-failure|unless-stopped|always)
+  - length_min: 110
+  - has_keyword: restart
+  expectations:
+  - Explains different restart policy options
+  - Recommends appropriate policy for production
+  - Shows policy configuration syntax
+- id: docker-inspect-debugging
+  prompt: How do I use docker inspect to troubleshoot a container that's crashing
+    on startup?
+  checks:
+  - regex: (inspect|jq|State|ExitCode|Config)
+  - length_min: 100
+  - has_keyword: inspect
+  expectations:
+  - Shows docker inspect command usage
+  - Demonstrates filtering with jq or grep
+  - Identifies key fields for debugging
+- id: docker-multiarch-buildx
+  prompt: Build a Docker image for both amd64 and arm64 architectures using docker
+    buildx.
+  checks:
+  - regex: (buildx|multiarch|platform|amd64|arm64)
+  - length_min: 130
+  - has_keyword: buildx
+  expectations:
+  - Uses docker buildx create and build commands
+  - Specifies multiple target platforms
+  - Shows how to push to registry
+- id: dockerignore-optimization
+  prompt: Create an effective .dockerignore file for a Node.js project to reduce build
+    context.
+  checks:
+  - regex: (.dockerignore|node_modules|.git|exclude)
+  - length_min: 100
+  - has_keyword: dockerignore
+  expectations:
+  - Lists common exclusions (node_modules, .git)
+  - Explains impact on build context size
+  - Shows pattern matching examples
+- id: docker-readonly-rootfs
+  prompt: Configure a container to run with a read-only root filesystem for security
+    hardening.
+  checks:
+  - regex: (readonly|rootfs|tmpfs|security)
+  - length_min: 120
+  - has_keyword: readonly
+  expectations:
+  - Shows --read-only flag usage
+  - Demonstrates tmpfs mounts for writable areas
+  - Mentions security benefits
+- id: docker-port-exposure
+  prompt: What's the difference between exposing ports and publishing ports in Docker,
+    and when should I use each?
+  checks:
+  - regex: (EXPOSE|publish|PORT|-p)
+  - length_min: 100
+  - has_keyword: port
+  expectations:
+  - Explains EXPOSE vs -p flag differences
+  - Discusses internal vs external access
+  - Shows syntax examples for both
+- id: docker-container-metrics
+  prompt: Monitor container resource usage with docker stats for a production deployment.
+  checks:
+  - regex: (stats|docker stats|cpu|memory|network)
+  - length_min: 100
+  - has_keyword: stats
+  expectations:
+  - Shows docker stats command usage
+  - Demonstrates format options for output
+  - Explains key metrics to monitor
+- id: docker-healthcheck-intervals
+  prompt: Configure optimal health check intervals and timeouts for a slow-starting
+    application container.
+  checks:
+  - regex: (HEALTHCHECK|interval|timeout|retries|start-period)
+  - length_min: 130
+  - has_keyword: healthcheck
+  expectations:
+  - Shows health check parameter tuning
+  - Explains start-period for slow containers
+  - Mentions appropriate timeout values
+- id: docker-container-namespace-isolation
+  prompt: How does Docker provide namespace isolation between containers, and what
+    are the main namespaces?
+  checks:
+  - regex: (namespace|isolate|PID|network|UTS)
+  - length_min: 120
+  - has_keyword: namespace
+  expectations:
+  - Lists key Linux namespaces (PID, network, UTS)
+  - Explains isolation mechanism
+  - Mentions container vs VM differences
+- id: docker-cgroups-resource-constraints
+  prompt: Constrain container resource access using cgroups to prevent noisy neighbor
+    problems in production.
+  checks:
+  - regex: (cgroups|cpu|memory|blkio|resource)
+  - length_min: 130
+  - has_keyword: cgroups
+  expectations:
+  - Explains cgroups resource limiting
+  - Shows memory and CPU constraints
+  - Mentions blkio for disk I/O limits
 ---
 # docker-expert
 
@@ -449,3 +705,10 @@ I provide comprehensive Docker containerization expertise with focus on practica
 
 ## When to Use
 This skill is applicable to execute the workflow or actions described in the overview.
+
+---
+
+## Live Documentation
+
+When working on tasks covered by this skill, use fetch_url to get current docs:
+- Always verify SDK versions against live docs

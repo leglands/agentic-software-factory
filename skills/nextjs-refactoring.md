@@ -14,12 +14,12 @@ eval_cases:
     description: Migrate legacy next/head usage to the new Metadata API. Replace Head exports with generateMetadata functions, ensuring proper OG tags, canonical URLs, and viewport configuration.
 ---
 
-## Server Components vs Client Components
+## Server vs Client Components
 
-Minimize `'use client'` directives. Default to Server Components; add `'use client'` only when:
+Minimize `'use client'`. Default to Server Components; add `'use client'` only when:
 - Using browser APIs (window, localStorage)
 - Using React state/-effects (useState, useEffect)
-- Using event handlers that need interactivity
+- Using event handlers needing interactivity
 - Using client-only hooks
 
 ```tsx
@@ -42,7 +42,7 @@ export function AddToCart({ productId }: { productId: string }) {
 
 ## Data Fetching
 
-Use server-side fetch with cache/revalidate. Avoid useEffect for data fetching.
+Use server-side fetch w/ cache/revalidate. Avoid useEffect for data fetching.
 
 ```tsx
 // Good: Server-side fetch with ISR
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
 
 ## Image Optimization
 
-Use `next/image` with proper sizing and blur placeholders.
+Use `next/image` w/ proper sizing + blur placeholders.
 
 ```tsx
 import Image from 'next/image';
@@ -117,7 +117,7 @@ export async function ProductImage({ src, alt }: { src: string; alt: string }) {
 
 ## Bundle Analysis
 
-Analyze and optimize client bundle size.
+Analyze + optimize client bundle size.
 
 ```bash
 npm install @next/bundle-analyzer --save-dev
@@ -151,7 +151,7 @@ const HeavyChart = dynamic(() => import('@/components/HeavyChart'), {
 
 ## Metadata API for SEO
 
-Replace `next/head` with the Metadata API.
+Replace `next/head` with Metadata API.
 
 ```tsx
 // app/products/[id]/page.tsx
@@ -184,7 +184,7 @@ export default async function ProductPage({ params }: Props) {
 
 ## Streaming with Suspense
 
-Use Suspense boundaries and loading.tsx for streaming.
+Use Suspense boundaries + loading.tsx for streaming.
 
 ```tsx
 // app/dashboard/page.tsx
@@ -221,7 +221,7 @@ export default function Loading() {
 
 ## Server Actions for Mutations
 
-Replace API routes with Server Actions for form mutations.
+Replace API routes w/ Server Actions for form mutations.
 
 ```tsx
 // app/actions.ts

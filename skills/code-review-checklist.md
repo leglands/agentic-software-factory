@@ -42,6 +42,116 @@ eval_cases:
   tags:
   - code
   - antipatterns
+- id: code-review-checklist-security-xss
+  prompt: How do I prevent XSS vulnerabilities during code review?
+  checks:
+  - regex: (?i)(xss|cross.site|cross-site|escape|sanitize)
+    length_min: 120
+    has_keyword: security
+  expectations:
+  - Explains XSS prevention techniques
+  - Mentions output escaping
+  - Covers input sanitization
+- id: code-review-checklist-sql-injection
+  prompt: What should I check for SQL injection in a code review?
+  checks:
+  - regex: (?i)(sql|injection|parameterized|query|escape)
+    length_min: 100
+    has_keyword: sql
+  expectations:
+  - Identifies SQL injection risks
+  - Recommends parameterized queries
+  - Warns against string concatenation
+- id: code-review-checklist-edge-cases
+  prompt: How do I verify edge case handling in a code review?
+  checks:
+  - regex: (?i)(edge|boundary|null|empty|zero|error)
+    length_min: 80
+    has_keyword: edge
+  expectations:
+  - Lists edge case scenarios
+  - Explains testing approach
+  - Covers error handling
+- id: code-review-checklist-performance-n1
+  prompt: How do I identify N+1 query problems in a code review?
+  checks:
+  - regex: (?i)(n\+1|query|database|loop|eager|lazy|join)
+    length_min: 90
+    has_keyword: performance
+  expectations:
+  - Explains N+1 problem
+  - Suggests solutions like eager loading
+  - Mentions query optimization
+- id: code-review-checklist-testing-coverage
+  prompt: What should I check for test coverage during code review?
+  checks:
+  - regex: (?i)(test|coverage|unit|integration|edge|case)
+    length_min: 100
+    has_keyword: test
+  expectations:
+  - Discusses adequate test coverage
+  - Mentions edge case testing
+  - Recommends test types
+- id: code-review-checklist-readability
+  prompt: How do I assess code readability in a code review?
+  checks:
+  - regex: (?i)(readable|naming|function|clear|complex|simple)
+    length_min: 85
+    has_keyword: readable
+  expectations:
+  - Evaluates naming conventions
+  - Assesses function complexity
+  - Checks code clarity
+- id: code-review-checklist-auth-bypass
+  prompt: What authentication and authorization checks should I look for?
+  checks:
+  - regex: (?i)(auth|permission|role|token|verify|check)
+    length_min: 95
+    has_keyword: auth
+  expectations:
+  - Verifies authentication is enforced
+  - Checks authorization logic
+  - Warns against bypass risks
+- id: code-review-checklist-dry-violations
+  prompt: How do I spot DRY principle violations in code review?
+  checks:
+  - regex: (?i)(dry|duplicate|copy|paste|repeat|reuse)
+    length_min: 75
+    has_keyword: dry
+  expectations:
+  - Identifies duplicated code
+  - Suggests abstraction
+  - Explains DRY benefits
+- id: code-review-checklist-commit-quality
+  prompt: What makes a good commit message in a code review context?
+  checks:
+  - regex: (?i)(commit|message|clear|describe|why|what)
+    length_min: 80
+    has_keyword: commit
+  expectations:
+  - Evaluates commit message clarity
+  - Checks for context
+  - Suggests improvements
+- id: code-review-checklist-hardcoded-secrets
+  prompt: How do I detect hardcoded secrets in code during review?
+  checks:
+  - regex: (?i)(secret|api_key|password|token|env|hardcode)
+    length_min: 90
+    has_keyword: secret
+  expectations:
+  - Identifies hardcoded credentials
+  - Recommends environment variables
+  - Warns about exposure risks
+- id: code-review-checklist-error-handling
+  prompt: What constitutes good error handling in code review?
+  checks:
+  - regex: (?i)(error|catch|exception|handle|log|message)
+    length_min: 85
+    has_keyword: error
+  expectations:
+  - Evaluates try-catch usage
+  - Checks error messages
+  - Assesses logging practices
 ---
 # code-review-checklist
 
@@ -484,3 +594,14 @@ This is great because [explain why]
 ---
 
 **Pro Tip:** Use a checklist template for every review to ensure consistency and thoroughness. Customize it for your team's specific needs!
+
+---
+
+## Live Documentation
+
+When working on tasks covered by this skill, use fetch_url to get current docs:
+- fetch_url(https://google.github.io/eng-practices/review/)
+- fetch_url(https://owasp.org/www-project-top-ten/)
+- fetch_url(https://github.com/thoughtbot/guides/tree/main/code-review)
+- fetch_url(https://www.kevinlondon.com/2015/05/05/code-review-best-practices.html)
+- Always verify SDK versions against live docs

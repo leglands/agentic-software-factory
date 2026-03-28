@@ -18,6 +18,11 @@ import os
 import time
 import uuid
 from collections.abc import AsyncIterator
+from pathlib import Path as _DotenvPath
+
+# Ensure .env is loaded BEFORE reading env vars for provider config
+from dotenv import load_dotenv as _load_dotenv
+_load_dotenv(_DotenvPath(__file__).resolve().parents[2] / ".env", override=False)
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path

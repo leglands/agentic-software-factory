@@ -25,9 +25,17 @@ logger = logging.getLogger(__name__)
 
 
 def _compute_relevance(
-    confidence: float, updated_at_str: str, access_count: int = 0
+    confidence: float,
+    updated_at_str: str,
+    access_count: int = 0,
+    decay_rate: float = 0.1,
+    is_pinned: bool = False,
 ) -> float:
-    """Relevance = confidence × recency_factor × access_boost."""
+    """Relevance = confidence × decay_factor × access_boost.
+
+    Inspired by rtk-ai/icm: access-aware decay — frequently recalled items
+    decay slower. Pinned items never decay below 0.5.
+    """
     try:
         if updated_at_str:
             updated = datetime.fromisoformat(str(updated_at_str)[:19])
@@ -37,21 +45,37 @@ def _compute_relevance(
     except Exception:
         age_days = 0
 
-    if age_days < 7:
-        recency = 1.0
-    elif age_days < 30:
-        recency = 0.7
-    elif age_days < 90:
-        recency = 0.4
-    else:
-        recency = 0.1
+    # Exponential decay: score = e^(-decay_rate * age_days / 30)
+    import math
+    decay_factor = math.exp(-decay_rate * age_days / 30.0)
+
+    # Pinned items never drop below 0.5
+    if is_pinned:
+        decay_factor = max(0.5, decay_factor)
 
     try:
         access_num = int(access_count or 0)
     except Exception:
         access_num = 0
+    # Access boost: each access slows decay (ICM pattern)
     access_boost = min(1.5, 1.0 + access_num * 0.05)
-    return round(min(1.0, confidence * recency * access_boost), 4)
+    return round(min(1.0, confidence * decay_factor * access_boost), 4)
+
+
+def _similarity_ratio(a: str, b: str) -> float:
+    """Fast Jaccard similarity on word sets (for dedup). 0.0-1.0."""
+    if not a or not b:
+        return 0.0
+    words_a = set(a.lower().split())
+    words_b = set(b.lower().split())
+    if not words_a or not words_b:
+        return 0.0
+    intersection = len(words_a & words_b)
+    union = len(words_a | words_b)
+    return intersection / union if union > 0 else 0.0
+
+
+_DEDUP_THRESHOLD = 0.85  # rtk-ai/icm: >85% similar = duplicate
 
 
 @dataclass
@@ -427,9 +451,10 @@ class MemoryManager:
         source: str = "system",
         confidence: float = 0.5,
         agent_role: str = "",
+        is_pinned: bool = False,
     ) -> int:
         now = datetime.now(timezone.utc).isoformat()
-        relevance = _compute_relevance(confidence, now, 0)
+        relevance = _compute_relevance(confidence, now, 0, is_pinned=is_pinned)
         conn = get_db()
         # Upsert: update if same project+category+key+agent_role exists
         existing = conn.execute(
@@ -438,7 +463,7 @@ class MemoryManager:
         ).fetchone()
         if existing:
             ac = existing["access_count"] or 0
-            new_rel = _compute_relevance(confidence, now, ac)
+            new_rel = _compute_relevance(confidence, now, ac, is_pinned=is_pinned)
             conn.execute(
                 "UPDATE memory_project SET value=?, confidence=?, source=?, relevance_score=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
                 (value, confidence, source, new_rel, existing["id"]),
@@ -446,6 +471,17 @@ class MemoryManager:
             conn.commit()
             rid = existing["id"]
         else:
+            # Dedup check: reject if >85% similar to an existing entry (ICM pattern)
+            recent = conn.execute(
+                "SELECT id, value FROM memory_project WHERE project_id=? AND category=? ORDER BY updated_at DESC LIMIT 20",
+                (project_id, category),
+            ).fetchall()
+            for row in recent:
+                if _similarity_ratio(value, row["value"]) >= _DEDUP_THRESHOLD:
+                    logger.debug("memory dedup: skipping duplicate (%.0f%% similar to id=%s)", _similarity_ratio(value, row["value"]) * 100, row["id"])
+                    conn.close()
+                    return row["id"]
+
             cur = conn.execute(
                 "INSERT INTO memory_project (project_id, category, key, value, confidence, source, agent_role, relevance_score) VALUES (?,?,?,?,?,?,?,?)",
                 (
@@ -729,6 +765,102 @@ class MemoryManager:
             logger.debug("Vector store failed: %s", e)
         return rid
 
+    # ── Graph Relations (ICM knowledge graph) ────────────────────
+
+    def relate(
+        self,
+        source_table: str,
+        source_id: int,
+        target_table: str,
+        target_id: int,
+        relation: str,
+        metadata: dict | None = None,
+    ) -> int:
+        """Create a typed relation between two memory entries.
+
+        Relations: depends_on, contradicts, superseded_by, elaborates, caused_by
+        Inspired by rtk-ai/icm knowledge graph model.
+        """
+        conn = get_db()
+        try:
+            cur = conn.execute(
+                "INSERT INTO memory_relations (source_table, source_id, target_table, target_id, relation, metadata_json) "
+                "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING",
+                (source_table, source_id, target_table, target_id, relation, json.dumps(metadata or {})),
+            )
+            conn.commit()
+            rid = cur.lastrowid or 0
+        except Exception as e:
+            logger.debug("memory relate failed: %s", e)
+            rid = 0
+        conn.close()
+        return rid
+
+    def supersede(self, table: str, old_id: int, new_id: int, reason: str = "") -> None:
+        """Mark old entry as superseded by new one (ICM pattern: facts never deleted, just superseded)."""
+        self.relate(table, new_id, table, old_id, "superseded_by", {"reason": reason})
+
+    def get_relations(
+        self, table: str, entry_id: int, relation: str = "", direction: str = "both"
+    ) -> list[dict]:
+        """Get all relations for a memory entry."""
+        conn = get_db()
+        results = []
+        if direction in ("both", "outgoing"):
+            rows = conn.execute(
+                "SELECT * FROM memory_relations WHERE source_table=? AND source_id=?"
+                + (" AND relation=?" if relation else ""),
+                (table, entry_id, relation) if relation else (table, entry_id),
+            ).fetchall()
+            results.extend([dict(r) for r in rows])
+        if direction in ("both", "incoming"):
+            rows = conn.execute(
+                "SELECT * FROM memory_relations WHERE target_table=? AND target_id=?"
+                + (" AND relation=?" if relation else ""),
+                (table, entry_id, relation) if relation else (table, entry_id),
+            ).fetchall()
+            results.extend([dict(r) for r in rows])
+        conn.close()
+        return results
+
+    # ── Decay Sweep ────────────────────────────────────────────
+
+    def decay_sweep(self, project_id: str = "") -> int:
+        """Recalculate relevance scores with decay. Returns count updated.
+
+        Run periodically (e.g., daily) to let old memories fade.
+        Pinned entries never drop below 0.5.
+        """
+        conn = get_db()
+        # Process project memory
+        where = "WHERE project_id=?" if project_id else ""
+        params = (project_id,) if project_id else ()
+        rows = conn.execute(
+            f"SELECT id, confidence, updated_at, access_count, "
+            f"COALESCE(decay_rate, 0.1) as decay_rate, "
+            f"COALESCE(is_pinned, FALSE) as is_pinned "
+            f"FROM memory_project {where}",
+            params,
+        ).fetchall()
+        count = 0
+        for r in rows:
+            new_rel = _compute_relevance(
+                r["confidence"],
+                str(r["updated_at"] or ""),
+                r["access_count"] or 0,
+                decay_rate=r["decay_rate"],
+                is_pinned=bool(r["is_pinned"]),
+            )
+            conn.execute(
+                "UPDATE memory_project SET relevance_score=? WHERE id=?",
+                (new_rel, r["id"]),
+            )
+            count += 1
+        conn.commit()
+        conn.close()
+        logger.info("memory decay sweep: updated %d entries", count)
+        return count
+
     # ── Stats ────────────────────────────────────────────────────
 
     def stats(self) -> dict:
@@ -750,6 +882,12 @@ class MemoryManager:
             result["session_count"] = row["c"]
         except Exception:
             result["session_count"] = 0
+        # Graph relations count
+        try:
+            row = conn.execute("SELECT COUNT(*) as c FROM memory_relations").fetchone()
+            result["relation_count"] = row["c"]
+        except Exception:
+            result["relation_count"] = 0
         # Knowledge health stats
         try:
             r = conn.execute(

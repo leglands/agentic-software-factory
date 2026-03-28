@@ -42,6 +42,130 @@ eval_cases:
   tags:
   - react
   - antipatterns
+- id: react-flow-hierarchical-nav-impl
+  prompt: How do I implement hierarchical tree navigation with expandable nodes in
+    ReactFlow?
+  checks:
+  - regex: (TreeNode|parentNode|isExpanded|buildVisibleNodes)
+    length_min: 200
+    has_keyword: hierarchical
+  expectations:
+  - Provides implementation pattern for hierarchical tree navigation
+  - Shows how to manage expanded/collapsed state
+  - Demonstrates recursive node building
+- id: react-flow-performance-incremental
+  prompt: How should I handle incremental rendering for large graphs with 1000+ nodes?
+  checks:
+  - regex: (useMemo|incremental|expandedChanged|cachedVisible)
+    length_min: 180
+    has_keyword: incremental
+  expectations:
+  - Explains incremental rendering approach
+  - Shows change detection mechanism
+  - Mentions performance optimization for large datasets
+- id: react-flow-memoization-patterns
+  prompt: What memoization strategies prevent unnecessary re-renders in ReactFlow?
+  checks:
+  - regex: (React\.memo|useMemo|useCallback|NodeProps)
+    length_min: 150
+    has_keyword: memo
+  expectations:
+  - Shows React.memo usage for node components
+  - Demonstrates custom comparison functions
+  - Provides useMemo examples for styled edges
+- id: react-flow-state-reducer-pattern
+  prompt: How do I implement a reducer pattern for managing ReactFlow node and edge
+    state?
+  checks:
+  - regex: (GraphAction|graphReducer|TOGGLE_EXPAND|SELECT_NODE)
+    length_min: 160
+    has_keyword: reducer
+  expectations:
+  - Shows typed GraphAction union type
+  - Demonstrates reducer switch statement
+  - Handles TOGGLE_EXPAND and SELECT_NODE actions
+- id: react-flow-undo-redo-history
+  prompt: How do I implement undo/redo functionality with history management in ReactFlow?
+  checks:
+  - regex: (historyIndex|SAVE_TO_HISTORY|RESTORE_FROM_HISTORY|canUndo)
+    length_min: 140
+    has_keyword: history
+  expectations:
+  - Shows history index tracking
+  - Demonstrates undo/redo callbacks
+  - Includes saveToHistory mechanism
+- id: react-flow-dagre-auto-layout
+  prompt: How do I integrate Dagre for automatic graph layout in ReactFlow?
+  checks:
+  - regex: (dagre|rankdir|nodesep|ranksep|g\.setNode)
+    length_min: 170
+    has_keyword: layout
+  expectations:
+  - Shows Dagre graph configuration
+  - Demonstrates node/edge addition to graph
+  - Explains layout position application
+- id: react-flow-focus-mode
+  prompt: How do I implement focus mode to isolate selected nodes and their connections?
+  checks:
+  - regex: (connectedNodeIds|focusedNodes|focusedEdges|fitView)
+    length_min: 150
+    has_keyword: focus
+  expectations:
+  - Shows filtering of connected nodes
+  - Demonstrates edge highlighting
+  - Includes smooth transitions for focus
+- id: react-flow-search-navigation
+  prompt: How do I implement search functionality to find and navigate to specific
+    nodes?
+  checks:
+  - regex: (searchNodes|calculateBreadcrumbPath|fitView|navigateToSearchResult)
+    length_min: 140
+    has_keyword: search
+  expectations:
+  - Shows node filtering by query
+  - Demonstrates parent path expansion
+  - Includes fitView for navigation
+- id: react-flow-performance-analyzer
+  prompt: How do I create a performance analysis script for ReactFlow graphs?
+  checks:
+  - regex: (GraphAnalyzer|countNodes|estimateRenderTime|detectPerformanceIssues)
+    length_min: 180
+    has_keyword: performance
+  expectations:
+  - Shows GraphAnalyzer class structure
+  - Demonstrates metrics calculation
+  - Includes issue detection and suggestions
+- id: react-flow-memory-optimization
+  prompt: What memory management patterns should I use for ReactFlow applications?
+  checks:
+  - regex: (Map|O\(1\)|useRef|WeakMap|layoutCacheRef)
+    length_min: 130
+    has_keyword: memory
+  expectations:
+  - Shows Map for O(1) node lookups
+  - Demonstrates layout caching
+  - Includes proper cleanup patterns
+- id: react-flow-common-problems
+  prompt: What are common ReactFlow performance issues and their solutions?
+  checks:
+  - regex: (lag|memory|re-renders|debounce|memoization)
+    length_min: 160
+    has_keyword: performance
+  expectations:
+  - Addresses lag during node expansion
+  - Solutions for memory growth
+  - Fixes for excessive re-renders
+- id: react-flow-complete-example
+  prompt: Show me a complete ReactFlow implementation with state management, layout,
+    and performance optimization.
+  checks:
+  - regex: (InteractiveGraph|GraphState|debouncedLayout|applyDagreLayout|fitView)
+    length_min: 200
+    has_keyword: complete
+  expectations:
+  - Full component with state management
+  - Integrated Dagre layout
+  - Memoized styling and debounced calculations
 ---
 # react-flow-architect
 

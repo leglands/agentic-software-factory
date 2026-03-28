@@ -44,6 +44,114 @@ eval_cases:
   tags:
   - agent
   - antipatterns
+- id: agent-orchestration-improve-baseline-metrics
+  prompt: What metrics should I collect to establish a baseline for agent performance?
+  checks:
+  - regex: (task completion|success rate|token|latency)
+  - length_min: 120
+  - has_keyword: metrics
+  expectations:
+  - Lists quantitative baseline metrics for agent performance
+  - Covers task success rate, latency, token consumption
+- id: agent-orchestration-improve-failure-modes
+  prompt: How do I classify failure modes in agent interactions?
+  checks:
+  - regex: (instruction|context|tool|constraint)
+  - length_min: 100
+  - has_keyword: failure
+  expectations:
+  - Categorizes failures by root cause
+  - Identifies instruction misunderstanding, context loss, tool misuse
+- id: agent-orchestration-improve-cot-enhancement
+  prompt: How can I implement chain-of-thought optimization in agent prompts?
+  checks:
+  - regex: (step-by-step|self-verification|reasoning|checkpoint)
+  - length_min: 80
+  - has_keyword: chain-of-thought
+  expectations:
+  - Describes structured reasoning patterns
+  - Includes self-verification checkpoints
+- id: agent-orchestration-improve-fewshot
+  prompt: What makes a good few-shot example for agent training?
+  checks:
+  - regex: (diverse|edge case|positive|negative|annotate)
+  - length_min: 100
+  - has_keyword: example
+  expectations:
+  - Covers example selection and ordering
+  - Includes edge cases and annotations
+- id: agent-orchestration-improve-role-definition
+  prompt: How should I define the role and constraints for an agent?
+  checks:
+  - regex: (mission|expertise|constraint|tool proficiency)
+  - length_min: 90
+  - has_keyword: role
+  expectations:
+  - Strengthens agent identity and capabilities
+  - Defines constraints and success criteria
+- id: agent-orchestration-improve-constitutional-ai
+  prompt: How do I integrate constitutional AI principles into agent prompts?
+  checks:
+  - regex: (self-critique|revision|principle|verify)
+  - length_min: 100
+  - has_keyword: constitutional
+  expectations:
+  - Implements critique-and-revise loops
+  - Adds self-correction mechanisms
+- id: agent-orchestration-improve-test-suite
+  prompt: What test categories should I include in an agent evaluation suite?
+  checks:
+  - regex: (golden path|edge case|stress test|adversarial)
+  - length_min: 80
+  - has_keyword: test
+  expectations:
+  - Covers golden path, regression, edge cases
+  - Includes adversarial inputs and stress tests
+- id: agent-orchestration-improve-ab-testing
+  prompt: How do I run A/B tests comparing two agent versions?
+  checks:
+  - regex: (statistical significance|confidence|sample size|p-value)
+  - length_min: 100
+  - has_keyword: A/B
+  expectations:
+  - Describes parallel test runner configuration
+  - Includes statistical significance testing requirements
+- id: agent-orchestration-improve-versioning
+  prompt: What is the versioning scheme for agent prompt changes?
+  checks:
+  - regex: (MAJOR|MINOR|PATCH|semantic)
+  - length_min: 70
+  - has_keyword: version
+  expectations:
+  - Explains semantic versioning for agents
+  - Defines version format and change types
+- id: agent-orchestration-improve-staged-rollout
+  prompt: How do I safely rollout a new agent version to production?
+  checks:
+  - regex: (alpha|beta|canary|monitoring)
+  - length_min: 90
+  - has_keyword: rollout
+  expectations:
+  - Describes staged rollout strategy
+  - Covers alpha, beta, canary deployment phases
+- id: agent-orchestration-improve-rollback
+  prompt: What triggers a rollback for an agent deployment?
+  checks:
+  - regex: (success rate|regression|alert|stable version)
+  - length_min: 80
+  - has_keyword: rollback
+  expectations:
+  - Lists rollback triggers with thresholds
+  - Describes quick recovery mechanism
+- id: agent-orchestration-improve-success-criteria
+  prompt: How do I measure if agent improvement was successful?
+  checks:
+  - regex: (success rate|improvement|baseline|satisfaction)
+  - length_min: 100
+  - has_keyword: success
+  expectations:
+  - Defines measurable success criteria
+  - Covers task success rate improvement targets
 ---
 # agent-orchestration-improve-agent
 

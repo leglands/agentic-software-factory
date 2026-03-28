@@ -141,6 +141,19 @@ async def _run_post_phase_hooks(
 
     phase_key = phase_name.lower().replace(" ", "-").replace("é", "e").replace("è", "e")
 
+    # Cleanup parasitic files before commit (.bak, .tmp, .orig, .swp)
+    try:
+        for ext in ("*.bak", "*.tmp", "*.orig", "*.swp"):
+            parasites = subprocess.run(
+                ["find", workspace, "-name", ext, "-not", "-path", "*/.git/*"],
+                capture_output=True, text=True, timeout=5,
+            )
+            for f in parasites.stdout.strip().split("\n"):
+                if f:
+                    Path(f).unlink(missing_ok=True)
+    except Exception:
+        pass
+
     # Auto-commit after EVERY phase — agents never call git_commit reliably
     try:
         git_add = subprocess.run(
@@ -2428,174 +2441,16 @@ def _detect_project_platform(workspace_path: str, brief: str = "") -> str:
     return "unknown"
 
 
-# Platform-specific QA/deploy/CI prompts
+# _PLATFORM_QA and _WEB_QA removed (2026-03-28)
+# Platform-specific instructions now come from agent skills + project memory,
+# not hardcoded Python dicts. The LLM reads the workspace and reasons about it.
 
-
-_PLATFORM_QA = {
-    "macos-native": {
-        "qa-campaign": (
-            "TYPE: Application macOS native (Swift/SwiftUI)\n"
-            "OUTILS QA ADAPTÉS — PAS de Playwright, PAS de Docker :\n"
-            "1. list_files + code_read pour comprendre la structure\n"
-            "2. Créez tests/PLAN.md (code_write) — plan de test macOS natif\n"
-            "3. Build: build command='swift build'\n"
-            "4. Tests unitaires: build command='swift test'\n"
-            "5. Bootez simulateur: build command='open -a Simulator'\n"
-            "6. SCREENSHOTS par parcours utilisateur (simulator_screenshot) :\n"
-            "   - simulator_screenshot filename='01_launch.png'\n"
-            "   - simulator_screenshot filename='02_main_view.png'\n"
-            "   - simulator_screenshot filename='03_feature_1.png'\n"
-            "   - simulator_screenshot filename='04_feature_2.png'\n"
-            "   - simulator_screenshot filename='05_settings.png'\n"
-            "7. Documentez bugs dans tests/BUGS.md, commitez\n"
-            "IMPORTANT: Chaque parcours DOIT avoir un screenshot réel."
-        ),
-        "qa-execution": (
-            "TYPE: Application macOS native (Swift/SwiftUI)\n"
-            "1. build command='swift test'\n"
-            "2. build command='open -a Simulator'\n"
-            "3. SCREENSHOTS: simulator_screenshot pour chaque écran\n"
-            "4. tests/REPORT.md avec résultats + screenshots\n"
-            "PAS de Playwright. PAS de Docker."
-        ),
-        "deploy-prod": (
-            "TYPE: Application macOS native — PAS de Docker/Azure\n"
-            "1. build command='swift build -c release'\n"
-            "2. Créez .app bundle ou archive\n"
-            "3. simulator_screenshot filename='release_final.png'\n"
-            "4. Documentez installation dans INSTALL.md\n"
-            "Distribution: TestFlight, .dmg, ou Mac App Store."
-        ),
-        "cicd": (
-            "TYPE: Application macOS native\n"
-            "1. Créez .github/workflows/ci.yml avec xcodebuild ou swift build\n"
-            "2. Créez scripts/build.sh + scripts/test.sh\n"
-            "3. build command='swift build && swift test'\n"
-            "4. git_commit\n"
-            "PAS de Dockerfile. PAS de docker-compose."
-        ),
-    },
-    "ios-native": {
-        "qa-campaign": (
-            "TYPE: Application iOS native (Swift/SwiftUI/UIKit)\n"
-            "OUTILS QA iOS — simulateur iPhone :\n"
-            "1. list_files + code_read\n"
-            "2. Créez tests/PLAN.md (code_write)\n"
-            "3. Build: build command='xcodebuild -scheme App -sdk iphonesimulator -destination \"platform=iOS Simulator,name=iPhone 16\" build'\n"
-            "4. Tests: build command='xcodebuild test -scheme App -sdk iphonesimulator -destination \"platform=iOS Simulator,name=iPhone 16\"'\n"
-            "5. SCREENSHOTS par parcours (simulator_screenshot) :\n"
-            "   - simulator_screenshot filename='01_splash.png'\n"
-            "   - simulator_screenshot filename='02_onboarding.png'\n"
-            "   - simulator_screenshot filename='03_main_screen.png'\n"
-            "   - simulator_screenshot filename='04_detail.png'\n"
-            "   - simulator_screenshot filename='05_profile.png'\n"
-            "6. Documentez bugs dans tests/BUGS.md\n"
-            "IMPORTANT: Screenshots RÉELS du simulateur iPhone."
-        ),
-        "qa-execution": (
-            "TYPE: Application iOS native\n"
-            "1. build command='xcodebuild test -scheme App -sdk iphonesimulator'\n"
-            "2. simulator_screenshot pour chaque écran\n"
-            "3. tests/REPORT.md\n"
-            "PAS de Playwright. PAS de Docker."
-        ),
-        "deploy-prod": (
-            "TYPE: Application iOS — TestFlight ou App Store\n"
-            "1. build command='xcodebuild archive -scheme App'\n"
-            "2. Export IPA pour TestFlight\n"
-            "3. simulator_screenshot filename='release_final.png'\n"
-            "Distribution: TestFlight → App Store Connect."
-        ),
-        "cicd": (
-            "TYPE: Application iOS native\n"
-            "1. .github/workflows/ci.yml avec xcodebuild + simulateur\n"
-            "2. Fastlane si disponible\n"
-            "3. build + test command\n"
-            "PAS de Docker."
-        ),
-    },
-    "android-native": {
-        "qa-campaign": (
-            "TYPE: Application Android native (Kotlin/Java)\n"
-            "OUTILS QA Android — émulateur :\n"
-            "1. list_files + code_read\n"
-            "2. Créez tests/PLAN.md (code_write)\n"
-            "3. Build: build command='./gradlew assembleDebug'\n"
-            "4. Tests: build command='./gradlew testDebugUnitTest'\n"
-            "5. Tests instrumentés: build command='./gradlew connectedAndroidTest'\n"
-            "6. SCREENSHOTS: build command='adb exec-out screencap -p > screenshots/NOM.png'\n"
-            "7. Documentez bugs dans tests/BUGS.md\n"
-            "IMPORTANT: Lancez l'émulateur et prenez des screenshots réels."
-        ),
-        "qa-execution": (
-            "TYPE: Application Android native\n"
-            "1. build command='./gradlew testDebugUnitTest'\n"
-            "2. build command='./gradlew connectedAndroidTest'\n"
-            "3. Screenshots via adb\n"
-            "4. tests/REPORT.md\n"
-            "PAS de Playwright."
-        ),
-        "deploy-prod": (
-            "TYPE: Application Android — Play Store\n"
-            "1. build command='./gradlew assembleRelease'\n"
-            "2. Signer l'APK/AAB\n"
-            "3. Screenshot final\n"
-            "Distribution: Google Play Console."
-        ),
-        "cicd": (
-            "TYPE: Application Android native\n"
-            "1. .github/workflows/ci.yml avec Gradle + JDK\n"
-            "2. Android SDK setup\n"
-            "3. ./gradlew build + test\n"
-            "PAS de Docker pour le build."
-        ),
-    },
-}
+_PLATFORM_QA = {}  # emptied — instructions in agent skills now
 
 # Web fallback (docker / node / static)
 
 
-_WEB_QA = {
-    "qa-campaign": (
-        "TYPE: Application web\n"
-        "1. list_files + code_read\n"
-        "2. Créez tests/PLAN.md (code_write)\n"
-        "3. Tests E2E Playwright :\n"
-        "   - tests/e2e/smoke.spec.ts (HTTP 200, 0 erreurs console)\n"
-        "   - tests/e2e/journey.spec.ts (parcours complets)\n"
-        "4. Lancez: playwright_test spec=tests/e2e/smoke.spec.ts\n"
-        "5. SCREENSHOTS par page/parcours :\n"
-        "   - screenshot url=http://localhost:3000 filename='01_home.png'\n"
-        "   - screenshot url=http://localhost:3000/dashboard filename='02_dashboard.png'\n"
-        "   UN SCREENSHOT PAR PAGE\n"
-        "6. tests/BUGS.md + git_commit\n"
-        "IMPORTANT: Screenshots réels, pas simulés."
-    ),
-    "qa-execution": (
-        "TYPE: Application web\n"
-        "1. playwright_test spec=tests/e2e/smoke.spec.ts\n"
-        "2. screenshot par page\n"
-        "3. tests/REPORT.md"
-    ),
-    "deploy-prod": (
-        "TYPE: Application web\n"
-        "DEPLOIEMENT REEL — Utilisez docker_deploy pour builder+run le container:\n"
-        "1. docker_deploy cwd=WORKSPACE_PATH mission_id=MISSION_ID\n"
-        "   → Auto-genere Dockerfile si absent, installe deps, build image, run container\n"
-        "   → Retourne l'URL live du container\n"
-        "2. docker_status mission_id=MISSION_ID pour verifier le container\n"
-        "3. screenshot url=URL_RETOURNEE filename='deploy_final.png'\n"
-        "4. Si health check echoue: docker_status pour les logs, corrigez, recommencez\n"
-        "IMPORTANT: PAS de discussion sur le deploiement. EXECUTEZ docker_deploy."
-    ),
-    "cicd": (
-        "TYPE: Application web\n"
-        "1. Dockerfile + docker-compose.yml\n"
-        "2. .github/workflows/ci.yml\n"
-        "3. scripts/build.sh + test.sh\n"
-        "4. build + verify"
-    ),
-}
+_WEB_QA = {}  # emptied — instructions in agent skills now
 
 
 async def _extract_features_from_phase(
@@ -2709,141 +2564,23 @@ def _build_phase_prompt(
     workspace_path: str = "",
 ) -> str:
     """Build a contextual task prompt for each lifecycle phase."""
-    platform = _detect_project_platform(workspace_path, brief=brief)
+    # Workspace scan: raw facts injected into every phase prompt
+    _workspace_brief = ""
+    if workspace_path:
+        try:
+            from ....patterns.engine import _generate_project_brief
+            _workspace_brief = _generate_project_brief(workspace_path)
+        except Exception:
+            pass
 
-    # Get platform-specific QA/deploy/cicd prompts
-    platform_prompts = _PLATFORM_QA.get(platform, {})
-
-    def _qa(key: str) -> str:
-        base = platform_prompts.get(key, _WEB_QA.get(key, ""))
-        return f"{key.replace('-', ' ').title()} pour «{brief}».\n{base}\nIMPORTANT: Commandes réelles, pas de simulation."
-
-    platform_label = {
-        "macos-native": "macOS native (Swift/SwiftUI)",
-        "ios-native": "iOS native (Swift/SwiftUI/UIKit)",
-        "android-native": "Android native (Kotlin/Java)",
-        "web-docker": "web (Docker)",
-        "web-node": "web (Node.js)",
-        "web-static": "web statique",
-    }.get(platform, "")
-
-    prompts = {
-        "ideation": (
-            f"Nous démarrons l'idéation pour le projet : «{brief}».\n"
-            "Chaque expert doit donner son avis selon sa spécialité :\n"
-            "- Business Analyst : besoin métier, personas, pain points\n"
-            "- UX Designer : parcours utilisateur, wireframes, ergonomie\n"
-            "- Architecte : faisabilité technique, stack recommandée\n"
-            "- Product Manager : valeur business, ROI, priorisation\n"
-            "Débattez et convergez vers une vision produit cohérente."
-        ),
-        "strategic-committee": (
-            f"Comité stratégique GO/NOGO pour le projet : «{brief}».\n"
-            "Analysez selon vos rôles respectifs :\n"
-            "- CPO : alignement vision produit, roadmap\n"
-            "- CTO : risques techniques, capacité équipe\n"
-            "- Portfolio Manager : WSJF score, priorisation portefeuille\n"
-            "- Lean Portfolio Manager : budget, ROI, lean metrics\n"
-            "- DSI : alignement stratégique SI, gouvernance\n"
-            "Donnez votre avis : GO, NOGO, ou PIVOT avec justification."
-        ),
-        "project-setup": (
-            f"Constitution du projet «{brief}».\n"
-            "- Scrum Master : cérémonie, cadence sprints, outils\n"
-            "- RH : staffing, compétences requises, planning\n"
-            "- Lead Dev : stack technique, repo, CI/CD setup\n"
-            "- Product Owner : backlog initial, user stories prioritisées\n"
-            "Définissez l'organisation projet complète."
-        ),
-        "architecture": (
-            f"Design architecture pour «{brief}».\n"
-            + (f"PLATEFORME CIBLE: {platform_label}\n" if platform_label else "")
-            + "- Architecte : patterns, layers, composants, API design\n"
-            "- UX Designer : maquettes, design system, composants UI\n"
-            "- Expert Sécurité : threat model, auth, OWASP\n"
-            "- DevOps : infra, CI/CD, monitoring, environnements\n"
-            "- Lead Dev : revue technique, standards code\n"
-            "Produisez le dossier d'architecture consolidé."
-        ),
-        "dev-sprint": (
-            f"Sprint de développement TDD pour «{brief}».\n"
-            + (f"PLATEFORME: {platform_label}\n" if platform_label else "")
-            + (
-                f"/!\\ STACK OBLIGATOIRE: {platform_label}. NE PAS utiliser une autre technologie.\n"
-                f"{'Utilisez HTML/CSS/JS ou TypeScript/Node.js. NE PAS écrire de Swift.' if platform in ('web-node', 'web-docker', 'web-static') else ''}\n"
-                f"{'Utilisez Swift/SwiftUI. NE PAS écrire de TypeScript.' if platform in ('ios-native', 'macos-native') else ''}\n"
-                f"{'Utilisez Kotlin/Java. NE PAS écrire de Swift.' if platform == 'android-native' else ''}\n"
-                if platform_label
-                else ""
-            )
-            + "VOUS DEVEZ UTILISER VOS OUTILS pour écrire du VRAI code dans le workspace.\n\n"
-            "WORKFLOW OBLIGATOIRE:\n"
-            "1. LIRE LE WORKSPACE: list_files + code_read sur les fichiers existants\n"
-            "2. ECRIRE LE CODE avec code_write:\n"
-            "   - Créer les fichiers source (HTML, CSS, JS, package.json si Node.js)\n"
-            "   - Créer au moins un fichier de test\n"
-            "   - Minimum 5 fichiers source pour une application fonctionnelle\n"
-            "3. BUILDER avec l'outil build:\n"
-            "   - Appeler build(command='npm install && npm run build', cwd=WORKSPACE)\n"
-            "   - Ou build(command='npx tsc --noEmit', cwd=WORKSPACE) pour TypeScript\n"
-            "   - Pour du HTML/JS simple: build(command='node -e \"console.log(1)\"', cwd=WORKSPACE)\n"
-            "4. TESTER avec l'outil test:\n"
-            "   - Appeler test(command='npm test', cwd=WORKSPACE)\n"
-            "   - Ou test(command='node tests/run.js', cwd=WORKSPACE)\n"
-            "5. COMMITTER avec git_commit: message descriptif\n\n"
-            "REGLES STRICTES:\n"
-            "- Chaque dev DOIT appeler code_write au minimum 3 fois\n"
-            "- Au moins UN appel à build() ou test() est OBLIGATOIRE\n"
-            "- NE DISCUTEZ PAS du code. ECRIVEZ-LE avec code_write.\n"
-            "- Pas de placeholder, pas de TODO, pas de mock — du vrai code fonctionnel\n"
-            "- Créez un package.json si c'est un projet Node.js"
-        ),
-        "cicd": _qa("cicd"),
-        "qa-campaign": _qa("qa-campaign"),
-        "qa-execution": _qa("qa-execution"),
-        "deploy-prod": _qa("deploy-prod"),
-        "tma-routing": (
-            f"Routage incidents TMA pour «{brief}».\n"
-            "- Support N1 : classification, triage incident\n"
-            "- Support N2 : diagnostic technique\n"
-            "- QA : reproduction, test regression\n"
-            "- Lead Dev : évaluation impact, assignation\n"
-            "Classifiez et routez l'incident."
-        ),
-        "tma-fix": (
-            f"Correctif TMA (TDD) pour «{brief}».\n"
-            "UTILISEZ VOS OUTILS — methode TDD obligatoire :\n"
-            "1. Lisez le code concerne avec code_read\n"
-            "2. RED: Ecrivez le test de non-regression qui reproduit le bug (code_write)\n"
-            "3. Lancez le test — il DOIT echouer (confirmant le bug)\n"
-            "4. GREEN: Corrigez le code avec code_edit (fix minimal)\n"
-            "5. Lancez le test — il DOIT passer\n"
-            "6. Lancez TOUS les tests pour verifier zero regression\n"
-            "7. Commitez avec git_commit (message: fix + test ajouté)"
-        ),
-    }
-    # Match by phase key first, then by alias mappings, then by index
-    phase_key = phase_name.lower().replace(" ", "-").replace("é", "e").replace("è", "e")
-    # Alias map for workflow phase names → prompt keys
-    _KEY_ALIASES = {
-        "feature-design": "architecture",
-        "tdd-sprint": "dev-sprint",
-        "adversarial-review": "qa-campaign",
-        "tests-e2e": "qa-execution",
-        "deploy-feature": "deploy-prod",
-        "feature-e2e": "qa-execution",
-    }
-    resolved_key = _KEY_ALIASES.get(phase_key, phase_key)
-    if resolved_key in prompts:
-        prompt = prompts[resolved_key]
-    elif idx < len(prompts):
-        ordered_keys = list(prompts.keys())
-        prompt = prompts[ordered_keys[idx]]
-    else:
-        prompt = (
-            f"Phase {idx + 1}/{total} : {phase_name} (pattern: {pattern}) pour le projet «{brief}».\n"
-            "Chaque agent contribue selon son rôle. Produisez un livrable concret."
-        )
+    # Phase prompt: brief + phase name + workspace facts. That's it.
+    # Agents have skills and memory for platform-specific knowledge.
+    prompt = (
+        f"Phase {idx + 1}/{total} : **{phase_name}** (pattern: {pattern}) pour le projet «{brief}».\n\n"
+        "Chaque agent contribue selon son rôle et ses skills. Produisez un livrable concret.\n"
+        "OBLIGATOIRE: utilisez vos outils (list_files, code_read, code_write, build, test). "
+        "Pas de texte seul — du travail réel avec les tools."
+    )
 
     # Inject previous phase context
     if prev_context:
@@ -2853,17 +2590,11 @@ def _build_phase_prompt(
             "Utilisez ce contexte. Lisez le workspace avec list_files et code_read pour voir le travail déjà fait."
         )
 
-    # Inject workspace path so agents know where to work
-    if workspace_path:
-        prompt += (
-            f"\n\nWORKSPACE: {workspace_path}\n"
-            f"RÈGLES IMPÉRATIVES pour écrire du code:\n"
-            f"- code_write: path DOIT être absolu et commencer par {workspace_path}/ "
-            f"(ex: path='{workspace_path}/src/main.py'). "
-            f"NE JAMAIS utiliser un chemin relatif ou inventer un autre répertoire.\n"
-            f"- build/test: utiliser cwd='{workspace_path}'\n"
-            f"- list_files: utiliser path='{workspace_path}' pour lister les fichiers existants"
-        )
+    # Inject workspace scan (raw facts — the LLM reasons about them)
+    if _workspace_brief:
+        prompt += f"\n\n{_workspace_brief}"
+    elif workspace_path:
+        prompt += f"\n\nWORKSPACE: {workspace_path}"
 
     return prompt
 

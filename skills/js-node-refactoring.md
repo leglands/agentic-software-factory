@@ -77,7 +77,7 @@ eval_cases:
 
 # JavaScript/Node.js Refactoring & Performance Optimization
 
-## Table of Contents
+## TOC
 
 1. [Event Loop Blocking Detection](#1-event-loop-blocking-detection)
 2. [Memory Leak Patterns](#2-memory-leak-patterns)
@@ -97,7 +97,7 @@ eval_cases:
 
 ### The Problem
 
-Node.js runs on a single-threaded event loop. Synchronous blocking operations freeze the entire process, degrading throughput.
+Node.js runs on single-threaded event loop. Sync blocking operations freeze entire process → degraded throughput.
 
 ### Detection
 
@@ -160,7 +160,7 @@ function runInWorker(workerPath, data) {
 ### Patterns to Avoid
 
 | Blocking Call | Non-blocking Alternative |
-|---------------|---------------------------|
+|---------------|--------------------------|
 | `fs.readFileSync` | `fs.promises.readFile` |
 | `JSON.parse(str)` (large) | `JSON.parse(str)` in Worker |
 | `for/while` loops > 1ms | `setImmediate` chunking |

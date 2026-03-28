@@ -42,6 +42,126 @@ eval_cases:
   tags:
   - api
   - antipatterns
+- id: api-security-jwt-implementation
+  prompt: How do I implement JWT authentication securely in my API?
+  checks:
+  - regex: (expiresIn|JWT_SECRET|token|bcrypt)
+    length_min: 150
+    has_keyword: jwt
+  expectations:
+  - Explains token generation with expiration
+  - Mentions secure secret storage
+  - Covers token verification middleware
+- id: api-security-sql-injection-prevention
+  prompt: How do I prevent SQL injection in my REST API?
+  checks:
+  - regex: (parameterized|query|ORM|validation)
+    length_min: 120
+    has_keyword: sql
+  expectations:
+  - Recommends parameterized queries
+  - Mentions input validation
+  - Covers ORM usage
+- id: api-security-rate-limiting
+  prompt: Implement rate limiting for my Express API to prevent DDoS
+  checks:
+  - regex: (rateLimit|Redis|windowMs|max)
+    length_min: 100
+    has_keyword: rate
+  expectations:
+  - Provides express-rate-limit implementation
+  - Covers Redis store configuration
+  - Mentions per-user or per-IP limiting
+- id: api-security-input-validation
+  prompt: How should I validate user input in my API endpoints?
+  checks:
+  - regex: (schema|Zod|validate|regex)
+    length_min: 100
+    has_keyword: validation
+  expectations:
+  - Covers request schema validation
+  - Mentions specific validation libraries
+  - Includes length and type checks
+- id: api-security-password-hashing
+  prompt: What are secure password hashing practices for user authentication?
+  checks:
+  - regex: (bcrypt|hash|salt| rounds)
+    length_min: 80
+    has_keyword: password
+  expectations:
+  - Recommends bcrypt with salt rounds >= 10
+  - Warns against plain text storage
+  - Mentions password strength requirements
+- id: api-security-cors-configuration
+  prompt: How do I configure CORS securely for my API?
+  checks:
+  - regex: (CORS|origin|credentials|whitelist)
+    length_min: 80
+    has_keyword: CORS
+  expectations:
+  - Explains proper origin validation
+  - Covers credentials handling
+  - Warns against wildcard origins
+- id: api-security-error-handling
+  prompt: How should I handle errors without exposing sensitive information?
+  checks:
+  - regex: (error|stack|log|generic)
+    length_min: 100
+    has_keyword: error
+  expectations:
+  - Warns against exposing stack traces
+  - Recommends generic error messages
+  - Mentions logging without sensitive data
+- id: api-security-owasp-top10
+  prompt: What are the OWASP API Security Top 10 vulnerabilities?
+  checks:
+  - regex: (OWASP|Broken|Authorization|injection)
+    length_min: 150
+    has_keyword: OWASP
+  expectations:
+  - Lists at least 5 OWASP API vulnerabilities
+  - Explains Broken Object Level Authorization
+  - Covers Broken Authentication
+- id: api-security-xss-prevention
+  prompt: How do I prevent XSS attacks in my API responses?
+  checks:
+  - regex: (sanitize|DOMPurify|XSS|HTML|escape)
+    length_min: 80
+    has_keyword: XSS
+  expectations:
+  - Recommends output sanitization
+  - Mentions DOMPurify or similar
+  - Covers HTML encoding
+- id: api-security-rbac-implementation
+  prompt: How do I implement role-based access control (RBAC) in my API?
+  checks:
+  - regex: (role|RBAC|permission|admin)
+    length_min: 100
+    has_keyword: role
+  expectations:
+  - Explains RBAC concept
+  - Covers middleware for authorization
+  - Mentions admin and user role separation
+- id: api-security-helmet-headers
+  prompt: How do I set up security headers to protect my API?
+  checks:
+  - regex: (Helmet|HSTS|CSP|X-Frame|security)
+    length_min: 80
+    has_keyword: security
+  expectations:
+  - Recommends Helmet.js
+  - Covers HSTS configuration
+  - Mentions CSP and X-Frame-Options
+- id: api-security-token-refresh
+  prompt: How should I implement token refresh flow for long-lived sessions?
+  checks:
+  - regex: (refresh|token|expires|revoke)
+    length_min: 100
+    has_keyword: refresh
+  expectations:
+  - Explains refresh token mechanism
+  - Covers token storage in database
+  - Mentions token revocation capability
 ---
 # api-security-best-practices
 

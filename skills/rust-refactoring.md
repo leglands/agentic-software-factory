@@ -171,9 +171,10 @@ eval_cases:
 
 ## Hot/Cold Path Annotations
 
-### `#[inline]` — Force Inlineing
-- **Always**: Accessors, small trait methods, closures passed to iterators
-- **Never**: Complex functions with deep call stacks, error paths
+### `#[inline]` — Force Inlining
+
+- **Always**: accessors, small trait methods, closures passed to iterators
+- **Never**: complex functions w/ deep call stacks, error paths
 - **Hint**: `#[inline(always)]` for tiny hot functions; `#[inline]` lets compiler decide
 
 ```rust
@@ -190,12 +191,13 @@ pub fn report_error(&self, err: &Error) {
 ```
 
 ### `#[cold]` — Mark Unlikely Branches
+
 - Error handlers, fallback paths, logging in hot loops
-- Compiler uses this for basic block ordering (instruction cache friendliness)
+- Compiler uses for basic block ordering → instruction cache friendliness
 
 ## Buffer Reuse Pattern
 
-Avoid per-call `Vec` allocation by reusing a scratch buffer:
+Avoid per-call `Vec` allocation → reuse scratch buffer:
 
 ```rust
 use std::mem::MaybeUninit;
@@ -226,6 +228,7 @@ impl Serializer {
 ## Zero-Copy Techniques
 
 ### `Cow<str>` / `Cow<[u8]>`
+
 ```rust
 use std::borrow::Cow;
 
@@ -239,6 +242,7 @@ fn sanitize(input: &str) -> Cow<str> {
 ```
 
 ### Zero-Copy Deserialization with `&[u8]`
+
 ```rust
 // BAD: allocates Vec for payload
 fn read_payload(data: &[u8]) -> Vec<u8> {
@@ -252,6 +256,7 @@ fn read_payload(data: &[u8]) -> &[u8] {
 ```
 
 ### `into_` Methods for Ownership Transfer
+
 ```rust
 struct Inner(Vec<u8>);
 
@@ -292,11 +297,11 @@ for chunk in &iter.into_iter().chunks(1024) {
 
 ## `unsafe` Audit Checklist
 
-1. **Minimize scope**: Wrap unsafe in safe abstractions immediately
-2. **Document invariants**: Every unsafe block must have a comment explaining why UB is impossible
+1. **Minimize scope**: wrap unsafe in safe abstractions immediately
+2. **Document invariants**: every unsafe block needs comment explaining why UB is impossible
 3. **Mark with `UNSAFE_BODY` or custom marker**: `const UNSAFE_BODY: &str = "...";`
-4. **Validate pointers**: Check for null, alignment, validity before dereferencing
-5. **Use `MaybeUninit`**: For uninitialized memory, never use `std::mem::uninitialized()`
+4. **Validate pointers**: check null, alignment, validity before dereferencing
+5. **Use `MaybeUninit`**: for uninitialized memory, never use `std::mem::uninitialized()`
 
 ```rust
 /// # Safety
@@ -310,9 +315,9 @@ unsafe fn borrow_unchecked<'a, T>(ptr: *const T) -> &'a T {
 ## Lifetime Elision Cleanup
 
 Lifetime elision rules (Rust 2018+):
-- Each input reference gets its own lifetime
-- If there's exactly one input lifetime, it's assigned to all output lifetimes
-- Otherwise, the user must annotate
+- Each input reference → own lifetime
+- If exactly one input lifetime → assigned to all output lifetimes
+- Otherwise → user must annotate
 
 ```rust
 // A: compiles — single input lifetime
@@ -377,9 +382,10 @@ grep -rn 'allow(dead_code)' src/
 ```
 
 ### Checklist
+
 - [ ] Remove `use` statements for items never referenced
 - [ ] Check for `impl`s where all methods are `#[allow(dead_code)]`
-- [ ] `#[allow(dead_code)]` on `struct`/`enum` — consider `#[derive(Debug)]` or `#[derive(PartialEq)]` usage
+- [ ] `#[allow(dead_code)]` on `struct`/`enum` → consider `#[derive(Debug)]` or `#[derive(PartialEq)]` usage
 - [ ] Unreachable match arms: use `unreachable!()` or `#[deny(unreachable_patterns)]`
 
 ## Dependency Audit
@@ -430,7 +436,7 @@ impl TryFrom<&[u8]> for Record {
 
 ## Type State Pattern
 
-Encode invariants at the type level to make invalid states unrepresentable:
+Encode invariants at type level → invalid states unrepresentable:
 
 ```rust
 use std::marker::PhantomData;

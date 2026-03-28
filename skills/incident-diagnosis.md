@@ -41,6 +41,148 @@ eval_cases:
       - Runs diag_logs filtering for OOM or GC pressure
       - Runs diag_queue_depth to check if backlog is growing
       - Recommends tracemalloc profiling if leak confirmed
+  - input: "API is returning 503s intermittently, about 1 in 10 requests fails"
+    checks:
+      - "regex:503|pool|connection|exhaust|race.condition|timeout|config"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_endpoint_latency to identify 503 pattern
+      - Runs diag_db_stats to check connection pool utilization
+      - Runs diag_process_stats to check for saturation
+      - Runs diag_logs filtering for connection errors or pool full messages
+      - Identifies connection pool exhaustion as top hypothesis
+      - Recommends increasing pool size or investigating connection leak
+  - input: "The notification service is failing, but users report checkout also broke"
+    checks:
+      - "regex:cascad|downstream|dependency|propagat|fallback|circuit.breaker|notify"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_logs on notification service first
+      - Runs diag_endpoint_latency on checkout endpoint
+      - Runs diag_logs on checkout service to find dependency errors
+      - Identifies cascading failure pattern (notification outage causing checkout failure)
+      - Recommends adding circuit breakers or fallback behavior
+      - Notes the root cause is the notification service, not checkout
+  - input: "Some users see correct data, others see stale or missing data — no errors in logs"
+    checks:
+      - "regex:stale|cache|inconsist|replication|lag|missing|partial|read.replica"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_db_stats to check replication lag
+      - Runs diag_logs with no error filter to look for cache events
+      - Runs diag_endpoint_latency on affected endpoint
+      - Hypothesizes read replica lag or cache inconsistency
+      - Recommends checking replication status or cache TTL settings
+      - Notes no errors in logs is consistent with eventual consistency issues
+  - input: "Containers are restarting randomly with no OOM in the logs"
+    checks:
+      - "regex:disk|space|full|no.*OOM|log.rotate|snapshot|volume|container"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_process_stats to check disk utilization
+      - Runs diag_logs filtering for disk or volume messages
+      - Runs diag_logs with no error filter for restart signals
+      - Identifies disk space exhaustion (not OOM) as root cause
+      - Recommends log rotation, volume expansion, or snapshot cleanup
+      - Notes containers restart when disk is full even without memory pressure
+  - input: "Error rate jumped 4x at 14:23 — a deploy happened at 14:20"
+    checks:
+      - "regex:14:23|deploy|regression|git|diff|rollback|blast.radius|recent"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_logs at the 14:23 timestamp window
+      - Runs diag_correlate with deploy context (PR, diff, migration)
+      - Identifies the deploy as the likely cause (4x error spike within minutes of deploy)
+      - Recommends rollback or git bisect to identify the offending commit
+      - Notes the blast radius to narrow scope
+      - Produces ranked hypotheses with deploy as #1
+  - input: "Database queries that normally take 10ms are now taking 800ms. No schema changes were made."
+    checks:
+      - "regex:lock|contention|transaction|serialize|wait|deadlock|isolation"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_db_stats to check for lock waits or table-level locking
+      - Runs diag_logs filtering for lock timeout or deadlock messages
+      - Runs diag_process_stats to check for long-running transactions
+      - Identifies lock contention as the root cause
+      - Recommends reviewing open transactions and lock timeout settings
+      - Notes this is a classic sign of a long transaction holding locks
+  - input: "A critical error was supposed to be logged but the ops team says they never saw it — logs look clean"
+    checks:
+      - "regex:log|saturat|buffer|drop|overflow|missing|filter|level|stderr"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_logs with no error filter and high line count
+      - Runs diag_process_stats to check log buffer status
+      - Hypothesizes log buffer overflow or log level filtering suppressing the error
+      - Recommends checking log daemon buffer size and log level configuration
+      - Notes clean logs do not mean no error — could be log saturation
+  - input: "API is returning 429 Too Many Requests on about 5% of calls — not 503"
+    checks:
+      - "regex:429|rate.limit|throttle|quota|RPS|too.many|backoff|retry"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_endpoint_latency to identify 429 pattern
+      - Runs diag_logs filtering for 429 or rate limit messages
+      - Runs diag_process_stats to check if service is hitting external quota
+      - Identifies rate limiting as the cause, not a server crash
+      - Recommends implementing exponential backoff or requesting quota increase
+      - Notes 429 is not a crash — it's a signal to slow down or batch requests
+  - input: "One microservice is unable to reach another — curl returns 'Could not resolve host'"
+    checks:
+      - "regex:DNS|resolve|host|nslookup|dig|resolv|/etc/hosts|container"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_process_stats on affected service to check container networking
+      - Runs diag_logs filtering for DNS, resolution, or network errors
+      - Identifies DNS resolution failure as the root cause
+      - Recommends checking container DNS config, /etc/hosts, or coredns issues
+      - Notes this is a common cause of microservice interconnection failures
+  - input: "A small number of users (~0.1%) are seeing completely wrong data — most users are fine"
+    checks:
+      - "regex:corruption|wrong.data|0\\.1|inconsist|ghost|phantom|cache.poison|stale"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_db_stats to check for data integrity issues
+      - Runs diag_logs filtering for corruption, inconsistency, or cache errors
+      - Runs diag_endpoint_latency on affected endpoints
+      - Hypothesizes cache poisoning, ghost reads, or race condition in read path
+      - Recommends checking cache invalidation logic and DB replication integrity
+      - Notes this is low prevalence but high severity
+  - input: "API response times are erratic — sometimes 50ms, sometimes 5000ms, no pattern in the logs"
+    checks:
+      - "regex:CPU|throttl|governor|spike|burst|erratic|schedule|container|noisy"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_process_stats with CPU metrics over time
+      - Runs diag_logs to find CPU throttling messages
+      - Runs diag_correlate with evidence of erratic latency spikes
+      - Identifies CPU throttling or CFS scheduler contention as root cause
+      - Recommends checking CPU limits, CPU governor settings, or noisy neighbor
+      - Notes erratic latency with no error log is classic throttling signature
+  - input: "Service A can reach the database but Service B gets connection timeouts to the same database"
+    checks:
+      - "regex:network|partition|timeout|firewall|security.group|route|Service.B|connectivity"
+      - "length_min:80"
+      - "no_placeholder"
+    expect:
+      - Runs diag_process_stats on Service B to check network interface
+      - Runs diag_logs on both services with connectivity filter
+      - Runs diag_logs filtering for timeout or connection refused errors
+      - Hypothesizes network partition or firewall rule blocking Service B specifically
+      - Recommends checking security group rules, VPC routes, or DNS resolution
+      - Notes that Service A working rules out database as the root cause
 ---
 
 # Incident Diagnosis Skill

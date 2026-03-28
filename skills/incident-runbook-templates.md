@@ -42,6 +42,195 @@ eval_cases:
   tags:
   - incident
   - antipatterns
+- id: incident-runbook-service-outage-response
+  prompt: A payment service is experiencing complete outage with all requests failing.
+    What steps should an on-call engineer take according to the runbook template?
+  checks:
+  - length_min: 200
+  - has_keyword:
+    - kubectl
+    - rollback
+    - pods
+    - escalation
+  - regex: (?i)(assess|check|triage|mitigation)
+  expectations:
+  - Covers initial triage steps for service outage
+  - Includes kubectl commands for pod inspection
+  - Mentions rollback procedure
+  - Contains escalation path
+- id: incident-runbook-severity-classification
+  prompt: How should I classify incident severity levels in a runbook and what are
+    the response times for each level?
+  checks:
+  - length_min: 150
+  - has_keyword:
+    - SEV1
+    - SEV2
+    - SEV3
+    - SEV4
+    - response time
+  - regex: (?i)(severity|impact|outage|degradation)
+  expectations:
+  - Defines SEV1 through SEV4 with impact descriptions
+  - Specifies response times for each level
+  - Provides examples for each severity
+- id: incident-runbook-database-connection-exhaustion
+  prompt: My PostgreSQL database is showing connection pool exhaustion. What commands
+    and procedures should I follow from the database incident runbook?
+  checks:
+  - length_min: 120
+  - has_keyword:
+    - pg_stat_activity
+    - pg_terminate_backend
+    - connection
+  - regex: (?i)(pool|connections|query|terminate)
+  expectations:
+  - Provides SQL commands to check connections
+  - Shows how to identify long-running queries
+  - Includes commands to terminate idle connections
+- id: incident-runbook-communication-template
+  prompt: I need to write an initial internal notification for a SEV2 incident affecting
+    20% of payment requests. What should the communication include?
+  checks:
+  - length_min: 100
+  - has_keyword:
+    - severity
+    - status
+    - impact
+    - incident commander
+  - regex: (?i)(notification|update|resolve|affected)
+  expectations:
+  - Includes severity level and status
+  - Describes current impact
+  - Lists actions being taken
+  - Provides escalation information
+- id: incident-runbook-rollback-procedure
+  prompt: A recent deployment appears to be causing issues. How do I rollback using
+    the runbook procedures?
+  checks:
+  - length_min: 100
+  - has_keyword:
+    - rollback
+    - deployment
+    - kubectl
+    - migration
+  - regex: (?i)(undo|rollout|feature.?flag|revert)
+  expectations:
+  - Shows kubectl rollout undo command
+  - Mentions database migration rollback
+  - Includes feature flag rollback
+  - Covers verification after rollback
+- id: incident-runbook-high-latency-investigation
+  prompt: Payment service latency has increased to p99 > 2s. What systematic approach
+    does the runbook recommend for diagnosing the cause?
+  checks:
+  - length_min: 150
+  - has_keyword:
+    - latency
+    - database
+    - dependency
+    - circuit breaker
+  - regex: (?i)(slow.?query|connection|external|replica)
+  expectations:
+  - Covers database connection checks
+  - Includes slow query identification
+  - Mentions external dependency checks
+  - Provides circuit breaker enabling steps
+- id: incident-runbook-traffic-surge-handling
+  prompt: We're experiencing unexpected traffic surge causing service degradation.
+    What capacity scaling steps does the runbook prescribe?
+  checks:
+  - length_min: 120
+  - has_keyword:
+    - scale
+    - replicas
+    - rate limiting
+    - NetworkPolicy
+  - regex: (?i)(horizontal|scale|limit|block)
+  expectations:
+  - Shows horizontal scaling commands
+  - Includes rate limiting configuration
+  - Mentions blocking suspicious IPs
+  - Covers monitoring after scaling
+- id: incident-runbook-escalation-matrix
+  prompt: When should I escalate an incident and to whom? What conditions trigger
+    escalation according to the runbook?
+  checks:
+  - length_min: 80
+  - has_keyword:
+    - escalate
+    - manager
+    - security
+    - finance
+  - regex: (?i)(unresolved|breach|impact|minutes)
+  expectations:
+  - Defines time-based escalation triggers
+  - Lists escalation targets (manager, security, finance)
+  - Covers data breach scenarios
+  - Includes communication requirements
+- id: incident-runbook-post-incident-verification
+  prompt: After resolving an incident, how do I verify the service is fully recovered
+    according to the runbook verification steps?
+  checks:
+  - length_min: 100
+  - has_keyword:
+    - health
+    - error rate
+    - latency
+    - smoke test
+  - regex: (?i)(verify|recover|normal|curl)
+  expectations:
+  - Includes health endpoint checks
+  - Shows error rate verification queries
+  - Mentions latency verification
+  - Covers smoke test execution
+- id: incident-runbook-best-practices-dos
+  prompt: What are the key do's for creating and maintaining incident runbooks?
+  checks:
+  - length_min: 100
+  - has_keyword:
+    - updated
+    - test
+    - rollback
+    - assumptions
+  - regex: (?i)(keep|test|include|document|link)
+  expectations:
+  - Emphasizes keeping runbooks updated
+  - Recommends regular testing
+  - Stresses including rollback steps
+  - Mentions documenting assumptions
+- id: incident-runbook-database-replication-lag
+  prompt: The database replica is showing significant replication lag. What diagnostic
+    queries and actions does the runbook recommend?
+  checks:
+  - length_min: 100
+  - has_keyword:
+    - replication
+    - pg_last_xact_replay_timestamp
+    - lag
+    - failover
+  - regex: (?i)(wal|replica|network|disk)
+  expectations:
+  - Provides replication lag query
+  - Lists possible causes to check
+  - Mentions failover consideration
+  - Includes threshold guidance
+- id: incident-runbook-antipatterns
+  prompt: What common mistakes should I avoid when following incident runbooks at
+    3 AM?
+  checks:
+  - length_min: 80
+  - has_keyword:
+    - assumption
+    - verification
+    - communication
+    - postmortem
+  - regex: (?i)(don'?t|skip|alone|forget)
+  expectations:
+  - Warns against assuming knowledge
+  - Emphasizes verification steps
+  - Stresses communication importance
+  - Mentions postmortem necessity
 ---
 # incident-runbook-templates
 

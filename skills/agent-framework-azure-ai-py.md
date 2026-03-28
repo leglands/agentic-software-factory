@@ -44,6 +44,119 @@ eval_cases:
   tags:
   - agent
   - antipatterns
+- id: azure-ai-basic-agent-creation
+  prompt: Show me how to create a basic Azure AI agent with the agent-framework-azure-ai-py
+    SDK
+  checks:
+  - regex: AzureAIAgentsProvider|create_agent
+    length_min: 150
+    has_keyword: async
+  expectations:
+  - Shows async context manager pattern with AzureAIAgentsProvider
+  - Demonstrates agent creation with name and instructions
+- id: azure-ai-function-tool-registration
+  prompt: How do I register a Python function as a tool for my Azure AI agent?
+  checks:
+  - regex: tools=\[|get_weather|Annotated
+    length_min: 100
+    has_keyword: Field
+  expectations:
+  - Explains using Annotated with Field for parameter descriptions
+  - Shows passing functions directly to tools parameter
+- id: azure-ai-hosted-code-interpreter
+  prompt: How can I use the hosted code interpreter tool in my Azure AI agent?
+  checks:
+  - regex: HostedCodeInterpreterTool|pip install
+    length_min: 80
+    has_keyword: agent_framework
+  expectations:
+  - Shows importing HostedCodeInterpreterTool
+  - Demonstrates adding it to tools list
+- id: azure-ai-streaming-responses
+  prompt: How do I stream responses from an Azure AI agent instead of waiting for
+    completion?
+  checks:
+  - regex: run_stream|async for|chunk
+    length_min: 100
+    has_keyword: print
+  expectations:
+  - Shows use of run_stream() method
+  - Demonstrates async iteration over chunks
+- id: azure-ai-conversation-threads
+  prompt: How do I maintain conversation context across multiple turns with an Azure
+    AI agent?
+  checks:
+  - regex: get_new_thread|thread=|conversation_id
+    length_min: 120
+    has_keyword: thread
+  expectations:
+  - Explains thread creation and persistence
+  - Shows passing thread parameter to run()
+- id: azure-ai-structured-outputs
+  prompt: How can I get structured JSON responses from my Azure AI agent using Pydantic
+    models?
+  checks:
+  - regex: response_format|WeatherResponse|model_validate_json
+    length_min: 100
+    has_keyword: BaseModel
+  expectations:
+  - Shows defining Pydantic model with model_config
+  - Demonstrates using response_format parameter
+- id: azure-ai-mcp-tool-integration
+  prompt: How do I integrate an MCP (Model Context Protocol) tool with Azure AI agents?
+  checks:
+  - regex: MCPStreamableHTTPTool|HostedMCPTool
+    length_min: 80
+    has_keyword: mcp_tool
+  expectations:
+  - Distinguishes betweenHostedMCPTool and MCPStreamableHTTPTool
+  - Shows async context manager usage for MCP tools
+- id: azure-ai-authentication-patterns
+  prompt: What are the authentication options for Azure AI agents in dev vs production?
+  checks:
+  - regex: AzureCliCredential|DefaultAzureCredential
+    length_min: 80
+    has_keyword: credential
+  expectations:
+  - Shows AzureCliCredential for development
+  - Shows DefaultAzureCredential for production
+- id: azure-ai-environment-setup
+  prompt: What environment variables do I need to set up for Azure AI agent framework?
+  checks:
+  - regex: AZURE_AI_PROJECT_ENDPOINT|AZURE_AI_MODEL_DEPLOYMENT_NAME
+    length_min: 60
+    has_keyword: BING_CONNECTION_ID
+  expectations:
+  - Lists required environment variables
+  - Shows export commands for configuration
+- id: azure-ai-multi-turn-vs-single
+  prompt: What's the difference between single-turn and multi-turn agent interactions?
+  checks:
+  - regex: thread|conversation|context
+    length_min: 100
+    has_keyword: get_new_thread
+  expectations:
+  - Explains when to use threads vs single calls
+  - Shows how context is maintained across turns
+- id: azure-ai-hosted-web-search
+  prompt: How do I add web search capability to my Azure AI agent using Bing?
+  checks:
+  - regex: HostedWebSearchTool|Bing
+    length_min: 80
+    has_keyword: agent_framework
+  expectations:
+  - Shows importing and configuring HostedWebSearchTool
+  - Demonstrates adding Bing search to agent tools
+- id: azure-ai-error-handling-async
+  prompt: What is the correct pattern for handling errors in async Azure AI agent
+    operations?
+  checks:
+  - regex: async with|try|exception
+    length_min: 100
+    has_keyword: asyncio
+  expectations:
+  - Shows proper async context manager usage
+  - Demonstrates error handling patterns for async operations
 ---
 # agent-framework-azure-ai-py
 
@@ -377,3 +490,10 @@ if __name__ == "__main__":
 
 ## When to Use
 This skill is applicable to execute the workflow or actions described in the overview.
+
+---
+
+## Live Documentation
+
+When working on tasks covered by this skill, use fetch_url to get current docs:
+- Always verify SDK versions against live docs

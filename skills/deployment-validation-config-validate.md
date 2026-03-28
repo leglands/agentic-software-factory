@@ -45,6 +45,143 @@ eval_cases:
   tags:
   - deployment
   - antipatterns
+- id: deployment-validation-config-validate-schema-approach
+  prompt: What is the best approach for implementing JSON Schema validation for configuration
+    files?
+  checks:
+  - length_min: 120
+  - has_keyword: schema
+  expectations:
+  - Provides guidance on JSON Schema validation implementation
+  tags:
+  - schema
+  - validation
+- id: deployment-validation-config-validate-security-issues
+  prompt: How do I detect potential secrets and security issues in configuration files?
+  checks:
+  - length_min: 100
+  - has_keyword: secret
+  - regex: (api[_-]?key|password|token)
+  expectations:
+  - Identifies methods for detecting secrets in configs
+  tags:
+  - security
+  - secrets
+- id: deployment-validation-config-validate-environment-consistency
+  prompt: How can I ensure configuration consistency across development, staging,
+    and production environments?
+  checks:
+  - length_min: 130
+  - has_keyword: environment
+  expectations:
+  - Provides strategies for environment-specific validation
+  tags:
+  - environment
+  - consistency
+- id: deployment-validation-config-validate-testing-strategy
+  prompt: What is an effective strategy for writing configuration validation tests?
+  checks:
+  - length_min: 110
+  - has_keyword: test
+  expectations:
+  - Describes testing approach for configuration validation
+  tags:
+  - testing
+  - validation
+- id: deployment-validation-config-validate-migration
+  prompt: How should I approach migrating configuration files between versions?
+  checks:
+  - length_min: 90
+  - has_keyword: migration
+  expectations:
+  - Provides guidance on configuration migration strategy
+  tags:
+  - migration
+  - versioning
+- id: deployment-validation-config-validate-runtime-monitoring
+  prompt: How do I implement runtime validation and monitoring of configuration changes?
+  checks:
+  - length_min: 100
+  - has_keyword: runtime
+  expectations:
+  - Describes runtime validation implementation
+  tags:
+  - runtime
+  - monitoring
+- id: deployment-validation-config-validate-documentation
+  prompt: How can I automatically generate documentation from configuration schemas?
+  checks:
+  - length_min: 80
+  - has_keyword: documentation
+  expectations:
+  - Provides approach for documentation generation
+  tags:
+  - documentation
+  - automation
+- id: deployment-validation-config-validate-type-safety
+  prompt: What are the best practices for ensuring type safety in configuration validation?
+  checks:
+  - length_min: 90
+  - has_keyword: type
+  expectations:
+  - Describes type safety approaches for configurations
+  tags:
+  - type-safety
+  - best-practices
+- id: deployment-validation-config-validate-drift-detection
+  prompt: How do I detect and handle configuration drift across environments?
+  checks:
+  - length_min: 100
+  - has_keyword: drift
+  expectations:
+  - Provides methods for configuration drift detection
+  tags:
+  - drift
+  - consistency
+- id: deployment-validation-config-validate-encryption
+  prompt: What is the recommended approach for handling encrypted values in configuration
+    files?
+  checks:
+  - length_min: 100
+  - has_keyword: encrypt
+  expectations:
+  - Describes encryption handling in configurations
+  tags:
+  - encryption
+  - security
+- id: deployment-validation-config-validate-schema-evolution
+  prompt: How should I handle schema evolution and backward compatibility for configurations?
+  checks:
+  - length_min: 110
+  - has_keyword: schema
+  expectations:
+  - Provides guidance on schema evolution strategy
+  tags:
+  - schema
+  - evolution
+- id: deployment-validation-config-validate-error-reporting
+  prompt: What is the best way to implement user-friendly error reporting for configuration
+    validation failures?
+  checks:
+  - length_min: 90
+  - has_keyword: error
+  expectations:
+  - Describes error reporting approach for validation
+  tags:
+  - error-handling
+  - user-experience
+- id: deployment-validation-config-validate-rollback
+- id: deployment-validation-config-validate-secrets-rotation
+- id: deployment-validation-config-validate-gitops
+- id: deployment-validation-config-validate-health-checks
+- id: deployment-validation-config-validate-audit-trail
+- id: deployment-validation-config-validate-canary
+- id: deployment-validation-config-validate-multi-cluster
+- id: deployment-validation-config-validate-regex-patterns
+- id: deployment-validation-config-validate-feature-flags
+- id: deployment-validation-config-validate-service-discovery
+- id: deployment-validation-config-validate-backup-recovery
+- id: deployment-validation-config-validate-compliance
 ---
 # deployment-validation-config-validate
 

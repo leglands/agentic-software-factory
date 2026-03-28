@@ -41,6 +41,115 @@ eval_cases:
   tags:
   - tdd
   - antipatterns
+- id: tdd-red-green-refactor-cycle
+  prompt: Explain the red-green-refactor cycle in detail for a team new to TDD
+  checks:
+  - regex: red.*green.*refactor|arrange.*act.*assert
+    length_min: 120
+    has_keyword: cycle
+  expectations:
+  - Describes the three phases clearly
+  - Mentions test-first discipline
+  - Covers refactoring safety
+- id: tdd-multi-agent-workflow
+  prompt: How do you coordinate multiple testing agents for parallel test development?
+  checks:
+  - regex: agent|orchestrat|parallel|delegat
+    length_min: 100
+    has_keyword: workflow
+  expectations:
+  - Addresses multi-agent coordination
+  - Discusses task delegation strategies
+- id: tdd-property-based-testing
+  prompt: Implement property-based testing for a sorting function using Hypothesis
+  checks:
+  - regex: property|hypothesis|QuickCheck|generative
+    length_min: 80
+    has_keyword: property
+  expectations:
+  - Mentions property-based testing framework
+  - Explains property discovery approach
+- id: tdd-test-doubles-mocks
+  prompt: When should I use mocks vs stubs vs fakes in TDD?
+  checks:
+  - regex: mock|stub|fake|spy|test double
+    length_min: 100
+    has_keyword: mock
+  expectations:
+  - Distinguishes between test doubles types
+  - Provides usage guidelines
+- id: tdd-legacy-code-refactoring
+  prompt: How do I safely refactor legacy code without existing tests?
+  checks:
+  - regex: legacy|characterization|seam|golden master
+    length_min: 130
+    has_keyword: legacy
+  expectations:
+  - Describes characterization testing approach
+  - Covers seam identification and dependency breaking
+- id: tdd-test-pyramid-strategy
+  prompt: Design an optimal test pyramid for a microservices architecture
+  checks:
+  - regex: unit|integration|e2e|pyramid|coverage
+    length_min: 100
+    has_keyword: pyramid
+  expectations:
+  - Explains test pyramid levels
+  - Discusses appropriate test distribution
+- id: tdd-mutation-testing
+  prompt: How does mutation testing validate test suite quality?
+  checks:
+  - regex: mutation|kill|survive|mutant
+    length_min: 80
+    has_keyword: mutation
+  expectations:
+  - Explains mutation testing concept
+  - Describes how it measures test quality
+- id: tdd-atdd-bdd-integration
+  prompt: Integrate ATDD and BDD practices into a TDD workflow
+  checks:
+  - regex: ATDD|BDD|acceptance|behavior|Gherkin
+    length_min: 90
+    has_keyword: BDD
+  expectations:
+  - Distinguishes ATDD/BDD from unit-level TDD
+  - Shows integration points
+- id: tdd-contract-testing
+  prompt: Implement contract testing between two microservices
+  checks:
+  - regex: contract|Pact|provider|consumer
+    length_min: 80
+    has_keyword: contract
+  expectations:
+  - Explains contract testing approach
+  - Mentions consumer-driven contracts
+- id: tdd-metrics-cycle-time
+  prompt: What metrics should I track to measure TDD effectiveness?
+  checks:
+  - regex: cycle.*time|coverage|velocity|metric
+    length_min: 90
+    has_keyword: metric
+  expectations:
+  - Lists key TDD metrics
+  - Explains measurement importance
+- id: tdd-test-data-management
+  prompt: Strategies for managing test data across unit and integration tests
+  checks:
+  - regex: fixture|data|isolation|fixture|teardown
+    length_min: 80
+    has_keyword: fixture
+  expectations:
+  - Covers test data management approaches
+  - Addresses test isolation concerns
+- id: tdd-chaos-resilience
+  prompt: Integrate chaos engineering with TDD for resilience validation
+  checks:
+  - regex: chaos|injection|fault|tolerance|resilience
+    length_min: 80
+    has_keyword: chaos
+  expectations:
+  - Explains chaos engineering integration
+  - Covers fault injection strategies
 ---
 # tdd-orchestrator
 

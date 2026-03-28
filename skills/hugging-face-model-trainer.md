@@ -49,7 +49,7 @@ eval_cases:
 
 ## Overview
 
-Train language models using TRL (Transformer Reinforcement Learning) on fully managed Hugging Face infrastructure. No local GPU setup required—models train on cloud GPUs and results are automatically saved to the Hugging Face Hub.
+Train language models using TRL (Transformer Reinforcement Learning) on fully managed Hugging Face infrastructure. No local GPU setup required — models train on cloud GPUs + results automatically saved to Hugging Face Hub.
 
 **TRL provides multiple training methods:**
 - **SFT** (Supervised Fine-Tuning) - Standard instruction tuning
@@ -65,16 +65,16 @@ hf_doc_fetch("https://huggingface.co/docs/trl/dpo_trainer")  # DPO
 # etc.
 ```
 
-**See also:** `references/training_methods.md` for method overviews and selection guidance
+**See also:** `references/training_methods.md` for method overviews + selection guidance
 
 ## When to Use This Skill
 
-Use this skill when users want to:
+Use when users want to:
 - Fine-tune language models on cloud GPUs without local infrastructure
 - Train with TRL methods (SFT, DPO, GRPO, etc.)
 - Run training jobs on Hugging Face Jobs infrastructure
 - Convert trained models to GGUF for local deployment (Ollama, LM Studio, llama.cpp)
-- Ensure trained models are permanently saved to the Hub
+- Ensure trained models are permanently saved to Hub
 - Use modern workflows with optimized defaults
 
 ### When to Use Unsloth
@@ -85,17 +85,17 @@ Use **Unsloth** (`references/unsloth.md`) instead of standard TRL when:
 - Training **large models (>13B)** - memory efficiency is critical
 - Training **Vision-Language Models (VLMs)** - Unsloth has `FastVisionModel` support
 
-See `references/unsloth.md` for complete Unsloth documentation and `scripts/unsloth_sft_example.py` for a production-ready training script.
+See `references/unsloth.md` for complete Unsloth documentation + `scripts/unsloth_sft_example.py` for production-ready training script.
 
 ## Key Directives
 
 When assisting with training jobs:
 
-1. **ALWAYS use `hf_jobs()` MCP tool** - Submit jobs using `hf_jobs("uv", {...})`, NOT bash `trl-jobs` commands. The `script` parameter accepts Python code directly. Do NOT save to local files unless the user explicitly requests it. Pass the script content as a string to `hf_jobs()`. If user asks to "train a model", "fine-tune", or similar requests, you MUST create the training script AND submit the job immediately using `hf_jobs()`.
+1. **ALWAYS use `hf_jobs()` MCP tool** - Submit jobs using `hf_jobs("uv", {...})`, NOT bash `trl-jobs` commands. The `script` parameter accepts Python code directly. Do NOT save to local files unless user explicitly requests. Pass script content as string to `hf_jobs()`. If user asks to "train a model", "fine-tune", or similar, MUST create training script AND submit job immediately using `hf_jobs()`.
 
 2. **Always include Trackio** - Every training script should include Trackio for real-time monitoring. Use example scripts in `scripts/` as templates.
 
-3. **Provide job details after submission** - After submitting, provide job ID, monitoring URL, estimated time, and note that the user can request status checks later.
+3. **Provide job details after submission** - After submitting, provide job ID, monitoring URL, estimated time, + note that user can request status checks later.
 
 4. **Use example scripts as templates** - Reference `scripts/train_sft_example.py`, `scripts/train_dpo_example.py`, etc. as starting points.
 
@@ -111,12 +111,11 @@ pip install -r requirements.txt
 Before starting any training job, verify:
 
 ### ✅ **Account & Authentication**
-- Hugging Face Account with [Pro](https://hf.co/pro), [Team](https://hf.co/enterprise), or [Enterprise](https://hf.co/enterprise) plan (Jobs require paid plan)
-- Authenticated login: Check with `hf_whoami()`
+- Hugging Face Account w/ [Pro](https://hf.co/pro), [Team](https://hf.co/enterprise), or [Enterprise](https://hf.co/enterprise) plan (Jobs require paid plan)
+- Authenticated login: Check w/ `hf_whoami()`
 - **HF_TOKEN for Hub Push** ⚠️ CRITICAL - Training environment is ephemeral, must push to Hub or ALL training results are lost
-- Token must have write permissions  
-- **MUST pass `secrets={"HF_TOKEN": "$HF_TOKEN"}` in job config** to make token available (the `$HF_TOKEN` syntax
-  references your actual token value)
+- Token must have write permissions
+- **MUST pass `secrets={"HF_TOKEN": "$HF_TOKEN"}` in job config** to make token available (the `$HF_TOKEN` syntax references your actual token value)
 
 ### ✅ **Dataset Requirements**
 - Dataset must exist on Hub or be loadable via `datasets.load_dataset()`
@@ -125,7 +124,7 @@ Before starting any training job, verify:
 - Size appropriate for hardware (Demo: 50-100 examples on t4-small; Production: 1K-10K+ on a10g-large/a100-large)
 
 ### ⚠️ **Critical Settings**
-- **Timeout must exceed expected training time** - Default 30min is TOO SHORT for most training. Minimum recommended: 1-2 hours. Job fails and loses all progress if timeout is exceeded.
+- **Timeout must exceed expected training time** - Default 30min is TOO SHORT for most training. Minimum recommended: 1-2 hrs. Job fails + loses all progress if timeout exceeded.
 - **Hub push must be enabled** - Config: `push_to_hub=True`, `hub_model_id="username/model-name"`; Job: `secrets={"HF_TOKEN": "$HF_TOKEN"}`
 
 ## Asynchronous Job Guidelines
@@ -137,7 +136,7 @@ Before starting any training job, verify:
 **When user requests training:**
 1. **Create the training script** with Trackio included (use `scripts/train_sft_example.py` as template)
 2. **Submit immediately** using `hf_jobs()` MCP tool with script content inline - don't save to file unless user requests
-3. **Report submission** with job ID, monitoring URL, and estimated time
+3. **Report submission** with job ID, monitoring URL, + estimated time
 4. **Wait for user** to request status checks - don't poll automatically
 
 ### Ground Rules
@@ -149,7 +148,7 @@ Before starting any training job, verify:
 ### After Submission
 
 **Provide to user:**
-- ✅ Job ID and monitoring URL
+- ✅ Job ID + monitoring URL
 - ✅ Expected completion time
 - ✅ Trackio dashboard URL
 - ✅ Note that user can request status checks later
@@ -164,12 +163,12 @@ Monitor: https://huggingface.co/jobs/username/abc123xyz
 Expected time: ~2 hours
 Estimated cost: ~$10
 
-The job is running in the background. Ask me to check status/logs when ready!
+Job running in background. Ask me to check status/logs when ready!
 ```
 
 ## Quick Start: Three Approaches
 
-**💡 Tip for Demos:** For quick demos on smaller GPUs (t4-small), omit `eval_dataset` and `eval_strategy` to save ~40% memory. You'll still see training loss and learning progress.
+**💡 Tip for Demos:** For quick demos on smaller GPUs (t4-small), omit `eval_dataset` + `eval_strategy` to save ~40% memory. You'll still see training loss + learning progress.
 
 ### Sequence Length Configuration
 
@@ -184,18 +183,18 @@ DPOConfig(max_length=2048)  # Longer context (2048 tokens)
 SFTConfig(max_seq_length=512)  # TypeError!
 ```
 
-**Default behavior:** `max_length=1024` (truncates from right). This works well for most training.
+**Default behavior:** `max_length=1024` (truncates from right). Works well for most training.
 
 **When to override:**
-- **Longer context**: Set higher (e.g., `max_length=2048`)
-- **Memory constraints**: Set lower (e.g., `max_length=512`)
+- **Longer context**: Set higher (eg, `max_length=2048`)
+- **Memory constraints**: Set lower (eg, `max_length=512`)
 - **Vision models**: Set `max_length=None` (prevents cutting image tokens)
 
-**Usually you don't need to set this parameter at all** - the examples below use the sensible default.
+**Usually you don't need to set this parameter at all** - examples below use sensible default.
 
 ### Approach 1: UV Scripts (Recommended—Default Choice)
 
-UV scripts use PEP 723 inline dependencies for clean, self-contained training. **This is the primary approach for Claude Code.**
+UV scripts use PEP 723 inline dependencies for clean, self-contained training. **Primary approach for Claude Code.**
 
 ```python
 hf_jobs("uv", {
@@ -306,7 +305,7 @@ hf_jobs("uv", {
 
 **Benefits:** No code to write, maintained by TRL team, production-tested
 **When to use:** Standard TRL training, quick experiments, don't need custom code
-**Available:** Scripts are available from https://github.com/huggingface/trl/tree/main/examples/scripts
+**Available:** Scripts available from https://github.com/huggingface/trl/tree/main/examples/scripts
 
 ### Finding More UV Scripts on Hub
 
@@ -324,7 +323,7 @@ hub_repo_details(["uv-scripts/classification"], repo_type="dataset", include_rea
 
 ### Approach 3: HF Jobs CLI (Direct Terminal Commands)
 
-When the `hf_jobs()` MCP tool is unavailable, use the `hf jobs` CLI directly.
+When `hf_jobs()` MCP tool unavailable, use `hf jobs` CLI directly.
 
 **⚠️ CRITICAL: CLI Syntax Rules**
 
@@ -344,9 +343,9 @@ hf jobs uv run --secret HF_TOKEN "https://example.com/train.py"
 
 **Key syntax rules:**
 1. Command order is `hf jobs uv run` (NOT `hf jobs run uv`)
-2. All flags (`--flavor`, `--timeout`, `--secrets`) must come BEFORE the script URL
+2. All flags (`--flavor`, `--timeout`, `--secrets`) must come BEFORE script URL
 3. Use `--secrets` (plural), not `--secret`
-4. Script URL must be the last positional argument
+4. Script URL must be last positional argument
 
 **Complete CLI example:**
 ```bash
@@ -367,7 +366,7 @@ hf jobs cancel <job-id>           # Cancel a job
 
 ### Approach 4: TRL Jobs Package (Simplified Training)
 
-The `trl-jobs` package provides optimized defaults and one-liner training.
+The `trl-jobs` package provides optimized defaults + one-liner training.
 
 ```bash
 # Install
@@ -408,7 +407,7 @@ trl-jobs sft \
 
 **⚠️ EPHEMERAL ENVIRONMENT—MUST PUSH TO HUB**
 
-The Jobs environment is temporary. All files are deleted when the job ends. If the model isn't pushed to Hub, **ALL TRAINING IS LOST**.
+Jobs environment is temporary. All files deleted when job ends. If model isn't pushed to Hub, **ALL TRAINING IS LOST**.
 
 ### Required Configuration
 
@@ -455,11 +454,11 @@ Before submitting:
 | Scenario | Recommended | Notes |
 |----------|-------------|-------|
 | Quick demo (50-100 examples) | 10-30 min | Verify setup |
-| Development training | 1-2 hours | Small datasets |
-| Production (3-7B model) | 4-6 hours | Full datasets |
-| Large model with LoRA | 3-6 hours | Depends on dataset |
+| Development training | 1-2 hrs | Small datasets |
+| Production (3-7B model) | 4-6 hrs | Full datasets |
+| Large model with LoRA | 3-6 hrs | Depends on dataset |
 
-**Always add 20-30% buffer** for model/dataset loading, checkpoint saving, Hub push operations, and network delays.
+**Always add 20-30% buffer** for model/dataset loading, checkpoint saving, Hub push operations, + network delays.
 
 **On timeout:** Job killed immediately, all unsaved progress lost, must restart from beginning
 
@@ -476,9 +475,9 @@ uv run scripts/estimate_cost.py \
   --epochs 3
 ```
 
-Output includes estimated time, cost, recommended timeout (with buffer), and optimization suggestions.
+Output includes estimated time, cost, recommended timeout (with buffer), + optimization suggestions.
 
-**When to offer:** User planning a job, asks about cost/time, choosing hardware, job will run >1 hour or cost >$5
+**When to offer:** User planning a job, asks about cost/time, choosing hardware, job will run >1 hr or cost >$5
 
 ## Example Training Scripts
 
@@ -490,7 +489,7 @@ Load these scripts for correctly:
 - **`scripts/train_dpo_example.py`** - DPO training for preference learning
 - **`scripts/train_grpo_example.py`** - GRPO training for online RL
 
-These scripts demonstrate proper Hub saving, Trackio integration, checkpoint management, and optimized parameters. Pass their content inline to `hf_jobs()` or use as templates for custom scripts.
+These scripts demonstrate proper Hub saving, Trackio integration, checkpoint management, + optimized parameters. Pass their content inline to `hf_jobs()` or use as templates for custom scripts.
 
 ## Monitoring and Tracking
 
@@ -498,7 +497,7 @@ These scripts demonstrate proper Hub saving, Trackio integration, checkpoint man
 
 **Key points:**
 - Add `trackio` to dependencies
-- Configure trainer with `report_to="trackio" and run_name="meaningful_name"`
+- Configure trainer with `report_to="trackio"` and run_name="meaningful_name"`
 
 ### Trackio Configuration Defaults
 
@@ -506,14 +505,13 @@ These scripts demonstrate proper Hub saving, Trackio integration, checkpoint man
 
 **Default Configuration:**
 - **Space ID**: `{username}/trackio` (use "trackio" as default space name)
-- **Run naming**: Unless otherwise specified, name the run in a way the user will recognize (e.g., descriptive of the task, model, or purpose)
-- **Config**: Keep minimal - only include hyperparameters and model/dataset info
-- **Project Name**: Use a Project Name to associate runs with a particular Project 
+- **Run naming**: Unless otherwise specified, name run in way user will recognize (eg, descriptive of task, model, or purpose)
+- **Config**: Keep minimal - only include hyperparameters + model/dataset info
+- **Project Name**: Use Project Name to associate runs with particular Project
 
 **User overrides:** If user requests specific trackio configuration (custom space, run naming, grouping, or additional config), apply their preferences instead of defaults.
 
-
-This is useful for managing multiple jobs with the same configuration or keeping training scripts portable.
+This is useful for managing multiple jobs with same configuration or keeping training scripts portable.
 
 See `references/trackio_guide.md` for complete documentation including grouping runs for experiments.
 
@@ -534,14 +532,14 @@ hf_jobs("logs", {"job_id": "your-job-id"})
 
 ## Dataset Validation
 
-**Validate dataset format BEFORE launching GPU training to prevent the #1 cause of training failures: format mismatches.**
+**Validate dataset format BEFORE launching GPU training to prevent #1 cause of training failures: format mismatches.**
 
 ### Why Validate
 
-- 50%+ of training failures are due to dataset format issues
+- 50%+ of training failures due to dataset format issues
 - DPO especially strict: requires exact column names (`prompt`, `chosen`, `rejected`)
-- Failed GPU jobs waste $1-10 and 30-60 minutes
-- Validation on CPU costs ~$0.01 and takes <1 minute
+- Failed GPU jobs waste $1-10 + 30-60 minutes
+- Validation on CPU costs ~$0.01 + takes <1 min
 
 ### When to Validate
 
@@ -562,17 +560,17 @@ hf_jobs("uv", {
 })
 ```
 
-The script is fast, and will usually complete synchronously.
+Script is fast, + will usually complete synchronously.
 
 ### Reading Results
 
-The output shows compatibility for each training method:
+Output shows compatibility for each training method:
 
 - **`✓ READY`** - Dataset is compatible, use directly
 - **`✗ NEEDS MAPPING`** - Compatible but needs preprocessing (mapping code provided)
 - **`✗ INCOMPATIBLE`** - Cannot be used for this method
 
-When mapping is needed, the output includes a **"MAPPING CODE"** section with copy-paste ready Python code.
+When mapping needed, output includes **"MAPPING CODE"** section with copy-paste ready Python code.
 
 ### Example Workflow
 
@@ -609,11 +607,11 @@ Dataset has: instruction, chosen_response, rejected_response
 DPO expects: prompt, chosen, rejected
 ```
 
-The validator detects this and provides exact mapping code to fix it.
+Validator detects this + provides exact mapping code to fix it.
 
 ## Converting Models to GGUF
 
-After training, convert models to **GGUF format** for use with llama.cpp, Ollama, LM Studio, and other local inference tools.
+After training, convert models to **GGUF format** for use with llama.cpp, Ollama, LM Studio, + other local inference tools.
 
 **What is GGUF:**
 - Optimized for CPU/GPU inference with llama.cpp
@@ -627,7 +625,7 @@ After training, convert models to **GGUF format** for use with llama.cpp, Ollama
 - Deploying to edge devices
 - Sharing models for local-first use
 
-**See:** `references/gguf_conversion.md` for complete conversion guide, including production-ready conversion script, quantization options, hardware requirements, usage examples, and troubleshooting.
+**See:** `references/gguf_conversion.md` for complete conversion guide, including production-ready conversion script, quantization options, hardware requirements, usage examples, + troubleshooting.
 
 **Quick conversion:**
 ```python
@@ -658,9 +656,9 @@ See `references/training_patterns.md` for detailed examples including:
 ### Out of Memory (OOM)
 
 **Fix (try in order):**
-1. Reduce batch size: `per_device_train_batch_size=1`, increase `gradient_accumulation_steps=8`. Effective batch size is `per_device_train_batch_size` x `gradient_accumulation_steps`. For best performance keep effective batch size close to 128. 
+1. Reduce batch size: `per_device_train_batch_size=1`, increase `gradient_accumulation_steps=8`. Effective batch size = `per_device_train_batch_size` x `gradient_accumulation_steps`. For best performance keep effective batch size close to 128.
 2. Enable: `gradient_checkpointing=True`
-3. Upgrade hardware: t4-small → l4x1, a10g-small → a10g-large etc. 
+3. Upgrade hardware: t4-small → l4x1, a10g-small → a10g-large etc.
 
 ### Dataset Misformatted
 
@@ -681,7 +679,7 @@ See `references/training_patterns.md` for detailed examples including:
 3. Or reduce training: lower `num_train_epochs`, use smaller dataset, enable `max_steps`
 4. Save checkpoints: `save_strategy="steps"`, `save_steps=500`, `hub_strategy="every_save"`
 
-**Note:** Default 30min is insufficient for real training. Minimum 1-2 hours.
+**Note:** Default 30min insufficient for real training. Minimum 1-2 hrs.
 
 ### Hub Push Failures
 
@@ -689,7 +687,7 @@ See `references/training_patterns.md` for detailed examples including:
 1. Add to job: `secrets={"HF_TOKEN": "$HF_TOKEN"}`
 2. Add to config: `push_to_hub=True`, `hub_model_id="username/model-name"`
 3. Verify auth: `mcp__huggingface__hf_whoami()`
-4. Check token has write permissions and repo exists (or set `hub_private_repo=True`)
+4. Check token has write permissions + repo exists (or set `hub_private_repo=True`)
 
 ### Missing Dependencies
 
@@ -717,20 +715,20 @@ Add to PEP 723 header:
 
 ### References (In This Skill)
 - `references/training_methods.md` - Overview of SFT, DPO, GRPO, KTO, PPO, Reward Modeling
-- `references/training_patterns.md` - Common training patterns and examples
+- `references/training_patterns.md` - Common training patterns + examples
 - `references/unsloth.md` - Unsloth for fast VLM training (~2x speed, 60% less VRAM)
 - `references/gguf_conversion.md` - Complete GGUF conversion guide
 - `references/trackio_guide.md` - Trackio monitoring setup
-- `references/hardware_guide.md` - Hardware specs and selection
+- `references/hardware_guide.md` - Hardware specs + selection
 - `references/hub_saving.md` - Hub authentication troubleshooting
-- `references/troubleshooting.md` - Common issues and solutions
+- `references/troubleshooting.md` - Common issues + solutions
 
 ### Scripts (In This Skill)
 - `scripts/train_sft_example.py` - Production SFT template
 - `scripts/train_dpo_example.py` - Production DPO template
 - `scripts/train_grpo_example.py` - Production GRPO template
 - `scripts/unsloth_sft_example.py` - Unsloth text LLM training template (faster, less VRAM)
-- `scripts/estimate_cost.py` - Estimate time and cost (offer when appropriate)
+- `scripts/estimate_cost.py` - Estimate time + cost (offer when appropriate)
 - `scripts/convert_to_gguf.py` - Complete GGUF conversion script
 
 ### External Scripts
@@ -747,12 +745,12 @@ Add to PEP 723 header:
 
 ## Key Takeaways
 
-1. **Submit scripts inline** - The `script` parameter accepts Python code directly; no file saving required unless user requests
+1. **Submit scripts inline** - `script` parameter accepts Python code directly; no file saving required unless user requests
 2. **Jobs are asynchronous** - Don't wait/poll; let user check when ready
-3. **Always set timeout** - Default 30 min is insufficient; minimum 1-2 hours recommended
+3. **Always set timeout** - Default 30 min insufficient; minimum 1-2 hrs recommended
 4. **Always enable Hub push** - Environment is ephemeral; without push, all results lost
 5. **Include Trackio** - Use example scripts as templates for real-time monitoring
-6. **Offer cost estimation** - When parameters are known, use `scripts/estimate_cost.py`
+6. **Offer cost estimation** - When parameters known, use `scripts/estimate_cost.py`
 7. **Use UV scripts (Approach 1)** - Default to `hf_jobs("uv", {...})` with inline scripts; TRL maintained scripts for standard training; avoid bash `trl-jobs` commands in Claude Code
 8. **Use hf_doc_fetch/hf_doc_search** for latest TRL documentation
 9. **Validate dataset format** before training with dataset inspector (see Dataset Validation section)

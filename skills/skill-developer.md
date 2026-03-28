@@ -43,6 +43,251 @@ eval_cases:
   tags:
   - skill
   - antipatterns
+- id: skill-developer-create-guardrail
+  prompt: Create a guardrail skill that blocks direct SQL queries to prevent injection
+    attacks
+  checks:
+  - has_keyword: guardrail
+  - has_keyword: block
+  - length_min: 120
+  expectations:
+  - Explains guardrail type and enforcement
+  - Mentions block with exit code 2
+  - Covers trigger patterns for SQL keywords
+- id: skill-developer-skip-conditions
+  prompt: How do session tracking and file markers work to avoid repeated nag prompts?
+  checks:
+  - has_keyword: session
+  - has_keyword: skip-validation
+  - length_min: 100
+  expectations:
+  - Describes session state file location
+  - Explains file marker syntax
+  - Clarifies difference between temporary and permanent skip
+- id: skill-developer-500-line-rule
+  prompt: What is the 500-line rule and why should I follow it when creating skills?
+  checks:
+  - has_keyword: 500-line
+  - has_keyword: progressive disclosure
+  - length_min: 80
+  expectations:
+  - Explains 500-line limit purpose
+  - Mentions progressive disclosure pattern
+  - Suggests using reference files
+- id: skill-developer-hook-flow
+  prompt: Walk me through the UserPromptSubmit hook flow and how it injects suggestions
+  checks:
+  - has_keyword: UserPromptSubmit
+  - has_keyword: stdout
+  - length_min: 100
+  expectations:
+  - Describes hook trigger timing
+  - Explains context injection method
+  - Mentions intent pattern matching
+- id: skill-developer-enforcement-levels
+  prompt: What are the differences between BLOCK, SUGGEST, and WARN enforcement levels?
+  checks:
+  - regex: BLOCK.*exit code
+  - length_min: 120
+  expectations:
+  - Explains BLOCK uses exit code 2
+  - Clarifies SUGGEST is advisory
+  - Notes WARN is rarely used
+- id: skill-developer-skill-rules-schema
+  prompt: Show me the structure of skill-rules.json and required fields for a domain
+    skill
+  checks:
+  - has_keyword: skill-rules.json
+  - has_keyword: enforcement
+  - length_min: 100
+  expectations:
+  - Shows JSON structure with type, enforcement, priority
+  - Mentions promptTriggers object
+  - Includes keywords and intentPatterns
+- id: skill-developer-troubleshooting-not-triggering
+  prompt: My skill is not activating even though I added keywords. How do I debug
+    this?
+  checks:
+  - has_keyword: troubleshooting
+  - has_keyword: keywords
+  - length_min: 100
+  expectations:
+  - Suggests testing with tsx command
+  - Recommends checking skill-rules.json syntax
+  - Mentions refining intent patterns
+- id: skill-developer-skip-env-vars
+  prompt: How can I temporarily disable skill guardrails using environment variables?
+  checks:
+  - has_keyword: SKIP_SKILL_GUARDRAILS
+  - has_keyword: environment
+  - length_min: 60
+  expectations:
+  - Shows global disable env var
+  - Mentions skill-specific env var pattern
+  - Notes emergency use case
+- id: skill-developer-reference-files
+  prompt: When should I create reference files instead of putting everything in SKILL.md?
+  checks:
+  - has_keyword: reference
+  - has_keyword: progressive disclosure
+  - length_min: 80
+  expectations:
+  - Explains when to use reference files
+  - Mentions table of contents for files >100 lines
+  - Recommends keeping SKILL.md under 500 lines
+- id: skill-developer-guardrail-vs-domain
+  prompt: Should I create a guardrail or domain skill for enforcing TypeScript strict
+    mode?
+  checks:
+  - has_keyword: guardrail
+  - has_keyword: domain
+  - length_min: 100
+  expectations:
+  - Recommends guardrail for blocking critical practices
+  - Notes domain for advisory guidance
+  - Explains priority levels
+- id: skill-developer-testing-checklist
+  prompt: What is the complete testing checklist before deploying a new skill?
+  checks:
+  - has_keyword: testing
+  - has_keyword: skill-rules.json
+  - length_min: 150
+  expectations:
+  - Lists multiple verification steps
+  - Mentions JSON validation with jq
+  - Covers false positive and negative testing
+- id: skill-developer-content-patterns
+  prompt: How do I use content patterns to auto-activate a skill when specific code
+    is detected?
+  checks:
+  - has_keyword: content
+  - has_keyword: regex
+  - length_min: 80
+  expectations:
+  - Explains content pattern matching
+  - Mentions regex-based detection
+  - Describes use case for technology-specific skills
+- id: skill-developer-naming-conventions
+  prompt: What naming conventions should I follow when creating new skills?
+  checks:
+  - has_keyword: gerund
+  - regex: lowercase.*
+  - length_min: 80
+  expectations:
+  - Mentions lowercase with hyphens
+  - Recommends verb+-ing form
+  - Notes max 1024 chars for description
+- id: skill-developer-frontmatter-schema
+  prompt: Show me the required frontmatter fields for a skill file
+  checks:
+  - has_keyword: frontmatter
+  - has_keyword: name
+  - length_min: 100
+  expectations:
+  - Lists required fields (name, description)
+  - Explains description should include trigger keywords
+  - Mentions max 1024 char limit
+- id: skill-developer-prompt-triggers-deep
+  prompt: How do I create effective intent patterns for skill activation?
+  checks:
+  - has_keyword: intentPatterns
+  - regex: regex.*
+  - length_min: 100
+  expectations:
+  - Explains regex-based intent matching
+  - Shows example patterns
+  - Warns about false positives
+- id: skill-developer-file-path-patterns
+  prompt: How can I activate a skill only when editing specific file types?
+  checks:
+  - has_keyword: file.*path
+  - has_keyword: glob
+  - length_min: 80
+  expectations:
+  - Describes glob pattern matching
+  - Explains file location-based triggers
+  - Mentions common use cases
+- id: skill-developer-session-state-internals
+  prompt: How does session state prevent repeated skill prompts in the same session?
+  checks:
+  - has_keyword: session
+  - regex: state.*
+  - length_min: 100
+  expectations:
+  - Explains state file location and format
+  - Describes how first edit differs from second
+  - Clarifies session_id scoping
+- id: skill-developer-exit-codes
+  prompt: What exit codes do hooks use and what do they mean?
+  checks:
+  - regex: exit.*code.*2
+  - has_keyword: stderr
+  - length_min: 80
+  expectations:
+  - Explains exit code 2 means BLOCK
+  - Notes stderr carries error message to Claude
+  - Clarifies non-zero for other failures
+- id: skill-developer-progressive-disclosure
+  prompt: When should I use reference files instead of putting everything in SKILL.md?
+  checks:
+  - has_keyword: progressive disclosure
+  - has_keyword: reference
+  - length_min: 100
+  expectations:
+  - Explains 500-line rule rationale
+  - Recommends TOC for files over 100 lines
+  - Mentions not nesting references deeply
+- id: skill-developer-guardrail-vs-suggest
+  prompt: Should I use BLOCK or SUGGEST enforcement for a security-related skill?
+  checks:
+  - has_keyword: BLOCK
+  - has_keyword: SUGGEST
+  - length_min: 100
+  expectations:
+  - Recommends BLOCK for security/critical issues
+  - Notes SUGGEST is advisory only
+  - Explains exit code 2 requirement for BLOCK
+- id: skill-developer-content-pattern-matching
+  prompt: How do I make a skill auto-activate when TypeScript code is detected?
+  checks:
+  - has_keyword: content
+  - regex: regex|pattern
+  - length_min: 80
+  expectations:
+  - Explains regex-based content detection
+  - Describes technology-specific use cases
+  - Mentions file content scanning
+- id: skill-developer-json-validation
+  prompt: How do I validate my skill-rules.json has no syntax errors?
+  checks:
+  - has_keyword: jq
+  - regex: json.*
+  - length_min: 60
+  expectations:
+  - Shows jq validation command
+  - Mentions checking syntax before testing
+  - Notes common JSON errors
+- id: skill-developer-stop-hook-philosophy
+  prompt: Why did the team switch from PreToolUse blocking to post-response reminders
+    for error handling?
+  checks:
+  - has_keyword: Stop.*hook
+  - regex: gentle.*reminder
+  - length_min: 100
+  expectations:
+  - Explains philosophy change rationale
+  - Mentions avoiding workflow blocking
+  - Notes maintaining code quality awareness
+- id: skill-developer-skip-validation-markup
+  prompt: How do I permanently skip validation for a specific file using a marker?
+  checks:
+  - has_keyword: skip-validation
+  - regex: marker|@
+  - length_min: 80
+  expectations:
+  - Shows // @skip-validation syntax
+  - Warns about overuse defeating purpose
+  - Explains permanent vs session skip
 ---
 # skill-developer
 

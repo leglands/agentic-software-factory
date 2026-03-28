@@ -44,6 +44,174 @@ eval_cases:
   tags:
   - security
   - antipatterns
+- id: security-scanning-sast-dast-approach
+  prompt: Explain how to combine SAST and DAST scanning in a DevSecOps pipeline for
+    comprehensive vulnerability detection.
+  checks:
+  - regex: (SAST|DAST|semgrep|zap|OWASP)
+    length_min: 120
+    has_keyword:
+    - scan
+    - security
+    - pipeline
+  expectations:
+  - Describes both static and dynamic analysis approaches
+  - Mentions specific tools or methodologies
+  - Addresses integration points in CI/CD
+- id: security-scanning-secrets-detection
+  prompt: How do you detect hardcoded secrets, API keys, and credentials in a codebase
+    using automated tools?
+  checks:
+  - regex: (gitLeaks|truffleHog|secret|credential|key)
+    length_min: 80
+    has_keyword:
+    - detect
+    - secret
+    - scan
+  expectations:
+  - Names specific secrets detection tools
+  - Explains the detection approach
+  - Addresses remediation of found secrets
+- id: security-scanning-sbom-generation
+  prompt: What is an SBOM and why is it critical for supply chain security in modern
+    applications?
+  checks:
+  - regex: (SBOM|supply.chain|dependency|inventory)
+    length_min: 100
+    has_keyword:
+    - SBOM
+    - supply
+    - vulnerability
+  expectations:
+  - Defines SBOM clearly
+  - Explains supply chain security importance
+  - Mentions tools for SBOM generation
+- id: security-scanning-threat-modeling-stride
+  prompt: Apply the STRIDE threat modeling methodology to a microservice architecture
+    with API gateway.
+  checks:
+  - regex: (STRIDE|threat.model|microservice|attack.vector)
+    length_min: 150
+    has_keyword:
+    - STRIDE
+    - threat
+    - mitigation
+  expectations:
+  - Explains STRIDE methodology components
+  - Applies it to the given architecture
+  - Identifies specific threats and mitigations
+- id: security-scanning-mitre-attack-mapping
+  prompt: How do you map discovered vulnerabilities to the MITRE ATT&CK framework
+    for better threat prioritization?
+  checks:
+  - regex: (MITRE|ATT.*CK|framework|tactic|technique)
+    length_min: 100
+    has_keyword:
+    - MITRE
+    - ATT&CK
+    - mapping
+  expectations:
+  - Explains MITRE ATT&CK structure
+  - Describes mapping process from vulnerabilities
+  - Addresses prioritization using the framework
+- id: security-scanning-cvss-scoring
+  prompt: How do you prioritize vulnerability remediation using CVSS scores in a resource-constrained
+    environment?
+  checks:
+  - regex: (CVSS|score|priority|severity|remediation)
+    length_min: 100
+    has_keyword:
+    - CVSS
+    - priority
+    - vulnerability
+  expectations:
+  - Explains CVSS scoring system
+  - Provides prioritization strategy
+  - Addresses resource allocation decisions
+- id: security-scanning-owasp-top10-remediation
+  prompt: What are the most effective countermeasures against SQL injection and XSS
+    vulnerabilities in web applications?
+  checks:
+  - regex: (SQL.injection|XSS|parameterized|encoding|OWASP)
+    length_min: 120
+    has_keyword:
+    - SQL injection
+    - XSS
+    - remediation
+  expectations:
+  - Identifies root causes of both vulnerabilities
+  - Provides specific remediation techniques
+  - References OWASP guidance
+- id: security-scanning-csp-implementation
+  prompt: How do you implement a Content Security Policy that effectively prevents
+    XSS attacks without breaking application functionality?
+  checks:
+  - regex: (CSP|Content.Security.Policy|XSS|directive|nonce)
+    length_min: 100
+    has_keyword:
+    - CSP
+    - XSS
+    - policy
+  expectations:
+  - Explains CSP directives
+  - Addresses XSS prevention mechanism
+  - Mentions deployment considerations
+- id: security-scanning-auth-mfa-implementation
+  prompt: Implement multi-factor authentication using TOTP and WebAuthn/FIDO2 for
+    a web application.
+  checks:
+  - regex: (MFA|TOTP|WebAuthn|FIDO2|authenticator)
+    length_min: 120
+    has_keyword:
+    - MFA
+    - TOTP
+    - authentication
+  expectations:
+  - Describes TOTP implementation approach
+  - Explains WebAuthn/FIDO2 advantages
+  - Addresses user enrollment flow
+- id: security-scanning-rate-limiting-ddos
+  prompt: Design a rate limiting strategy to protect API endpoints from DDoS attacks
+    while allowing legitimate traffic.
+  checks:
+  - regex: (rate.limit|DDoS|throttle|WAF|burst)
+    length_min: 100
+    has_keyword:
+    - rate limiting
+    - DDoS
+    - API
+  expectations:
+  - Describes rate limiting algorithms
+  - Addresses DDoS protection layers
+  - Considers legitimate traffic patterns
+- id: security-scanning-penetration-testing
+  prompt: What is the methodology for conducting a penetration test that validates
+    the effectiveness of implemented security controls?
+  checks:
+  - regex: (pentest|Burp.Suite|Metasploit|exploit|validation)
+    length_min: 120
+    has_keyword:
+    - pentest
+    - exploit
+    - validation
+  expectations:
+  - Outlines penetration testing phases
+  - Names common tools used
+  - Addresses validation of security controls
+- id: security-scanning-compliance-owasp-asvs
+  prompt: How do you verify that an application meets OWASP ASVS Level 2 requirements
+    and generate compliance documentation?
+  checks:
+  - regex: (ASVS|OWASP|compliance|verification|audit)
+    length_min: 100
+    has_keyword:
+    - ASVS
+    - compliance
+    - verification
+  expectations:
+  - Explains OWASP ASVS levels
+  - Describes verification methodology
+  - Addresses documentation requirements
 ---
 # security-scanning-security-hardening
 

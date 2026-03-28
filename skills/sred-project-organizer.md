@@ -46,22 +46,22 @@ eval_cases:
 
 # SRED Project Organization
 
-SRED expects projects to be presented in a particular format. Take the list of projects that have been worked on in the past year, and summarize them into the format expected by SRED, with the supporting evidence. Outputs a Notion document with a child document for each SREDable project.
+SRED expects projects to be presented in particular format. Take list of projects that have been worked on in past year, and summarize them into format expected by SRED, with supporting evidence. Outputs Notion document with child document for each SREDable project.
 
 # Prerequisites
 
-Before starting make sure that Github, Notion and Linear can be accessed. Notion and Linear should be connected using an MCP. Github can be connected with an MCP, but if you have access to the `gh` CLI tool, you can use that instead.
+Before starting ensure that Github, Notion and Linear can be accessed. Notion and Linear is connected using MCP. Github can be connected with MCP, but when have access to `gh` CLI tool, can use that instead.
 
-If any of these can't be accessed, prompt the user to grant access before proceeding.
+If any of these can't be accessed, prompt user to grant access before proceeding.
 
 # Process
 
 ## Step 1
 
-Prompt the user for a link a Notion document, which is a Work Summary for the previous year produced by the `sred-work-summary` skill.
+Prompt user for link Notion document, = Work Summary for previous year produced by `sred-work-summary` skill.
 
 Ensure:
-- The notion links to a valid document that roughly matches this format:
+- notion links to valid document that roughly matches this format:
 
 ```markdown
 # Projects
@@ -84,87 +84,85 @@ Ensure:
 
 ## Step 2
 
-For each project in the Work Summary, evaluate it against the description of a SRED project in `${CLAUDE_SKILL_ROOT}/references/SRED.md`. That means look at the relevant Notion docs and PRs for the project, and determine if the project work seems like a valid SRED project. Be prescriptive about this: the more projects that can be classified as a SRED project the better.
+For each project in Work Summary, evaluate it against description of SRED project in `${CLAUDE_SKILL_ROOT}/references/SRED.md`. That means look at relevant Notion docs and PRs for project, and determine if project work seems like valid SRED project. Be prescriptive about this: more projects that can be classified as SRED project better.
 
-Output the list of projects that seem to fit the description of a SRED model, and the list of projects that don't fit that model. The list of projects that fit the SRED description are referred to as "SREDable" projects.
+Output list of projects that seem to fit description of SRED model, and list of projects that won't fit that model. list of projects that fit SRED description are referred to as "SREDable" projects.
 
 Ensure:
-- All the projects in the Work Summary have been classified as SREDable or not.
+- All projects in Work Summary have been classified as SREDable or not.
 
 ## Step 3
 
-Ask the user whether the list of SREDable projects is correct. Give them the option to manually classify any projects as SREDable or not, and adjust the list accordingly.
+Ask user whether list of SREDable projects is correct. Give them option to manually classify any projects as SREDable or not, and adjust list accordingly.
 
 ## Step 4
 
-Create a private Notion document called "SRED Project Descriptions". Output the full link to this document.
+Create private Notion document called "SRED Project Descriptions". Output full link to this document.
 
 ## Step 5
 
-For each SREDable project, go through a series of steps.
+For each SREDable project, go through series of steps.
 
 *Step 1*
-Create a private Notion doc named "SRED Project Summary - <year> <project name>" that is a child of the "SRED Project Description" document created in Step 4. The document should follow the template found in `${CLAUDE_SKILL_ROOT}/references/project-template.md`.
+Create private Notion doc named "SRED Project Summary - <year> <project name>" = child of "SRED Project Description" document created in Step 4. document should follow template found in `${CLAUDE_SKILL_ROOT}/references/project-template.md`.
 
 *Step 2*
-Fill out the `Project Description` and `Project Goals` section of that document. Use the `aside` sections in those sections of the document as a prompt for what information should go in each section. Use all the information for each project gathered in the Work Summary. Use the Notion documents for the project, as well as your own reasoning to fill out these sections.
+Fill out `Project Description` and `Project Goals` section of that document. Use `aside` sections in those sections of document as prompt for what information should go in each section. Use all information for each project gathered in Work Summary. Use Notion documents for project, + your own reasoning to fill out these sections.
 
 Ensure:
-- The project description should be no more than 100 words.
-- The project goals should be no more than 100 words.
+- project description is no more than 100 words.
+- project goals is no more than 100 words.
 
 *Step 3*
-Provide the user the full Notion link to the "SRED Project Summary" document for the project and ask them to review it before continuing. Make any changes they ask for.
+Provide user full Notion link to "SRED Project Summary" document for project and ask them to review it before continuing. Make any changes they ask for.
 
 *Step 4*
-Each project will have one or more Uncertainties. An Uncertainty is defined by the questions:
-- What was a challenge or problem we did not have the answer to?
+Each project will have one or more Uncertainties. Uncertainty is defined by questions:
+- What was challenge or problem we did not have answer to?
 - Is there prior art that we could use to base our problem solving on?
 - If not, why?
 
-Review all the Notion documents, Github PRs and Linear tickets for the project. Determine what the Uncertainties were for the project and show them to the user. Ask the user whether these are correct or should be adjusted in some way.
+Review all Notion documents, Github PRs and Linear tickets for project. Determine what Uncertainties were for project and show them to user. Ask user whether these are correct or is adjusted in some way.
 
 Ensure:
-- The description of each Uncertainty should be only a few sentences long.
+- description of each Uncertainty is only few sentences long.
 
 *Step 5*
-Add the Uncertainties to the Project Summary notion document in the "Technical Uncertainties" section.
+Add Uncertainties to Project Summary notion document in "Technical Uncertainties" section.
 
 Ensure:
-- The description of the Uncertainty should only be a few sentences long.
+- description of Uncertainty should only be few sentences long.
 
 *Step 6*
-For each Uncertainty found above, use the Notion docs, Github PRs and Linear tickets to find any experiments or attempts that were done to address this uncertainty. Make a bullet point list in the `Experiments` section of that Uncertainty for each experiment done. Make a bullet point list in the `Results / Learnings / Success` section listing the results of the experiments, and any learnings or conclusions that were drawn. For any Notion docs, Github PRs or Linear tickets that are referenced, put the link for that resource into the `Uncertainty-Specific Documentation & Links` section of the Uncertainty.
+For each Uncertainty found above, use Notion docs, Github PRs and Linear tickets to find any experiments or attempts that were done to address this uncertainty. Make bullet point list in `Experiments` section of that Uncertainty for each experiment done. Make bullet point list in `Results / Learnings / Success` section listing results of experiments, and any learnings or conclusions that were drawn. For any Notion docs, Github PRs or Linear tickets = referenced, put link for that resource into `Uncertainty-Specific Documentation & Links` section of Uncertainty.
 
 Ensure:
 - Only one bullet point for each Experiment
 - Only one bullet point for each Result/Learning/Success
 
 *Step 7*
-Take all of the links for the project found in the Work Summary, and for any that were not linked as part of an Uncertainty, include them in the `Project Documentation & Links` section of the Project Summary.
+Take all of links for project found in Work Summary, and for any that were not linked as part of Uncertainty, include them in `Project Documentation & Links` section of Project Summary.
 
 Ensure:
-- Provide a list of all the specific links, not a summary or a general link for Github notifications.
-- Check that every link is directly related to the project and/or its uncertainties.
+- Provide list of all specific links, not summary or general link for Github notifications.
+- Check that every link is directly related to project and/or its uncertainties.
 
 *Step 8*
-Provide the user with the link to the Project Summary document again, and ask the user to review it before moving on to the next SREDable Project. Remind the user to fill out the Participants section of the document.
+Provide user with link to Project Summary document again, and ask user to review it before moving on to next SREDable Project. Remind user to fill out Participants section of document.
 
 ## Step 6
 
-Provide a link to the "SRED Project Descriptions" notion document.
-
+Provide link to "SRED Project Descriptions" notion document.
 
 ## Examples
 
 Example work summary: https://www.notion.so/sentry/SRED-Work-Summary-2026-30a8b10e4b5d81f5bc8df3553da55220
 
-
 ## References
 
-Summary of what constitutes a project and how it should be organized: `${CLAUDE_SKILL_ROOT}/references/SRED.md`
-Notion Template of the summary for a specific project: `${CLAUDE_SKILL_ROOT}/references/project-template.md`
+Summary of what constitutes project and how it is organized: `${CLAUDE_SKILL_ROOT}/references/SRED.md`
+Notion Template of summary for specific project: `${CLAUDE_SKILL_ROOT}/references/project-template.md`
 
 ## Resources
 
-Full documentation on the SRED program: https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program.html
+Full documentation on SRED program: https://www.canada.ca/en/revenue-agency/services/scientific-research-experimental-development-tax-incentive-program.html

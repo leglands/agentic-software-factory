@@ -42,6 +42,136 @@ eval_cases:
   tags:
   - git
   - antipatterns
+- id: git-pr-workflow-pr-description-generation
+  prompt: Generate a PR description for a feature branch with breaking changes that
+    includes test results and deployment notes
+  checks:
+  - regex: (PR|pull request|description)
+  - length_min: 120
+  - has_keyword: description
+  expectations:
+  - Generates comprehensive PR description with all required sections
+  - Includes breaking changes section
+  - Contains test results summary
+- id: git-pr-workflow-commit-message-creation
+  prompt: Create a Conventional Commits format commit message for a breaking API change
+    in the user service
+  checks:
+  - regex: (feat|fix|conventional)
+  - length_min: 80
+  - has_keyword: conventional
+  expectations:
+  - Follows Conventional Commits format
+  - Includes BREAKING CHANGE footer
+  - Subject line under 50 characters
+- id: git-pr-workflow-branch-strategy
+  prompt: Prepare branch strategy for a hotfix targeting production with minimal downtime
+  checks:
+  - regex: (branch|hotfix|feature)
+  - length_min: 100
+  - has_keyword: branch
+  expectations:
+  - Uses hotfix branch naming convention
+  - Clear target branch identification
+  - Conflict resolution plan
+- id: git-pr-workflow-pre-push-validation
+  prompt: Perform pre-push validation for commits containing sensitive configuration
+    changes
+  checks:
+  - regex: (validation|security|sensitive)
+  - length_min: 90
+  - has_keyword: validation
+  expectations:
+  - Checks for sensitive data exposure
+  - Validates commit signatures
+  - Confirms branch protection rules
+- id: git-pr-workflow-test-coverage
+  prompt: Execute test suite and generate coverage report for changes affecting authentication
+    module
+  checks:
+  - regex: (test|coverage|passed)
+  - length_min: 110
+  - has_keyword: coverage
+  expectations:
+  - Runs unit and integration tests
+  - Generates coverage metrics
+  - Identifies untested critical paths
+- id: git-pr-workflow-code-review-issues
+  prompt: Review code for security vulnerabilities and missing error handling in payment
+    processing code
+  checks:
+  - regex: (security|vulnerability|review)
+  - length_min: 100
+  - has_keyword: security
+  expectations:
+  - Identifies critical security issues
+  - Reports severity levels
+  - Provides line-by-line feedback
+- id: git-pr-workflow-rollback-procedure
+  prompt: Document rollback procedure for a failed production deployment with feature
+    flags enabled
+  checks:
+  - regex: (rollback|revert|hotfix)
+  - length_min: 80
+  - has_keyword: rollback
+  expectations:
+  - Documents git revert steps
+  - Includes feature flag disable procedure
+  - Communication plan for team
+- id: git-pr-workflow-pr-metadata-setup
+  prompt: Configure PR metadata including labels, reviewers, and auto-merge for a
+    draft PR
+  checks:
+  - regex: (reviewer|label|milestone)
+  - length_min: 90
+  - has_keyword: reviewer
+  expectations:
+  - Assigns appropriate reviewers
+  - Adds type and priority labels
+  - Configures auto-merge rules
+- id: git-pr-workflow-dependency-analysis
+  prompt: Analyze changes for breaking API changes and backward compatibility issues
+    in the database layer
+  checks:
+  - regex: (dependency|breaking|compatibility)
+  - length_min: 100
+  - has_keyword: breaking
+  expectations:
+  - Identifies breaking API changes
+  - Reports backward compatibility issues
+  - Specifies migration requirements
+- id: git-pr-workflow-trunk-based-strategy
+  prompt: Prepare trunk-based development workflow with feature flags for a large-scale
+    refactor
+  checks:
+  - regex: (trunk|feature-flag|main)
+  - length_min: 95
+  - has_keyword: trunk
+  expectations:
+  - Uses trunk-based workflow
+  - Implements feature flag strategy
+  - Direct main push preparation
+- id: git-pr-workflow-test-gap-analysis
+  prompt: Identify missing test scenarios and edge cases for a new caching implementation
+  checks:
+  - regex: (test|edge|coverage)
+  - length_min: 85
+  - has_keyword: test
+  expectations:
+  - Identifies untested edge cases
+  - Prioritizes tests by risk
+  - Lists integration points needing verification
+- id: git-pr-workflow-squash-strategy
+  prompt: Prepare squash commit strategy for merging 15 small commits into a single
+    atomic commit
+  checks:
+  - regex: (squash|commit|atomic)
+  - length_min: 75
+  - has_keyword: squash
+  expectations:
+  - Prepares squash merge commands
+  - Ensures atomic commit structure
+  - Validates final commit message
 ---
 # git-pr-workflows-git-workflow
 

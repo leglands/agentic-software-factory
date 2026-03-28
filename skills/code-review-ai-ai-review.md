@@ -44,6 +44,116 @@ eval_cases:
   tags:
   - code
   - antipatterns
+- id: code-review-ai-security-scan
+  prompt: Run a security scan on this Python authentication module for SQL injection
+    vulnerabilities
+  checks:
+  - regex: (?i)(sql|injection|vulnerability|security)
+  - length_min: 120
+  - has_keyword: CWE
+  expectations:
+  - Identifies SQL injection risks
+  - References CWE identifiers
+  - Provides remediation code
+- id: code-review-ai-performance-n-plus-one
+  prompt: Detect N+1 query issues in this Django ORM code and suggest optimizations
+  checks:
+  - regex: (?i)(n\+1|query|database|performance)
+  - length_min: 100
+  - has_keyword: JOIN
+  expectations:
+  - Identifies N+1 query pattern
+  - Recommends eager loading or batch operations
+- id: code-review-ai-owasp-top-10
+  prompt: Check this API endpoint for OWASP Top 10 vulnerabilities including broken
+    access control and injection
+  checks:
+  - regex: (?i)(owasp|access.control|injection|cryptographic)
+  - length_min: 150
+  - has_keyword: CRITICAL
+  expectations:
+  - Maps findings to OWASP categories
+  - Classifies severity appropriately
+- id: code-review-ai-secret-detection
+  prompt: Scan this codebase for exposed secrets, API keys, and credentials using
+    TruffleHog patterns
+  checks:
+  - regex: (?i)(secret|api.?key|credential|token|password)
+  - length_min: 80
+  - has_keyword: TRUFFLEHOG
+  expectations:
+  - Detects hardcoded secrets
+  - Reports file locations and secret types
+- id: code-review-ai-microservices-boundaries
+  prompt: Review these microservice definitions for bounded context violations and
+    data ownership issues
+  checks:
+  - regex: (?i)(microservice|boundary|ownership|database-per-service)
+  - length_min: 120
+  - has_keyword: bounded.context
+  expectations:
+  - Validates service cohesion
+  - Identifies shared database violations
+- id: code-review-ai-codeql-analysis
+  prompt: Run CodeQL deep vulnerability analysis on this JavaScript code for XSS and
+    auth bypasses
+  checks:
+  - regex: (?i)(codeql|xss|auth.bypass|sanitiz)
+  - length_min: 100
+  - has_keyword: SARIF
+  expectations:
+  - Performs deep vulnerability analysis
+  - Outputs findings with severity levels
+- id: code-review-ai-solid-principles
+  prompt: Verify this class hierarchy follows SOLID principles and identify any God
+    object anti-patterns
+  checks:
+  - regex: (?i)(single.responsibility|open.closed|liskov|interface.seg|dependency.inversion)
+  - length_min: 100
+  - has_keyword: God.object
+  expectations:
+  - Validates each SOLID principle
+  - Detects violations and anti-patterns
+- id: code-review-ai-pr-routing
+  prompt: Given a PR with 75 files changed and 1500 lines modified, recommend the
+    appropriate review strategy
+  checks:
+  - regex: (?i)(human.review|automated|pr.size|large.pr)
+  - length_min: 80
+  - has_keyword: CRITICAL
+  expectations:
+  - Routes to human review for large PRs
+  - Applies temperature and token limits
+- id: code-review-ai-review-comment-format
+  prompt: Generate a structured review comment for a SQL injection vulnerability with
+    file path, severity, and fix example
+  checks:
+  - regex: (?i)(severity|file.path|code.example|remediation)
+  - length_min: 100
+  - has_keyword: CRITICAL
+  expectations:
+  - Follows structured format
+  - Includes code example and fix
+- id: code-review-ai-cicd-integration
+  prompt: Set up GitHub Actions workflow for AI code review on pull requests with
+    SonarQube and Semgrep
+  checks:
+  - regex: (?i)(github.actions|sonar|semgrep|pull.request)
+  - length_min: 120
+  - has_keyword: sonar-scanner
+  expectations:
+  - Integrates static analysis tools
+  - Posts review comments automatically
+- id: code-review-ai-model-selection
+  prompt: Recommend the optimal AI model for reviewing a 150-line PR with security-sensitive
+    authentication changes
+  checks:
+  - regex: (?i)(claude|sonnet|temperature|token)
+  - length_min: 80
+  - has_keyword: Claude
+  expectations:
+  - Selects appropriate model based on complexity
+  - Specifies temperature and token settings
 ---
 # code-review-ai-ai-review
 

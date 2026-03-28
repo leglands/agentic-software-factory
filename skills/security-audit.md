@@ -1,99 +1,410 @@
 ---
 name: security-audit
-version: "1.2.0"
-description: >
-  Guides the agent through web application security auditing based on OWASP Top 10,
-  OWASP LLM Top 10:2025, and SecureByDesign controls. Use this skill when checking
-  code for security vulnerabilities, reviewing authentication/authorization, scanning
-  for secrets, auditing LLM-specific risks, or assessing input validation.
+version: 1.3.0
+description: 'Guides the agent through web application security auditing based on
+  OWASP Top 10, OWASP LLM Top 10:2025, and SecureByDesign controls. Use this skill
+  when checking code for security vulnerabilities, reviewing authentication/authorization,
+  scanning for secrets, auditing LLM-specific risks, or assessing input validation.
+
+  '
 metadata:
   category: security
   triggers:
-    - "when user asks for a security review"
-    - "when checking code for vulnerabilities"
-    - "when user mentions OWASP or security audit"
-    - "when reviewing authentication or authorization code"
-    - "when scanning for hardcoded secrets"
-    - "when auditing an LLM-based system"
+  - when user asks for a security review
+  - when checking code for vulnerabilities
+  - when user mentions OWASP or security audit
+  - when reviewing authentication or authorization code
+  - when scanning for hardcoded secrets
+  - when auditing an LLM-based system
   sources:
-    - "OWASP Top 10:2021 — https://owasp.org/Top10/"
-    - "OWASP LLM Top 10:2025 — https://owasp.org/www-project-top-10-for-large-language-model-applications/"
-    - "SecureByDesign v1.1 (MIT, Abdoulaye Sylla) — https://github.com/Yems221/securebydesign-llmskill"
-    - "NIST CSF 2.0, ISO/IEC 27001:2022, CIS Controls v8"
-  why_not_full_securebydesign: >
-    The full SecureByDesign skill (25 controls, multi-language, version check) is too
-    token-heavy to inject into every agent. Instead we extract: tiered enforcement,
-    security theater detection, OWASP LLM section, and scope-of-assurance closing.
-    LLM-specific adversarial testing (SBD-17, prompt injection test suites) is in
-    skills/qa-adversarial-llm.md. Conflict resolution SBD-09/SBD-10 is in
-    platform/tools/monitoring_tools.py.
-# EVAL CASES
-# WHY: Security skill must surface real vulnerabilities (not style), never
-# produce false negatives on obvious injection patterns, and cover OWASP LLM risks.
-# Ref: philschmid.de/testing-skills — skill eval harness convention.
-eval_cases:
-  - id: sql-injection-detection
-    prompt: |
-      Review this Python code for security issues:
-      def get_user(email):
-          query = f"SELECT * FROM users WHERE email='{email}'"
-          return db.execute(query)
-    should_trigger: true
-    checks:
-      - "regex:SQL inject|f-string|parameteriz|prepared statement|placeholder"
-      - "regex:OWASP|A03|injection"
-      - "no_placeholder"
-      - "length_min:100"
-    expectations:
-      - "identifies the SQL injection vulnerability in the f-string query"
-      - "recommends parameterized queries or ORM"
-      - "references OWASP A03:2021 or equivalent"
-    tags: [sql-injection, owasp-a03]
-  - id: hardcoded-secret
-    prompt: |
-      Review this config for security issues:
-      SECRET_KEY = "abc123supersecret"
-      DATABASE_URL = "postgresql://admin:password@prod-db:5432/app"
-    should_trigger: true
-    checks:
-      - "regex:hardcoded|secret|credential|env.*var|vault|rotate"
-      - "no_placeholder"
-    expectations:
-      - "flags hardcoded credentials as high severity"
-      - "recommends environment variables or secrets manager (Vault, Infisical)"
-    tags: [hardcoded-secrets, owasp-a07]
-  - id: prompt-injection-llm
-    prompt: |
-      This LLM endpoint passes user input directly to the system prompt:
-      system_prompt = f"You are a helpful assistant. User context: {user_input}"
-      response = llm.chat(system_prompt)
-    should_trigger: true
-    checks:
-      - "regex:prompt inject|LLM|OWASP LLM01|system prompt|sanitiz|escap"
-      - "no_placeholder"
-    expectations:
-      - "identifies prompt injection risk (OWASP LLM01:2025)"
-      - "recommends separating system prompt from user content"
-    tags: [prompt-injection, llm-security, owasp-llm01]
-  - id: clean-code-no-vuln
-    prompt: |
-      Review this code for security issues:
-      from fastapi import APIRouter, Depends
-      router = APIRouter()
+  - OWASP Top 10:2021 — https://owasp.org/Top10/
+  - OWASP LLM Top 10:2025 — https://owasp.org/www-project-top-10-for-large-language-model-applications/
+  - SecureByDesign v1.1 (MIT, Abdoulaye Sylla) — https://github.com/Yems221/securebydesign-llmskill
+  - NIST CSF 2.0, ISO/IEC 27001:2022, CIS Controls v8
+  why_not_full_securebydesign: 'The full SecureByDesign skill (25 controls, multi-language,
+    version check) is too token-heavy to inject into every agent. Instead we extract:
+    tiered enforcement, security theater detection, OWASP LLM section, and scope-of-assurance
+    closing. LLM-specific adversarial testing (SBD-17, prompt injection test suites)
+    is in skills/qa-adversarial-llm.md. Conflict resolution SBD-09/SBD-10 is in platform/tools/monitoring_tools.py.
 
-      @router.get("/api/users/{user_id}")
-      async def get_user(user_id: str, current_user=Depends(require_auth)):
-          return await user_service.get_by_id(user_id, requester=current_user)
-    should_trigger: true
-    checks:
-      - "length_min:50"
-      - "not_regex:SQL inject|XSS|CSRF|hardcoded secret|buffer overflow|remote code execution|critical.*vulnerability|high.*severity"
-      - "regex:IDOR|authorization|get_by_id|requester|check|depends|auth|looks good|no.*major|minimal|low risk"
-    expectations:
-      - "does NOT fabricate vulnerabilities that don't exist"
-      - "may note that IDOR check depends on get_by_id implementation"
-      - "does not raise false positives on well-structured code"
-    tags: [negative, false-positive-guard]
+    '
+eval_cases:
+- id: sql-injection-detection
+  prompt: "Review this Python code for security issues:\ndef get_user(email):\n  \
+    \  query = f\"SELECT * FROM users WHERE email='{email}'\"\n    return db.execute(query)\n"
+  should_trigger: true
+  checks:
+  - regex:SQL inject|f-string|parameteriz|prepared statement|placeholder
+  - regex:OWASP|A03|injection
+  - no_placeholder
+  - length_min:100
+  expectations:
+  - identifies the SQL injection vulnerability in the f-string query
+  - recommends parameterized queries or ORM
+  - references OWASP A03:2021 or equivalent
+  tags:
+  - sql-injection
+  - owasp-a03
+- id: hardcoded-secret
+  prompt: 'Review this config for security issues:
+
+    SECRET_KEY = "abc123supersecret"
+
+    DATABASE_URL = "postgresql://admin:password@prod-db:5432/app"
+
+    '
+  should_trigger: true
+  checks:
+  - regex:hardcoded|secret|credential|env.*var|vault|rotate
+  - no_placeholder
+  expectations:
+  - flags hardcoded credentials as high severity
+  - recommends environment variables or secrets manager (Vault, Infisical)
+  tags:
+  - hardcoded-secrets
+  - owasp-a07
+- id: prompt-injection-llm
+  prompt: 'This LLM endpoint passes user input directly to the system prompt:
+
+    system_prompt = f"You are a helpful assistant. User context: {user_input}"
+
+    response = llm.chat(system_prompt)
+
+    '
+  should_trigger: true
+  checks:
+  - regex:prompt inject|LLM|OWASP LLM01|system prompt|sanitiz|escap
+  - no_placeholder
+  expectations:
+  - identifies prompt injection risk (OWASP LLM01:2025)
+  - recommends separating system prompt from user content
+  tags:
+  - prompt-injection
+  - llm-security
+  - owasp-llm01
+- id: clean-code-no-vuln
+  prompt: "Review this code for security issues:\nfrom fastapi import APIRouter, Depends\n\
+    router = APIRouter()\n\n@router.get(\"/api/users/{user_id}\")\nasync def get_user(user_id:\
+    \ str, current_user=Depends(require_auth)):\n    return await user_service.get_by_id(user_id,\
+    \ requester=current_user)\n"
+  should_trigger: true
+  checks:
+  - length_min:50
+  - not_regex:SQL inject|XSS|CSRF|hardcoded secret|buffer overflow|remote code execution|critical.*vulnerability|high.*severity
+  - regex:IDOR|authorization|get_by_id|requester|check|depends|auth|looks good|no.*major|minimal|low
+    risk
+  expectations:
+  - does NOT fabricate vulnerabilities that don't exist
+  - may note that IDOR check depends on get_by_id implementation
+  - does not raise false positives on well-structured code
+  tags:
+  - negative
+  - false-positive-guard
+- id: xss-reflected-get
+  prompt: "Review this Node.js handler for security issues:\napp.get('/search', (req,\
+    \ res) => {\n  res.send(`<h1>Results for: ${req.query.term}</h1>`);\n});\n"
+  should_trigger: true
+  checks:
+  - regex:XSS|cross.site|script|html.*escape|sanitiz|innerHTML|textContent
+  - regex:OWASP|A03|A07
+  - no_placeholder
+  - length_min:80
+  expectations:
+  - identifies reflected XSS via unsanitized query parameter
+  - recommends HTML escaping or CSP
+  - references OWASP A03:2021
+  tags:
+  - xss
+  - owasp-a03
+  - reflected-xss
+- id: csrf-missing-token
+  prompt: "Review this form handler for CSRF protection:\napp.post('/transfer', authenticate,\
+    \ async (req, res) => {\n  await db.transfer(req.user.id, req.body.to, req.body.amount);\n\
+    \  res.json({ success: true });\n});\n"
+  should_trigger: true
+  checks:
+  - regex:CSRF|csrf|_token|sameSite|SameSite|double.submit
+  - regex:OWASP|A01|A07
+  - no_placeholder
+  expectations:
+  - flags missing CSRF token validation
+  - recommends CSRF tokens or SameSite cookies
+  - references OWASP A01:2021 or A07
+  tags:
+  - csrf
+  - owasp-a01
+  - owasp-a07
+- id: auth-bypass-idor
+  prompt: "Review this endpoint for authorization issues:\n@app.route('/api/orders/<order_id>')\n\
+    @login_required\ndef get_order(order_id):\n    return jsonify(db.get_order(order_id))\n"
+  should_trigger: true
+  checks:
+  - regex:IDOR|horizonta|vertical|priv escalation|authorize|owner.*check|access control
+  - regex:OWASP|A01
+  - no_placeholder
+  expectations:
+  - identifies IDOR — user can access any order by changing order_id
+  - recommends ownership validation or scope filtering
+  - references OWASP A01:2021
+  tags:
+  - auth-bypass
+  - idor
+  - owasp-a01
+- id: rate-limiting-missing
+  prompt: "Review this authentication endpoint for security controls:\n@app.route('/api/login',\
+    \ methods=['POST'])\ndef login():\n    user = db.verify_password(req.body.email,\
+    \ req.body.password)\n    if user:\n        return jsonify({'token': generate_token(user)})\n\
+    \    return 401\n"
+  should_trigger: true
+  checks:
+  - regex:rate.*limit|throttle|brute.*force|lockout|attempt.*limit
+  - regex:OWASP|A04|A07
+  - no_placeholder
+  expectations:
+  - flags missing rate limiting on auth endpoint
+  - recommends rate limiting and account lockout
+  - references OWASP A04:2021 or A07
+  tags:
+  - rate-limiting
+  - brute-force
+  - owasp-a04
+- id: ssti-template-injection
+  prompt: 'Review this Python code for security issues:
+
+    from jinja2 import Template
+
+    template = Template(f"Hello {user_name}")
+
+    rendered = template.render()
+
+    '
+  should_trigger: true
+  checks:
+  - regex:SSTI|template.*inject|jinja2|eval| Template |unsafe.*render
+  - regex:OWASP|A03|injection
+  - no_placeholder
+  expectations:
+  - identifies server-side template injection risk
+  - recommends using safe template API or context isolation
+  - references OWASP A03:2021
+  tags:
+  - ssti
+  - template-injection
+  - owasp-a03
+- id: secret-api-key-hardcoded
+  prompt: 'Review this code for hardcoded credentials:
+
+    import openai
+
+    openai.api_key = "sk-prod-1234567890abcdef"
+
+    stripe.api_key = "sk_live_abc123xyz"
+
+    '
+  should_trigger: true
+  checks:
+  - regex:api[_-]?key|secret|sk_live|sk_prod|hardcoded|credential
+  - regex:OWASP|A07
+  - no_placeholder
+  expectations:
+  - flags hardcoded API keys as critical severity
+  - recommends environment variables or secrets manager
+  - references OWASP A07:2021
+  tags:
+  - hardcoded-secrets
+  - api-key
+  - owasp-a07
+- id: cmd-injection
+  prompt: "Review this Python function for command injection:\nimport os\ndef ping_host(host):\n\
+    \    os.system(f\"ping -c 1 {host}\")\n"
+  should_trigger: true
+  checks:
+  - regex:command.*inject|os\.system|subprocess|shell.*true|injection
+  - regex:OWASP|A03|injection
+  - no_placeholder
+  expectations:
+  - identifies command injection via string interpolation
+  - recommends subprocess with shell=False and input validation
+  - references OWASP A03:2021
+  tags:
+  - command-injection
+  - owasp-a03
+- id: csp-missing
+  prompt: 'Review this web app configuration for security headers:
+
+    app.use(express.static(''public''))
+
+    app.get(''/'', (req, res) => res.sendFile(''index.html''))
+
+    '
+  should_trigger: true
+  checks:
+  - regex:CSP|Content-Security-Policy|X-Frame-Options|HSTS|security.*header
+  - regex:OWASP|A05
+  - no_placeholder
+  expectations:
+  - flags missing CSP and security headers
+  - recommends CSP, X-Frame-Options, HSTS
+  - references OWASP A05:2021
+  tags:
+  - csp
+  - security-headers
+  - owasp-a05
+- id: jwt-none-algorithm
+  prompt: 'Review this JWT handling for vulnerabilities:
+
+    import jwt
+
+    token = jwt.encode({''user_id'': 1, ''role'': ''admin''}, ''secret'', algorithm=''HS256'')
+
+    # Attacker changes to ''none''
+
+    decoded = jwt.decode(token, options={''verify_signature'': False})
+
+    '
+  should_trigger: true
+  checks:
+  - regex:JWT|algorithm.*none|none.*alg|verify.*signature|token.*tamper
+  - regex:OWASP|A07|A02
+  - no_placeholder
+  expectations:
+  - flags algorithm none attack vector
+  - recommends enforcing RS256 and signature verification
+  - references OWASP A07:2021
+  tags:
+  - jwt
+  - auth-bypass
+  - owasp-a07
+- id: dependency-known-cve
+  prompt: "Review this package.json for vulnerable dependencies:\n{\n  \"dependencies\"\
+    : {\n    \"lodash\": \"4.17.11\",\n    \"express\": \"4.16.0\"\n  }\n}\nRun: npm\
+    \ audit\n"
+  should_trigger: true
+  checks:
+  - regex:CVE|vulnerability|known.*exploit|outdated|unpatched
+  - regex:OWASP|A06
+  - no_placeholder
+  expectations:
+  - identifies outdated packages with known CVEs
+  - recommends updating or patching dependencies
+  - references OWASP A06:2021
+  tags:
+  - dependency-audit
+  - cve
+  - owasp-a06
+- id: ssrf-user-url
+  prompt: "Review this code for SSRF vulnerabilities:\n@app.route('/fetch')\ndef fetch_url():\n\
+    \    url = request.args.get('url')\n    response = requests.get(url)\n    return\
+    \ response.content\n"
+  should_trigger: true
+  checks:
+  - regex:SSRF|server.*side.*request.*forge|url.*validation|block.*internal
+  - regex:OWASP|A10
+  - no_placeholder
+  expectations:
+  - identifies SSRF via user-controlled URL
+  - recommends URL allowlist and hostname validation
+  - references OWASP A10:2021
+  tags:
+  - ssrf
+  - owasp-a10
+- id: xxe-injection
+  prompt: 'Review this XML processing code:
+
+    import xml.etree.ElementTree as ET
+
+    tree = ET.parse(request.files[''xml''])
+
+    root = tree.getroot()
+
+    '
+  should_trigger: true
+  checks:
+  - regex:XXE|XML.*external|entity|DOCTYPE|xml.*pars
+  - regex:OWASP|A03|injection
+  - no_placeholder
+  expectations:
+  - identifies XXE injection risk in XML parser
+  - recommends disabling DTD and external entities
+  - references OWASP A03:2021
+  tags:
+  - xxe
+  - owasp-a03
+  - injection
+- id: secure-auth-flow
+  prompt: "Review this authentication implementation:\nfrom argon2 import PasswordHash\n\
+    pwd_hash = PasswordHash()\nif pwd_hash.verify(stored_hash, password):\n    session['user_id']\
+    \ = user.id\n    session.set_expiry(3600)\n"
+  should_trigger: true
+  checks:
+  - length_min:60
+  - not_regex:SQL inject|XSS|CSRF|hardcoded secret|command inject|XXE|SSRF|critical.*vuln|high.*severity
+  - regex:argon2|bcrypt|verify|session|expiry|secure|password.*hash
+  expectations:
+  - does NOT fabricate vulnerabilities
+  - confirms password hashing and session management are secure
+  tags:
+  - negative
+  - auth
+  - false-positive-guard
+- id: path-traversal
+  prompt: "Review this file handling code:\n@app.route('/download')\ndef download():\n\
+    \    filename = request.args.get('file')\n    return send_from_directory('/data',\
+    \ filename)\n"
+  should_trigger: true
+  checks:
+  - regex:path.*traversal|directory.*traversal|dotdot|\.\./|sanitiz|abs.*path
+  - regex:OWASP|A01|A05
+  - no_placeholder
+  expectations:
+  - identifies path traversal via unsanitized filename
+  - recommends using secure_filename or path validation
+  - references OWASP A01:2021
+  tags:
+  - path-traversal
+  - owasp-a01
+- id: lds-injection-ldap
+  prompt: 'Review this LDAP authentication:
+
+    ldap_query = f"(uid={username})"
+
+    conn = ldap.connect(''ldap://ldap.example.com'')
+
+    result = conn.search_s(''dc=example,dc=com'', ldap.SCOPE_SUBTREE, ldap_query)
+
+    '
+  should_trigger: true
+  checks:
+  - regex:LDAP.*inject|injection|ldap_query|sanitiz|escape
+  - regex:OWASP|A03|injection
+  - no_placeholder
+  expectations:
+  - identifies LDAP injection via string concatenation
+  - recommends escaping special LDAP characters
+  - references OWASP A03:2021
+  tags:
+  - ldap-injection
+  - owasp-a03
+- id: nosql-injection
+  prompt: 'Review this MongoDB query:
+
+    user = db.users.find_one({"email": email, "password": password})
+
+    # where email comes from req.body.email directly
+
+    '
+  should_trigger: true
+  checks:
+  - regex:NoSQL.*inject|mongodb|\$where|\$regex|\$ne|injection
+  - regex:OWASP|A03|injection
+  - no_placeholder
+  expectations:
+  - identifies NoSQL injection risk
+  - recommends input validation and query builder
+  - references OWASP A03:2021
+  tags:
+  - nosql-injection
+  - owasp-a03
 ---
 
 # Security Audit

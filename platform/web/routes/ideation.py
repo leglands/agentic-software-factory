@@ -323,18 +323,28 @@ You receive an ideation synthesis and MUST produce TWO things:
 
 You MUST compose the workflow phases yourself. Pick ONLY the phases that match the epic.
 
-Available phase briques (pick what you need):
-- scan-codebase: parallel, agents read existing code structure → findings list
-- architecture-review: sequential, architect + security analyze and document
-- sprint-contract: adversarial-pair, dev + critic negotiate deliverables
-- tdd-sprint: loop (max_iter:10), dev codes RED→GREEN with tests
-- fractal-decompose: fractal-worktree, break large task into atomic subtasks per file
-- adversarial-review: adversarial-cascade, critics verify code quality + security
-- ux-design: sequential, UX designer validates UI (ONLY for frontend epics)
-- e2e-tests: parallel, QA + automation write Playwright tests (ONLY for UI epics)
-- deploy: sequential, devops deploys (ONLY if deploy is in scope)
-- refactor-scan: parallel, 4 agents audit perf/dead-code/arch/deps
-- connect-services: sequential, backend dev wires services to existing APIs
+Available phase briques — ALWAYS specify the RIGHT agents for the stack:
+
+| Phase | Pattern | Agents (pick by stack) | When |
+|---|---|---|---|
+| scan-codebase | parallel | architecte, dev_backend (Rust/Go), dev_frontend (JS/Vue) | Always first — read existing code |
+| architecture-review | sequential | solution_architect + securite | New architecture decisions |
+| sprint-contract | adversarial-pair | lead_dev + code-critic | Before TDD — negotiate deliverables |
+| tdd-sprint | loop (max_iter:10) | dev_backend (Rust), dev_frontend (JS/Vue/Next) | Core coding — RED→GREEN→REFACTOR |
+| fractal-decompose | fractal-worktree | lead_dev | Break large task into atomic subtasks |
+| adversarial-review | adversarial-cascade | code-critic + securite | Post-code quality + security check |
+| test-verification | adversarial-pair | testeur + code-critic | Tests MUST pass, coverage gaps |
+| ux-design | sequential | ux_designer | ONLY for frontend/UI epics |
+| e2e-tests | parallel | testeur + test_automation | ONLY for UI epics |
+| connect-services | sequential | dev_backend | Wire services to existing APIs |
+| deploy | sequential | devops | ONLY if deploy is in scope |
+
+AGENT ASSIGNMENT RULES (CRITICAL — wrong agent = wasted phase):
+- Rust/gRPC backend → agents: ["dev_backend"] (NEVER dev_frontend, trace-lead, or qa for coding)
+- JS/Vue/Next frontend → agents: ["dev_frontend"] (NEVER dev_backend)
+- Mixed → agents: ["dev_backend", "dev_frontend"] (both)
+- Review/QA → agents: ["code-critic", "testeur"] (NEVER dev agents for review)
+- NEVER assign trace-lead, scrum_master, or product_manager to TDD/coding phases
 
 RULES:
 - Backend-only epic → NO ux-design, NO e2e-tests, NO deploy

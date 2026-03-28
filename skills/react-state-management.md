@@ -42,6 +42,224 @@ eval_cases:
   tags:
   - react
   - antipatterns
+- id: react-zustand-setup
+  prompt: How do I set up a Zustand store with devtools and persistence middleware?
+  checks:
+  - regex: create.*devtools.*persist|persist.*devtools
+  - length_min: 80
+  - has_keyword: zustand
+  expectations:
+  - Shows Zustand store creation with middleware setup
+  - Includes devtools and persist configuration
+- id: react-redux-toolkit-slice
+  prompt: Create a Redux Toolkit slice for managing user authentication state with
+    async thunk
+  checks:
+  - regex: createSlice|createAsyncThunk
+  - length_min: 100
+  - has_keyword: redux
+  expectations:
+  - Defines slice with reducers and async thunk
+  - Includes proper TypeScript types for user state
+- id: react-jotai-atoms
+  prompt: How do I create derived atoms in Jotai that compute values from other atoms?
+  checks:
+  - regex: atom.*get.*atom|derived
+  - length_min: 60
+  - has_keyword: jotai
+  expectations:
+  - Demonstrates atom composition
+  - Shows computed/derived state pattern
+- id: react-query-optimistic-update
+  prompt: Implement optimistic updates with React Query for a mutation
+  checks:
+  - regex: onMutate|queryClient.setQueryData|rollback
+  - length_min: 80
+  - has_keyword: react-query
+  expectations:
+  - Shows onMutate for optimistic update
+  - Includes rollback logic in onError
+- id: react-state-selection
+  prompt: What is the best way to select specific state slices to prevent unnecessary
+    re-renders?
+  checks:
+  - regex: selector|useStore.*=>|subscribe
+  - length_min: 50
+  - has_keyword: zustand
+  expectations:
+  - Explains selective subscription pattern
+  - Mentions avoiding full store subscription
+- id: react-query-vs-redux
+  prompt: When should I use React Query vs Redux for state management?
+  checks:
+  - regex: server.*state|client.*state|caching
+  - length_min: 80
+  - has_keyword: react-query
+  expectations:
+  - Differentiates server vs client state
+  - Recommends appropriate tool per use case
+- id: react-migration-redux
+  prompt: Migrate legacy Redux to Redux Toolkit - show the before and after pattern
+  checks:
+  - regex: createSlice|Immer|reducers
+  - length_min: 70
+  - has_keyword: redux
+  expectations:
+  - Shows legacy Redux pattern
+  - Demonstrates RTK modern equivalent
+- id: react-form-state
+  prompt: Which library should I use for form state management in React?
+  checks:
+  - regex: React Hook Form|Formik|validation
+  - length_min: 40
+  - has_keyword: form
+  expectations:
+  - Recommends form state solution
+  - Mentions validation approach
+- id: react-url-state
+  prompt: How do I manage URL state like query parameters and route state?
+  checks:
+  - regex: nuqs|React Router|searchParams
+  - length_min: 40
+  - has_keyword: url
+  expectations:
+  - Addresses URL state management
+  - Mentions routing integration
+- id: react-combining-states
+  prompt: How do I combine Zustand for UI state with React Query for server state?
+  checks:
+  - regex: useQuery|useStore|client.*state
+  - length_min: 60
+  - has_keyword: zustand
+  expectations:
+  - Shows hybrid approach
+  - Separates client and server state concerns
+- id: react-normalize-state
+  prompt: Why should I normalize nested data structures in my state?
+  checks:
+  - regex: normalize|flatten|update.*easy
+  - length_min: 50
+  - has_keyword: state
+  expectations:
+  - Explains normalization benefits
+  - Mentions easier state updates
+- id: react-atomic-vs-global
+  prompt: When is Jotai better than Redux Toolkit for atomic updates?
+  checks:
+  - regex: atomic|granular|re-render
+  - length_min: 60
+  - has_keyword: jotai
+  expectations:
+  - Contrasts atomic vs global state
+  - Highlights Jotai's granular updates
+- id: react-state-immutable-updates
+  prompt: How do I ensure immutable state updates work correctly in React?
+  checks:
+  - regex: immer|immutable|spread.*operator|Object.assign
+  - length_min: 60
+  - has_keyword: state
+  expectations:
+  - Explains immutable update patterns
+  - Mentions Immer or spread operators
+- id: react-swr-vs-react-query
+  prompt: What are the differences between SWR and React Query for data fetching?
+  checks:
+  - regex: swr|react-query|cache|stale
+  - length_min: 70
+  - has_keyword: react-query
+  expectations:
+  - Compares SWR and React Query features
+  - Discusses caching strategies
+- id: react-redux-selector-pattern
+  prompt: How do I create optimized Redux selectors with reselect to prevent re-renders?
+  checks:
+  - regex: createSelector|selector|memoize
+  - length_min: 60
+  - has_keyword: redux
+  expectations:
+  - Shows memoized selector creation
+  - Demonstrates selector composition
+- id: react-zustand-middleware
+  prompt: How do I add custom middleware to a Zustand store for logging or auth?
+  checks:
+  - regex: middleware|zustand.*middleware|console.log
+  - length_min: 50
+  - has_keyword: zustand
+  expectations:
+  - Demonstrates custom middleware pattern
+  - Shows store middleware chain
+- id: react-context-vs-global-state
+  prompt: When should I use React Context instead of Zustand or Redux?
+  checks:
+  - regex: context|Provider|global.*state|re-render
+  - length_min: 60
+  - has_keyword: context
+  expectations:
+  - Contrasts Context with global stores
+  - Explains when Context is appropriate
+- id: react-query-cache-invalidation
+  prompt: How do I properly invalidate React Query cache after a mutation?
+  checks:
+  - regex: invalidateQueries|queryClient|queryKey
+  - length_min: 50
+  - has_keyword: react-query
+  expectations:
+  - Shows cache invalidation pattern
+  - Demonstrates queryKey usage
+- id: react-state-testing
+  prompt: What is the best approach for testing React state management logic?
+  checks:
+  - regex: test|jest|vitest|renderHook|store.*test
+  - length_min: 50
+  - has_keyword: test
+  expectations:
+  - Recommends testing strategies
+  - Mentions testing libraries for state
+- id: react-jotai-provider
+  prompt: Do I need a Provider wrapper when using Jotai in my React app?
+  checks:
+  - regex: Provider|jotai|atom
+  - length_min: 40
+  - has_keyword: jotai
+  expectations:
+  - Clarifies Jotai provider requirements
+  - Explains store-less architecture
+- id: react-redux-toolkit-rtk-query
+  prompt: How do I set up RTK Query for automatic API caching and synchronization?
+  checks:
+  - regex: createApi|fetchBaseQuery|endpoint
+  - length_min: 70
+  - has_keyword: redux
+  expectations:
+  - Shows RTK Query API slice setup
+  - Demonstrates automatic caching
+- id: react-zustand-persistence
+  prompt: How do I persist Zustand state to localStorage and rehydrate on reload?
+  checks:
+  - regex: persist|localStorage|storage|rehydrate
+  - length_min: 50
+  - has_keyword: zustand
+  expectations:
+  - Demonstrates persistence middleware
+  - Shows storage configuration
+- id: react-server-state-caching
+  prompt: How does React Query handle stale-while-revalidate caching?
+  checks:
+  - regex: staleTime|gcTime|revalidate|cache
+  - length_min: 50
+  - has_keyword: react-query
+  expectations:
+  - Explains stale-while-revalidate pattern
+  - Discusses cache timing configuration
+- id: react-atomic-design-state
+  prompt: How should I structure state atoms in Jotai for a scalable application?
+  checks:
+  - regex: atom|primitive|derived|split
+  - length_min: 50
+  - has_keyword: jotai
+  expectations:
+  - Shows atom composition strategies
+  - Demonstrates scalable atom organization
 ---
 # react-state-management
 
@@ -481,3 +699,14 @@ const todosSlice = createSlice({
 - [Zustand GitHub](https://github.com/pmndrs/zustand)
 - [Jotai Documentation](https://jotai.org/)
 - [TanStack Query](https://tanstack.com/query)
+
+---
+
+## Live Documentation
+
+When working on tasks covered by this skill, use fetch_url to get current docs:
+- fetch_url(https://redux-toolkit.js.org/)
+- fetch_url(https://github.com/pmndrs/zustand)
+- fetch_url(https://jotai.org/)
+- fetch_url(https://tanstack.com/query)
+- Always verify SDK versions against live docs

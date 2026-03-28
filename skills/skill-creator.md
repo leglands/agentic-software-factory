@@ -57,6 +57,153 @@ eval_cases:
       - "does NOT include 'output exists' as an expectation"
       - "expectations reference specific JSON keys or structure"
     tags: ["meta-eval", "assertion-quality"]
+  - id: anti-slop-detection
+    prompt: "Write a skill that extracts data from JSON APIs. The skill must ensure agents never hardcode or mock API responses."
+    checks:
+      - "regex:NEVER|MUST|avoid|slop|mock|stub|fake|hardcode|real"
+      - "regex:name:|version:|eval_cases:|triggers:"
+      - "length_min:200"
+      - "no_placeholder"
+    expectations:
+      - "skill body contains explicit anti-slop rules (NEVER mock data, NEVER hardcode responses)"
+      - "has a bad/good example pair showing the difference between real and fake API handling"
+      - "includes an eval_case that tests the agent won't mock the API response"
+      - "frontmatter is valid YAML with name, version, description, eval_cases, triggers"
+    tags: ["anti-slop", "api"]
+  - id: multi-agent-handoff
+    prompt: "Write a skill for the handoff moment when a QA agent finishes testing and a dev agent needs to fix the bugs"
+    checks:
+      - "regex:handoff|transition|context|pass|badge|evidence|bug.list|quality"
+      - "length_min:200"
+      - "no_placeholder"
+    expectations:
+      - "skill defines clear boundary between QA phase output and dev phase input"
+      - "includes format for passing test evidence (screenshots, error logs, reproduction steps)"
+      - "has a rule preventing the dev agent from re-running QA without closing the loop"
+      - "includes an eval_case where handoff is done correctly with bug list and evidence"
+      - "frontmatter has at least 3 triggers covering the handoff context"
+    tags: ["multi-agent", "handoff"]
+  - id: security-skill-constraints
+    prompt: "Write a skill that helps agents handle secrets and credentials — it must never log or expose secrets"
+    checks:
+      - "regex:secret|credential|token|log|expos|mask|NEVER|MUST|redact|env"
+      - "length_min:200"
+      - "no_placeholder"
+    expectations:
+      - "has explicit NEVER rule against logging or displaying secrets"
+      - "has a MUST rule about masking secrets in output (e.g., *** for last 4 chars)"
+      - "has a bad/good example showing secret handling in error messages"
+      - "includes an eval_case that tests an agent trying to log a secret — must fail or mask it"
+    tags: ["security", "secrets"]
+  - id: skill-with-missing-version-bump
+    prompt: "The existing skill 'tdd.md' was updated to add a new rule, but the version was not bumped. Write the correct version of the skill frontmatter."
+    checks:
+      - "regex:version.*1\\.1\\.0|version.*minor|patch|increas|changelog"
+      - "length_min:100"
+      - "no_placeholder"
+    expectations:
+      - "bumps version from prior version to a higher minor/patch version"
+      - "includes a changelog or notes section documenting what changed"
+      - "adds an eval_case for the new rule that was introduced"
+      - "does NOT leave version unchanged when a rule was added"
+      - "does NOT output the full skill body — only the corrected frontmatter"
+    tags: ["versioning", "discipline"]
+  - id: skill-trigger-misalignment
+    prompt: "Write a skill for writing Bash scripts. The skill triggers list says 'when reviewing a PR' and 'when checking code quality' but never 'when writing a script'. What is wrong and fix it?"
+    checks:
+      - "regex:triggers|script|bash|write|when.doing|context|exact"
+      - "length_min:100"
+      - "no_placeholder"
+    expectations:
+      - "identifies that triggers are misaligned with the skill's actual purpose"
+      - "fixes triggers to include 'when writing a bash script' and 'when creating a shell script'"
+      - "removes misleading triggers about PR review that belong in a code-review skill"
+      - "adds at least one eval_case with a prompt that matches the corrected triggers"
+    tags: ["triggers", "alignment"]
+  - id: ux-skill-constraints
+    prompt: "Write a skill for creating UI components. The skill must ensure agents never hardcode colors or pixel values — use design tokens only."
+    checks:
+      - "regex:design.token|token|color|px|pixel|hardcode|NEVER|MUST|variable|theme"
+      - "length_min:200"
+      - "no_placeholder"
+    expectations:
+      - "has explicit NEVER rule against hardcoding colors (e.g. #ff0000) or pixel values"
+      - "has a MUST rule to use design tokens from the theme system"
+      - "includes a bad/good example: hardcoded #fff vs token(text.primary)"
+      - "includes an eval_case that tests an agent trying to use hardcoded pixel values — must fail"
+    tags: ["ux", "design-tokens"]
+  - id: idempotent-skill-rule
+    prompt: "Write a skill for running database migrations. The skill must ensure agents never run a migration twice in production."
+    checks:
+      - "regex:idempotent|once|only|run.once|duplicate|migration|NEVER|guard|check"
+      - "length_min:150"
+      - "no_placeholder"
+    expectations:
+      - "has explicit NEVER rule against running the same migration twice"
+      - "has a MUST rule to check migration status before running"
+      - "includes a bad/good example: running without check vs checking migrations table first"
+      - "includes an eval_case testing that the agent won't run a migration twice"
+    tags: ["database", "safety"]
+  - id: escalation-skill
+    prompt: "Write a skill for when a human engineer must be called in — the agent should never pretend it can fix something beyond its capability."
+    checks:
+      - "regex:escalat|human|engineer|never.fake|capability|boundary|SAFE|STOP|call"
+      - "length_min:150"
+      - "no_placeholder"
+    expectations:
+      - "has a MUST rule to escalate when the agent cannot safely resolve the issue"
+      - "has a NEVER rule against pretending to fix something beyond capability"
+      - "includes a concrete escalation trigger (e.g., production data loss, security breach)"
+      - "includes an eval_case where the agent correctly escalates instead of faking a fix"
+    tags: ["safety", "escalation"]
+  - id: multi-file-output
+    prompt: "Write a skill for generating a full project scaffold (multiple files: package.json, tsconfig.json, README.md, src/index.ts). Output must be complete files, not descriptions."
+    checks:
+      - "regex:file:|package\\.json|tsconfig|README|scaffold|NEVER|description|complete"
+      - "length_min:150"
+      - "no_placeholder"
+    expectations:
+      - "has a NEVER rule against outputting file descriptions instead of actual file content"
+      - "has a MUST rule to output complete, syntactically valid file content for each file"
+      - "includes an eval_case with a multi-file prompt — each file must be complete"
+      - "does NOT output 'package.json would contain...' — must output the actual file"
+    tags: ["output", "completeness"]
+  - id: test-coverage-requirements
+    prompt: "Write a skill that ensures test cases cover happy path AND edge cases. The skill must reject a test suite that only tests the happy path."
+    checks:
+      - "regex:edge|corner|edge.case|happy.path|coverage|test|NEVER|MUST|reject"
+      - "length_min:150"
+      - "no_placeholder"
+    expectations:
+      - "has a NEVER rule against accepting a test suite with only happy path tests"
+      - "has a MUST rule requiring at least one edge case test per feature"
+      - "includes a bad/good example: only happy path tests vs happy + edge tests"
+      - "includes an eval_case testing an agent submitting only happy path — must fail or be rejected"
+    tags: ["testing", "coverage"]
+  - id: error-handling-constraints
+    prompt: "Write a skill for API endpoint handlers. The skill must ensure agents handle errors explicitly — never let exceptions propagate raw to the caller."
+    checks:
+      - "regex:error|except|catch|raise|propagat|raw|NEVER|MUST|try.except|finally"
+      - "length_min:150"
+      - "no_placeholder"
+    expectations:
+      - "has a NEVER rule against letting exceptions propagate unhandled"
+      - "has a MUST rule to catch and transform exceptions into structured error responses"
+      - "includes a bad/good example: raw exception vs caught and transformed error"
+      - "includes an eval_case testing an agent that lets an exception propagate — must fail"
+    tags: ["error-handling", "api"]
+  - id: version-semver-discipline
+    prompt: "Write a skill for API design. You must follow semver. If you add a breaking change without bumping the major version, the skill should fail."
+    checks:
+      - "regex:semver|version|major|minor|patch|breaking|changelog|NEVER"
+      - "length_min:200"
+      - "no_placeholder"
+    expectations:
+      - "has a rule that breaking changes MUST bump major version (X+1.0.0)"
+      - "has a NEVER rule against adding breaking changes without version bump"
+      - "includes an eval_case with a breaking change — must bump major or fail"
+      - "frontmatter version is set appropriately"
+    tags: ["versioning", "semver"]
 ---
 
 # Skill Creator

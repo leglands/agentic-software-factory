@@ -715,6 +715,50 @@ def _migrate_pg(conn):
     except Exception:
         pass
 
+    # ── Memory ICM enhancements (decay + dedup + graph) ─────────
+    # Inspired by rtk-ai/icm: dual memory (episodic decay + knowledge graph)
+
+    # Decay columns on memory_project
+    try:
+        conn.execute("ALTER TABLE memory_project ADD COLUMN IF NOT EXISTS decay_rate REAL DEFAULT 0.1")
+    except Exception:
+        pass
+    try:
+        conn.execute("ALTER TABLE memory_project ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE")
+    except Exception:
+        pass
+
+    # Decay columns on memory_global
+    try:
+        conn.execute("ALTER TABLE memory_global ADD COLUMN IF NOT EXISTS decay_rate REAL DEFAULT 0.05")
+    except Exception:
+        pass
+    try:
+        conn.execute("ALTER TABLE memory_global ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE")
+    except Exception:
+        pass
+
+    # Knowledge graph relations table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS memory_relations (
+            id SERIAL PRIMARY KEY,
+            source_table TEXT NOT NULL,
+            source_id INTEGER NOT NULL,
+            target_table TEXT NOT NULL,
+            target_id INTEGER NOT NULL,
+            relation TEXT NOT NULL,
+            metadata_json TEXT DEFAULT '{}',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(source_table, source_id, target_table, target_id, relation)
+        )
+    """)
+    try:
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_memrel_source ON memory_relations(source_table, source_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_memrel_target ON memory_relations(target_table, target_id)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_memrel_relation ON memory_relations(relation)")
+    except Exception:
+        pass
+
     conn.commit()
 
 

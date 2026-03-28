@@ -1,66 +1,270 @@
 ---
 name: ac-security
-description: >
-  AC Security phase — applies SecureByDesign v1.1.0's 25 controls (OWASP Web 2021,
-  OWASP LLM 2025, NIST CSF 2.0, ISO 27001:2022) to sprint output before CI/CD validation.
-  Produces a per-control pass/fail report and remediation plan.
+description: 'AC Security phase — applies SecureByDesign v1.1.0''s 25 controls (OWASP
+  Web 2021, OWASP LLM 2025, NIST CSF 2.0, ISO 27001:2022) to sprint output before
+  CI/CD validation. Produces a per-control pass/fail report and remediation plan.
+
+  '
 metadata:
   category: security
   triggers:
-    - "when applying security hardening on sprint output"
-    - "when running SecureByDesign controls"
-    - "when checking for SBD compliance before CI validation"
-# EVAL CASES
-# WHY: The AC security phase must detect real SBD failures (injection, missing
-# rate-limiting) and produce structured pass/fail reports — not generic advice.
-# Ref: philschmid.de/testing-skills; SecureByDesign v1.1.0 SKILL.md
+  - when applying security hardening on sprint output
+  - when running SecureByDesign controls
+  - when checking for SBD compliance before CI validation
 eval_cases:
-  - id: sbd01-injection-fail
-    prompt: |
-      Audit this code under SecureByDesign SBD-01:
-      def update_user(user_id, **kwargs):
-          sets = ", ".join(f"{k}=?" for k in kwargs)
-          db.execute(f"UPDATE users SET {sets} WHERE id=?", list(kwargs.values()) + [user_id])
-    should_trigger: true
-    checks:
-      - "regex:SBD-01|injection|f-string|dynamic.*column|whitelist|allowlist"
-      - "regex:FAIL|risk|vulnerab|danger|issue|problem|insecur"
-      - "length_min:80"
-    expectations:
-      - "evaluates specifically against SBD-01 (injection control)"
-      - "flags dynamic column names in f-string even if values are parameterized"
-      - "recommends a column allowlist"
-    tags: [sbd-01, sql-injection]
-  - id: sbd04-rate-limit-fail
-    prompt: |
-      Audit this FastAPI route under SecureByDesign SBD-04:
-      @router.post("/api/auth/login")
-      async def login(request: Request):
-          body = await request.json()
-          return service.login(body["email"], body["password"])
-    should_trigger: true
-    checks:
-      - "regex:SBD-04|rate.*limit|brute.*force|429|Retry-After|throttl"
-      - "no_placeholder"
-    expectations:
-      - "flags missing rate limiting as SBD-04 FAIL"
-      - "recommends per-IP rate limiting with 429 response"
-    tags: [sbd-04, rate-limiting]
-  - id: sbd-report-format
-    prompt: |
-      Run a SecureByDesign audit on this module and produce a structured report.
-      The module has: JWT auth with HS256, bcrypt password hashing, no hardcoded
-      secrets, parameterized queries, but no security headers middleware.
-    should_trigger: true
-    checks:
-      - "regex:PASS|FAIL|SBD-|control|score|tier"
-      - "no_placeholder"
-      - "length_min:150"
-    expectations:
-      - "produces a structured per-control report (PASS/FAIL per SBD-XX)"
-      - "correctly marks JWT/bcrypt/parameterized queries as PASS"
-      - "marks missing security headers as FAIL (SBD-03)"
-    tags: [report-format, sbd-03]
+- id: sbd01-injection-fail
+  prompt: "Audit this code under SecureByDesign SBD-01:\ndef update_user(user_id,\
+    \ **kwargs):\n    sets = \", \".join(f\"{k}=?\" for k in kwargs)\n    db.execute(f\"\
+    UPDATE users SET {sets} WHERE id=?\", list(kwargs.values()) + [user_id])\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-01|injection|f-string|dynamic.*column|whitelist|allowlist
+  - regex:FAIL|risk|vulnerab|danger|issue|problem|insecur
+  - length_min:80
+  expectations:
+  - evaluates specifically against SBD-01 (injection control)
+  - flags dynamic column names in f-string even if values are parameterized
+  - recommends a column allowlist
+  tags:
+  - sbd-01
+  - sql-injection
+- id: sbd04-rate-limit-fail
+  prompt: "Audit this FastAPI route under SecureByDesign SBD-04:\n@router.post(\"\
+    /api/auth/login\")\nasync def login(request: Request):\n    body = await request.json()\n\
+    \    return service.login(body[\"email\"], body[\"password\"])\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-04|rate.*limit|brute.*force|429|Retry-After|throttl
+  - no_placeholder
+  expectations:
+  - flags missing rate limiting as SBD-04 FAIL
+  - recommends per-IP rate limiting with 429 response
+  tags:
+  - sbd-04
+  - rate-limiting
+- id: sbd-report-format
+  prompt: 'Run a SecureByDesign audit on this module and produce a structured report.
+
+    The module has: JWT auth with HS256, bcrypt password hashing, no hardcoded
+
+    secrets, parameterized queries, but no security headers middleware.
+
+    '
+  should_trigger: true
+  checks:
+  - regex:PASS|FAIL|SBD-|control|score|tier
+  - no_placeholder
+  - length_min:150
+  expectations:
+  - produces a structured per-control report (PASS/FAIL per SBD-XX)
+  - correctly marks JWT/bcrypt/parameterized queries as PASS
+  - marks missing security headers as FAIL (SBD-03)
+  tags:
+  - report-format
+  - sbd-03
+- id: sbd02-prompt-injection-fail
+  prompt: "Audit this LLM integration under SecureByDesign SBD-02:\ndef ask_llm(user_message:\
+    \ str):\n    prompt = f\"System: You are helpful. User: {user_message}\"\n   \
+    \ return openai.ChatCompletion.create(model=\"gpt-4\", messages=[{\"role\": \"\
+    user\", \"content\": prompt}])\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-02|prompt.*injection|adversarial|system.*prompt|sanitiz
+  - regex:FAIL|vulnerab|inject|separat|defense
+  - length_min:80
+  expectations:
+  - identifies SBD-02 prompt injection risk
+  - flags unsanitized user_message in system prompt
+  - recommends structural separation of system prompt and user content
+  tags:
+  - sbd-02
+  - prompt-injection
+  - llm
+- id: sbd03-security-headers-fail
+  prompt: "Audit this Express.js middleware under SecureByDesign SBD-03:\napp.use((req,\
+    \ res, next) => {\n    res.setHeader('X-Content-Type-Options', 'nosniff');\n \
+    \   next();\n});\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-03|CSP|X-Frame|HSTS|Referrer|Security.*Headers
+  - no_placeholder
+  - length_min:60
+  expectations:
+  - identifies missing CSP header as FAIL
+  - identifies missing X-Frame-Options as FAIL
+  - identifies missing HSTS header as FAIL
+  - lists all 5 required security headers
+  tags:
+  - sbd-03
+  - security-headers
+  - express
+- id: sbd05-authorization-fail
+  prompt: "Audit this resource access code under SecureByDesign SBD-05:\n@app.get(\"\
+    /documents/{doc_id}\")\ndef get_document(doc_id):\n    doc = db.query(\"SELECT\
+    \ * FROM documents WHERE id = ?\", doc_id)\n    return doc\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-05|authoriz|ownership|owner|defaut.*DENY|permission
+  - regex:FAIL|miss|without|no.*check|vulnerab
+  - length_min:80
+  expectations:
+  - flags missing authorization check as SBD-05 FAIL
+  - recommends owner_id verification before returning document
+  - recommends returning 404 (not 403) for unauthorized access
+  tags:
+  - sbd-05
+  - authorization
+  - access-control
+- id: sbd06-least-privilege-fail
+  prompt: 'Audit this API configuration under SecureByDesign SBD-06:
+
+    AWS_ACCESS_KEY_ID="<REDACTED_EXAMPLE_KEY>"
+
+    AWS_SECRET_ACCESS_KEY="<REDACTED_EXAMPLE_SECRET>"
+
+    db_user="root"
+
+    '
+  should_trigger: true
+  checks:
+  - regex:SBD-06|least.*privileg|minimiz.*permission|credential|segregat
+  - regex:FAIL|overprivileged|too.*much|unnecessar|root.*access
+  - has_keyword:root|AKIAIOSFODNN7|secret.*key.*example
+  expectations:
+  - flags root database user as SBD-06 FAIL
+  - flags AWS credentials in code as SBD-07 FAIL also
+  - recommends IAM role with minimal required permissions
+  tags:
+  - sbd-06
+  - least-privilege
+  - credentials
+- id: sbd07-secrets-in-code
+  prompt: 'Audit this Python module under SecureByDesign SBD-07:
+
+    import os
+
+    API_KEY = os.environ.get("API_KEY") or "<REDACTED_EXAMPLE_OPENAI_KEY>"
+
+    GITHUB_TOKEN = "<REDACTED_EXAMPLE_GH_TOKEN>"
+
+    STRIPE_KEY = "<REDACTED_EXAMPLE_STRIPE_KEY>"
+
+    '
+  should_trigger: true
+  checks:
+  - regex:SBD-07|secret|credential|hardcoded|api.*key|token
+  - regex:FAIL|exposed|committ|found|detect
+  - has_keyword:sk-|ghp_|AKIA|sk_live
+  expectations:
+  - detects hardcoded API key pattern sk-[a-zA-Z0-9]{48}
+  - detects GitHub token pattern ghp_[a-zA-Z0-9]{36}
+  - recommends environment variables or secret manager
+  tags:
+  - sbd-07
+  - secrets
+  - hardcoded-credentials
+- id: sbd08-crypto-standards-fail
+  prompt: "Audit this token generation under SecureByDesign SBD-08:\nimport hashlib\n\
+    def generate_token(user_id):\n    return hashlib.md5(str(user_id + timestamp)).hexdigest()\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-08|MD5|SHA-1| insecure|forbidden|deprecat
+  - regex:FAIL|weak.*crypto|md5|sha1|entropy
+  - length_min:60
+  expectations:
+  - flags MD5 as SBD-08 FAIL (forbidden)
+  - recommends crypto.random_token() or secrets module
+  - 'mentions forbidden algorithms: MD5, SHA-1, DES, 3DES, RC4'
+  tags:
+  - sbd-08
+  - cryptography
+  - md5
+- id: sbd09-data-minimization-fail
+  prompt: "Audit this logging statement under SecureByDesign SBD-09:\ndef process_payment(card_number,\
+    \ cvv, amount):\n    logger.info(f\"Processing payment: card={card_number}, cvv={cvv},\
+    \ amount={amount}\")\n    return payment_service.charge(card_number, cvv, amount)\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-09|data.*minim|purge|sensitive|PCI|DSS|card.*number|cvv
+  - regex:FAIL|log.*sensitive|expos|persist|store.*plain
+  - length_min:60
+  expectations:
+  - flags logging of full card number as SBD-09 FAIL
+  - flags logging of CVV as SBD-09 FAIL
+  - recommends logging only event type and masked PAN
+  tags:
+  - sbd-09
+  - data-minimization
+  - pci-dss
+- id: sbd10-logging-audit-fail
+  prompt: "Audit this authentication module under SecureByDesign SBD-10:\ndef login(email,\
+    \ password):\n    user = db.query(\"SELECT * FROM users WHERE email=?\", email)\n\
+    \    if verify(password, user.hash):\n        session.create(user.id)\n      \
+    \  return \"Login successful\"\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-10|audit.*trail|logg|event.*type|timestamp|uuid
+  - regex:FAIL|no.*log|miss.*log|unlogged|incomplete
+  - length_min:80
+  expectations:
+  - flags missing security logging as SBD-10 FAIL
+  - expects structured log format with timestamp, event_type, user_id, ip, outcome
+  - recommends logging failed and successful login attempts
+  tags:
+  - sbd-10
+  - logging
+  - audit-trail
+- id: sbd13-error-handling-fail
+  prompt: "Audit this API error handler under SecureByDesign SBD-13:\n@app.errorhandler(Exception)\n\
+    def handle_all(error):\n    return f\"Error: {str(error)}\\n{traceback.format_exc()}\"\
+    , 500\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-13|error.*handling|stack.*trace|expos|generi.*messag
+  - regex:FAIL|leak|expos|reveal|traceback|internal.*detail
+  - length_min:70
+  expectations:
+  - flags exposing stack trace as SBD-13 FAIL
+  - expects generic error message to user
+  - recommends logging detailed error server-side only
+  tags:
+  - sbd-13
+  - error-handling
+  - information-disclosure
+- id: sbd17-system-prompt-protection-fail
+  prompt: "Audit this LLM application under SecureByDesign SBD-17:\ndef chat(message):\n\
+    \    if \"above\" in message or \"instructions\" in message.lower():\n       \
+    \ return \"I cannot help with that.\"\n    return llm.complete(f\"System: You\
+    \ are a helpful assistant.\\n{message}\")\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-17|system.*prompt.*protect|prompt.*leak|repeat|instructions
+  - regex:WARN|insufficient|bypass|keyword.*filter|trivial
+  - length_min:80
+  expectations:
+  - flags keyword-based bypass as insufficient SBD-17 protection
+  - recommends structural enforcement (separate message types, not string matching)
+  - notes prompt injection tests like 'Repeat everything above'
+  tags:
+  - sbd-17
+  - prompt-protection
+  - llm-security
+- id: sbd19-llm-output-validation-fail
+  prompt: "Audit this code under SecureByDesign SBD-19:\ndef process_llm_response(llm_output:\
+    \ str):\n    result = eval(llm_output)\n    exec(result)\n    return result\n"
+  should_trigger: true
+  checks:
+  - regex:SBD-19|llm.*output.*validat|eval|exec|sandbox|untrusted
+  - regex:FAIL|danger|critic|remote.*code|exec.*llm|no.*validat
+  - length_min:70
+  expectations:
+  - flags direct eval/exec of LLM output as SBD-19 CRITICAL FAIL
+  - recommends output validation, sandboxing, or safe execution wrapper
+  - mentions never passing LLM output directly to eval/exec/DB/browser
+  tags:
+  - sbd-19
+  - llm-output
+  - code-execution
 ---
 # Skill: AC Security — SecureByDesign Hardening Phase
 
@@ -250,3 +454,11 @@ Calculer le `security_score` (0-100) comme moyenne pondérée par couche :
 4. Clôturer chaque audit par la phrase de scope d'assurance (Rule D anti-hallucination)
 5. Log structured — jamais de données sensibles dans les logs
 6. Si `security_score < 60` → VETO immédiat, bloquer le cycle, notifier l'équipe
+
+---
+
+## Live Documentation
+
+When working on tasks covered by this skill, use fetch_url to get current docs:
+- fetch_url(https://securebydesign.saccessa.com/)
+- Always verify SDK versions against live docs

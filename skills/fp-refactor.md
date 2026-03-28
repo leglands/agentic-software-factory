@@ -46,35 +46,34 @@ eval_cases:
 
 # Refactoring Imperative Code to fp-ts
 
-This skill provides comprehensive patterns and strategies for migrating existing imperative TypeScript code to fp-ts functional programming patterns.
+fp-ts migration patterns + strategies for existing TypeScript → fp-ts functional patterns.
 
-## Table of Contents
+## TOC
 
-1. [Converting try-catch to Either/TaskEither](#1-converting-try-catch-to-eithertaskeither)
-2. [Converting null checks to Option](#2-converting-null-checks-to-option)
-3. [Converting callbacks to Task](#3-converting-callbacks-to-task)
-4. [Converting class-based DI to Reader](#4-converting-class-based-di-to-reader)
-5. [Converting imperative loops to functional operations](#5-converting-imperative-loops-to-functional-operations)
-6. [Migrating Promise chains to TaskEither](#6-migrating-promise-chains-to-taskeither)
-7. [Common Pitfalls](#7-common-pitfalls)
-8. [Gradual Adoption Strategies](#8-gradual-adoption-strategies)
-9. [When NOT to Refactor](#9-when-not-to-refactor)
+1. [try-catch → Either/TaskEither](#1)
+2. [null → Option](#2)
+3. [callbacks → Task](#3)
+4. [class DI → Reader](#4)
+5. [loops → fp ops](#5)
+6. [Promise chains → TaskEither](#6)
+7. [Pitfalls](#7)
+8. [Adoption strategies](#8)
+9. [When NOT to refactor](#9)
 
 ---
 
-## 1. Converting try-catch to Either/TaskEither
+## 1. try-catch → Either/TaskEither <a name="1"></a>
 
-### The Problem with try-catch
+### Problem w/ try-catch
 
-Traditional try-catch blocks have several issues:
-- Error handling is implicit and easy to forget
-- The type system doesn't track which functions can throw
-- Control flow is non-linear and harder to reason about
-- Composing multiple fallible operations is verbose
+- Errors implicit + easy to forget
+- Type system doesn't track throwing fns
+- Control flow non-linear
+- Composing fallible ops verbose
 
-### Pattern: Synchronous try-catch to Either
+### Pattern: Sync try-catch → Either
 
-#### Before (Imperative)
+#### Before
 
 ```typescript
 function parseJSON(input: string): unknown {
@@ -103,7 +102,6 @@ function validateUser(data: unknown): User {
   }
 }
 
-// Usage with nested try-catch
 function processUserInput(input: string): User | null {
   try {
     const data = parseJSON(input);
@@ -128,14 +126,12 @@ interface User {
   age: number;
 }
 
-// Use Json.parse which returns Either<Error, Json>
 const parseJSON = (input: string): E.Either<Error, unknown> =>
   pipe(
     J.parse(input),
     E.mapLeft((e) => new Error(`Invalid JSON: ${e}`))
   );
 
-// Validation returns Either, making errors explicit in types
 const validateUser = (data: unknown): E.Either<Error, User> => {
   if (!data || typeof data !== 'object') {
     return E.left(new Error('Data must be an object'));
@@ -150,14 +146,12 @@ const validateUser = (data: unknown): E.Either<Error, User> => {
   return E.right({ name: obj.name, age: obj.age });
 };
 
-// Compose with pipe and flatMap - errors propagate automatically
 const processUserInput = (input: string): E.Either<Error, User> =>
   pipe(
     parseJSON(input),
     E.flatMap(validateUser)
   );
 
-// Handle both cases explicitly
 pipe(
   processUserInput('{"name": "Alice", "age": 30}'),
   E.match(
@@ -167,18 +161,18 @@ pipe(
 );
 ```
 
-### Step-by-Step Refactoring Guide
+### Step-by-Step
 
-1. **Identify the error type**: Determine what errors can occur and create appropriate error types
-2. **Change return type**: From `T` to `Either<E, T>` where `E` is your error type
-3. **Replace throw statements**: Convert `throw new Error(...)` to `E.left(new Error(...))`
-4. **Replace return statements**: Convert `return value` to `E.right(value)`
-5. **Remove try-catch blocks**: They're no longer needed
-6. **Update callers**: Use `pipe` with `E.flatMap` to chain operations
+1. **Identify error type** → create error types
+2. **Change return type** → `T` → `Either<E, T>`
+3. **Replace throw** → `E.left(new Error(...))`
+4. **Replace return** → `E.right(value)`
+5. **Remove try-catch** → gone
+6. **Update callers** → `pipe` + `E.flatMap`
 
-### Pattern: Async try-catch to TaskEither
+### Pattern: Async try-catch → TaskEither
 
-#### Before (Imperative)
+#### Before
 
 ```typescript
 async function fetchUser(id: string): Promise<User> {
@@ -206,7 +200,6 @@ async function fetchUserPosts(userId: string): Promise<Post[]> {
   }
 }
 
-// Complex orchestration with try-catch
 async function getUserWithPosts(id: string): Promise<{ user: User; posts: Post[] } | null> {
   try {
     const user = await fetchUser(id);
@@ -226,7 +219,6 @@ import * as TE from 'fp-ts/TaskEither';
 import * as E from 'fp-ts/Either';
 import { pipe } from 'fp-ts/function';
 
-// Wrap fetch in TaskEither
 const fetchUser = (id: string): TE.TaskEither<Error, User> =>
   pipe(
     TE.tryCatch(
@@ -266,7 +258,6 @@ const fetchUserPosts = (userId: string): TE.TaskEither<Error, Post[]> =>
     )
   );
 
-// Clean composition with automatic error propagation
 const getUserWithPosts = (
   id: string
 ): TE.TaskEither<Error, { user: User; posts: Post[] }> =>
@@ -276,7 +267,6 @@ const getUserWithPosts = (
     TE.bind('posts', () => fetchUserPosts(id))
   );
 
-// Execute and handle results
 const main = async () => {
   const result = await getUserWithPosts('123')();
   pipe(
@@ -289,37 +279,33 @@ const main = async () => {
 };
 ```
 
-### Helper: tryCatch Utility
-
-Create a reusable wrapper for functions that might throw:
+### Helper: tryCatch
 
 ```typescript
 import * as E from 'fp-ts/Either';
 import * as TE from 'fp-ts/TaskEither';
 
-// For sync functions
 const tryCatchSync = <A>(f: () => A): E.Either<Error, A> =>
   E.tryCatch(f, (e) => (e instanceof Error ? e : new Error(String(e))));
 
-// For async functions
 const tryCatchAsync = <A>(f: () => Promise<A>): TE.TaskEither<Error, A> =>
   TE.tryCatch(f, (e) => (e instanceof Error ? e : new Error(String(e))));
 ```
 
 ---
 
-## 2. Converting null checks to Option
+## 2. null checks → Option <a name="2"></a>
 
-### The Problem with null/undefined
+### Problem w/ null/undefined
 
-- TypeScript's strict null checks help, but null still spreads through code
-- Chained property access requires verbose null guards
-- The distinction between "missing" and "present but null" is unclear
-- Easy to forget null checks leading to runtime errors
+- TS strict null helps, but null spreads
+- Chained access needs verbose null guards
+- "missing" vs "present but null" unclear
+- Easy to forget null checks
 
-### Pattern: Simple null checks to Option
+### Pattern: Simple null → Option
 
-#### Before (Imperative)
+#### Before
 
 ```typescript
 interface Config {
@@ -352,7 +338,6 @@ function getDatabaseUrl(config: Config): string | null {
   return `postgres://${auth}${config.database.host}:${port}`;
 }
 
-// Usage requires null check
 const url = getDatabaseUrl(config);
 if (url !== null) {
   connectToDatabase(url);
@@ -393,7 +378,6 @@ const getDatabaseUrl = (config: Config): O.Option<string> =>
     )
   );
 
-// Usage is explicit about the optional nature
 pipe(
   getDatabaseUrl(config),
   O.match(
@@ -403,9 +387,9 @@ pipe(
 );
 ```
 
-### Pattern: Array find operations
+### Pattern: Array find
 
-#### Before (Imperative)
+#### Before
 
 ```typescript
 interface User {
@@ -426,7 +410,6 @@ function getUserEmail(users: User[], id: string): string | null {
   return user.email;
 }
 
-// Chained lookups get messy
 function getManagerEmail(users: User[], employee: { managerId?: string }): string | null {
   if (!employee.managerId) {
     return null;
@@ -466,22 +449,21 @@ const getManagerEmail = (
   );
 ```
 
-### Step-by-Step Refactoring Guide
+### Step-by-Step
 
-1. **Identify nullable values**: Find all `T | null`, `T | undefined`, or optional properties
-2. **Wrap with fromNullable**: Convert nullable values to Option at system boundaries
-3. **Change return types**: From `T | null` to `Option<T>`
-4. **Replace null checks**: Use `O.map`, `O.flatMap`, `O.filter` instead of if statements
-5. **Handle at boundaries**: Use `O.getOrElse`, `O.match`, or `O.toNullable` when interfacing with non-fp code
+1. **Identify nullable** → `T | null`, `T | undefined`, optional props
+2. **Wrap w/ fromNullable** → at system boundaries
+3. **Change return types** → `T | null` → `Option<T>`
+4. **Replace null checks** → `O.map`, `O.flatMap`, `O.filter`
+5. **Handle at boundaries** → `O.getOrElse`, `O.match`, `O.toNullable`
 
-### Converting Between Option and Either
+### Option ↔ Either
 
 ```typescript
 import * as O from 'fp-ts/Option';
 import * as E from 'fp-ts/Either';
 import { pipe } from 'fp-ts/function';
 
-// Option to Either: provide error for None case
 const optionToEither = <E, A>(onNone: () => E) => (
   option: O.Option<A>
 ): E.Either<E, A> =>
@@ -490,7 +472,6 @@ const optionToEither = <E, A>(onNone: () => E) => (
     E.fromOption(onNone)
   );
 
-// Example
 const findUser = (id: string): O.Option<User> => /* ... */;
 
 const getUser = (id: string): E.Either<Error, User> =>
@@ -502,18 +483,18 @@ const getUser = (id: string): E.Either<Error, User> =>
 
 ---
 
-## 3. Converting callbacks to Task
+## 3. callbacks → Task <a name="3"></a>
 
-### The Problem with Callbacks
+### Problem w/ Callbacks
 
-- Callback hell makes code hard to read
-- Error handling is inconsistent
-- Difficult to compose and sequence
-- No standard way to handle async operations
+- Callback hell → hard to read
+- Error handling inconsistent
+- Difficult to compose/sequence
+- No standard async pattern
 
-### Pattern: Node-style callbacks to Task
+### Pattern: Node callbacks → Task
 
-#### Before (Imperative)
+#### Before
 
 ```typescript
 import * as fs from 'fs';
@@ -552,7 +533,6 @@ function processFile(
   });
 }
 
-// Callback hell
 function processMultipleFiles(
   files: Array<{ input: string; output: string }>,
   callback: (error: Error | null) => void
@@ -586,7 +566,6 @@ import * as TE from 'fp-ts/TaskEither';
 import * as A from 'fp-ts/Array';
 import { pipe } from 'fp-ts/function';
 
-// Wrap fs.promises in TaskEither
 const readFile = (path: string): TE.TaskEither<Error, string> =>
   TE.tryCatch(
     () => fs.readFile(path, 'utf-8'),
@@ -599,7 +578,6 @@ const writeFile = (path: string, data: string): TE.TaskEither<Error, void> =>
     (e) => (e instanceof Error ? e : new Error(String(e)))
   );
 
-// Clean composition
 const processFile = (
   inputPath: string,
   outputPath: string
@@ -610,7 +588,6 @@ const processFile = (
     TE.flatMap((processed) => writeFile(outputPath, processed))
   );
 
-// Process multiple files in parallel or sequence
 const processMultipleFilesParallel = (
   files: Array<{ input: string; output: string }>
 ): TE.TaskEither<Error, void[]> =>
@@ -632,12 +609,11 @@ const processMultipleFilesSequential = (
   );
 ```
 
-### Pattern: Converting callback-based APIs
+### Pattern: callback APIs → TaskEither
 
 ```typescript
 import * as TE from 'fp-ts/TaskEither';
 
-// Generic callback-to-TaskEither converter
 const fromCallback = <A>(
   f: (callback: (error: Error | null, result: A | null) => void) => void
 ): TE.TaskEither<Error, A> =>
@@ -652,28 +628,26 @@ const fromCallback = <A>(
       });
     });
 
-// Usage
 const readFileLegacy = (path: string): TE.TaskEither<Error, string> =>
   fromCallback((cb) => fs.readFile(path, 'utf-8', cb));
 ```
 
 ---
 
-## 4. Converting class-based DI to Reader
+## 4. class DI → Reader <a name="4"></a>
 
-### The Problem with Class-based DI
+### Problem w/ Class DI
 
-- Tight coupling between classes and their dependencies
-- Testing requires mocking entire class hierarchies
-- Dependency injection containers add runtime complexity
-- Hard to trace data flow through the application
+- Tight coupling classes ↔ deps
+- Testing requires mocking hierarchies
+- DI containers add runtime complexity
+- Hard to trace data flow
 
-### Pattern: Service classes to Reader
+### Pattern: Service classes → Reader
 
-#### Before (Imperative with Classes)
+#### Before (Classes)
 
 ```typescript
-// Traditional class-based approach
 interface Logger {
   log(message: string): void;
   error(message: string): void;
@@ -719,7 +693,6 @@ class UserService {
   }
 }
 
-// Manual DI setup
 const logger = new ConsoleLogger();
 const userRepo = new PostgresUserRepository(dbConnection);
 const emailService = new SmtpEmailService(smtpConfig);
@@ -734,7 +707,6 @@ import * as RTE from 'fp-ts/ReaderTaskEither';
 import * as TE from 'fp-ts/TaskEither';
 import { pipe } from 'fp-ts/function';
 
-// Define the environment/dependencies as an interface
 interface AppEnv {
   logger: {
     log: (message: string) => void;
@@ -749,10 +721,8 @@ interface AppEnv {
   };
 }
 
-// Helper to access environment
 const ask = RTE.ask<AppEnv, Error>();
 
-// Service functions using ReaderTaskEither
 const logInfo = (message: string): RTE.ReaderTaskEither<AppEnv, Error, void> =>
   pipe(
     ask,
@@ -787,7 +757,6 @@ const sendEmail = (
     RTE.flatMapTaskEither((env) => env.emailService.send(to, subject, body))
   );
 
-// The updateEmail function using Reader composition
 const updateEmail = (
   userId: string,
   newEmail: string
@@ -819,7 +788,6 @@ const updateEmail = (
     })
   );
 
-// Build the environment
 const createAppEnv = (): AppEnv => ({
   logger: {
     log: (msg) => console.log(`[INFO] ${msg}`),
@@ -843,7 +811,6 @@ const createAppEnv = (): AppEnv => ({
   },
 });
 
-// Run the program
 const main = async () => {
   const env = createAppEnv();
   const result = await updateEmail('user-123', 'new@email.com')(env)();
@@ -858,10 +825,9 @@ const main = async () => {
 };
 ```
 
-### Testing with Reader
+### Testing w/ Reader
 
 ```typescript
-// Easy to test with mock environment
 const createTestEnv = (): AppEnv => {
   const logs: string[] = [];
   const savedUsers: User[] = [];
@@ -889,25 +855,23 @@ const createTestEnv = (): AppEnv => {
   };
 };
 
-// Test
 describe('updateEmail', () => {
   it('should update email and send notification', async () => {
     const env = createTestEnv();
     const result = await updateEmail('existing-user', 'new@email.com')(env)();
 
     expect(E.isRight(result)).toBe(true);
-    // Assert on captured side effects
   });
 });
 ```
 
 ---
 
-## 5. Converting imperative loops to functional operations
+## 5. imperative loops → fp ops <a name="5"></a>
 
-### Pattern: for loops to map/filter/reduce
+### Pattern: for → map/filter/reduce
 
-#### Before (Imperative)
+#### Before
 
 ```typescript
 interface Product {
@@ -930,21 +894,17 @@ function processProducts(products: Product[]): {
   for (let i = 0; i < products.length; i++) {
     const product = products[i];
 
-    // Skip out of stock
     if (!product.inStock) {
       continue;
     }
 
-    // Sum total value
     totalValue += product.price;
 
-    // Count categories
     if (categoryCounts[product.category] === undefined) {
       categoryCounts[product.category] = 0;
     }
     categoryCounts[product.category]++;
 
-    // Collect expensive products
     if (product.price > 100) {
       expensiveProducts.push(product.name);
     }
@@ -954,7 +914,7 @@ function processProducts(products: Product[]): {
 }
 ```
 
-#### After (fp-ts functional operations)
+#### After (fp-ts)
 
 ```typescript
 import * as A from 'fp-ts/Array';
@@ -992,7 +952,6 @@ const processProducts = (products: Product[]) => {
   return { totalValue, categoryCounts, expensiveProducts };
 };
 
-// Or using a single pass with foldMap for efficiency
 import { Monoid as M } from 'fp-ts/Monoid';
 
 interface ProductStats {
@@ -1025,9 +984,9 @@ const processProductsSinglePass = (products: Product[]): ProductStats =>
   );
 ```
 
-### Pattern: Nested loops to flatMap
+### Pattern: nested loops → flatMap
 
-#### Before (Imperative)
+#### Before
 
 ```typescript
 interface Order {
@@ -1071,7 +1030,6 @@ const getAllProductIds = (orders: Order[]): string[] =>
     A.uniq(Str.Eq)
   );
 
-// Or using Set for better performance with large datasets
 const getAllProductIdsSet = (orders: Order[]): Set<string> =>
   pipe(
     orders,
@@ -1081,9 +1039,9 @@ const getAllProductIdsSet = (orders: Order[]): Set<string> =>
   );
 ```
 
-### Pattern: while loops to recursion/unfold
+### Pattern: while → recursion/unfold
 
-#### Before (Imperative)
+#### Before
 
 ```typescript
 function paginate<T>(
@@ -1138,7 +1096,6 @@ const paginate = <T>(
   return go(null, []);
 };
 
-// Using unfold for generating sequences
 import * as RA from 'fp-ts/ReadonlyArray';
 
 const range = (start: number, end: number): readonly number[] =>
@@ -1147,11 +1104,11 @@ const range = (start: number, end: number): readonly number[] =>
 
 ---
 
-## 6. Migrating Promise chains to TaskEither
+## 6. Promise chains → TaskEither <a name="6"></a>
 
-### Pattern: Promise.then chains to pipe
+### Pattern: Promise.then → pipe
 
-#### Before (Imperative)
+#### Before
 
 ```typescript
 function fetchUserData(userId: string): Promise<UserProfile> {
@@ -1170,7 +1127,6 @@ function fetchUserData(userId: string): Promise<UserProfile> {
     });
 }
 
-// Chained promises with conditionals
 function processOrder(orderId: string): Promise<OrderResult> {
   return getOrder(orderId)
     .then((order) => {
@@ -1214,7 +1170,6 @@ const fetchUserData = (userId: string): TE.TaskEither<Error, UserProfile> =>
     TE.flatMap((validData) => enrichUserProfile(validData))
   );
 
-// Conditionals are explicit
 const processOrder = (orderId: string): TE.TaskEither<Error, OrderResult> =>
   pipe(
     getOrder(orderId),
@@ -1235,9 +1190,9 @@ const processOrder = (orderId: string): TE.TaskEither<Error, OrderResult> =>
   );
 ```
 
-### Pattern: Promise.all to traverse
+### Pattern: Promise.all → traverse
 
-#### Before (Imperative)
+#### Before
 
 ```typescript
 async function fetchAllUsers(ids: string[]): Promise<User[]> {
@@ -1245,7 +1200,6 @@ async function fetchAllUsers(ids: string[]): Promise<User[]> {
   return Promise.all(promises);
 }
 
-// With error handling for individual items
 async function fetchUsersWithFallback(ids: string[]): Promise<Array<User | null>> {
   const promises = ids.map(async (id) => {
     try {
@@ -1266,21 +1220,18 @@ import * as A from 'fp-ts/Array';
 import * as T from 'fp-ts/Task';
 import { pipe } from 'fp-ts/function';
 
-// Parallel execution - fails fast on first error
 const fetchAllUsers = (ids: string[]): TE.TaskEither<Error, User[]> =>
   pipe(
     ids,
     A.traverse(TE.ApplicativePar)(fetchUser)
   );
 
-// Sequential execution
 const fetchAllUsersSequential = (ids: string[]): TE.TaskEither<Error, User[]> =>
   pipe(
     ids,
     A.traverse(TE.ApplicativeSeq)(fetchUser)
   );
 
-// Collect successes, ignore failures (using Task instead of TaskEither)
 const fetchUsersWithFallback = (ids: string[]): T.Task<Array<User | null>> =>
   pipe(
     ids,
@@ -1295,7 +1246,6 @@ const fetchUsersWithFallback = (ids: string[]): T.Task<Array<User | null>> =>
     )
   );
 
-// Or keep track of which failed
 const fetchUsersPartitioned = (
   ids: string[]
 ): T.Task<{ successes: User[]; failures: Array<{ id: string; error: Error }> }> =>
@@ -1316,20 +1266,18 @@ const fetchUsersPartitioned = (
   );
 ```
 
-### Pattern: Promise.race to alternative
+### Pattern: Promise.race → alternative
 
 ```typescript
 import * as TE from 'fp-ts/TaskEither';
 import * as T from 'fp-ts/Task';
 import { pipe } from 'fp-ts/function';
 
-// Race - first to complete wins
 const raceTaskEithers = <E, A>(
   tasks: Array<TE.TaskEither<E, A>>
 ): TE.TaskEither<E, A> =>
   () => Promise.race(tasks.map((te) => te()));
 
-// Try alternatives on failure (like Promise.any but typed)
 const tryAlternatives = <E, A>(
   primary: TE.TaskEither<E, A>,
   fallback: TE.TaskEither<E, A>
@@ -1339,7 +1287,6 @@ const tryAlternatives = <E, A>(
     TE.orElse(() => fallback)
   );
 
-// Chain of fallbacks
 const withFallbacks = <E, A>(
   tasks: Array<TE.TaskEither<E, A>>
 ): TE.TaskEither<E, A> =>
@@ -1348,32 +1295,32 @@ const withFallbacks = <E, A>(
 
 ---
 
-## 7. Common Pitfalls
+## 7. Common Pitfalls <a name="7"></a>
 
 ### Pitfall 1: Forgetting to run Tasks
 
 ```typescript
-// WRONG: Task is not executed
+// WRONG: Task not executed
 const fetchData = (): TE.TaskEither<Error, Data> => /* ... */;
-const result = fetchData(); // This is still a Task, not the result!
+const result = fetchData(); // Still a Task!
 
 // CORRECT: Execute the Task
-const result = await fetchData()(); // Note the double invocation
+const result = await fetchData()(); // Double invocation
 ```
 
-### Pitfall 2: Mixing async/await with fp-ts incorrectly
+### Pitfall 2: Mixing async/await w/ fp-ts incorrectly
 
 ```typescript
-// WRONG: Breaking out of the fp-ts ecosystem
+// WRONG: Breaking out of fp-ts ecosystem
 const processData = async (input: string): Promise<Result> => {
-  const parsed = parseInput(input); // Returns Either
+  const parsed = parseInput(input);
   if (E.isLeft(parsed)) {
-    throw new Error(parsed.left.message); // Don't do this!
+    throw new Error(parsed.left.message); // Don't!
   }
   return await fetchData(parsed.right)();
 };
 
-// CORRECT: Stay in the ecosystem
+// CORRECT: Stay in ecosystem
 const processData = (input: string): TE.TaskEither<Error, Result> =>
   pipe(
     parseInput(input),
@@ -1382,13 +1329,13 @@ const processData = (input: string): TE.TaskEither<Error, Result> =>
   );
 ```
 
-### Pitfall 3: Using map when flatMap is needed
+### Pitfall 3: Using map when flatMap needed
 
 ```typescript
 // WRONG: Results in nested Either
 const result: E.Either<Error, E.Either<Error, User>> = pipe(
-  parseUserId(input), // E.Either<Error, string>
-  E.map(fetchUser) // Returns E.Either<Error, User>, so we get nested Either
+  parseUserId(input),
+  E.map(fetchUser)
 );
 
 // CORRECT: Use flatMap to flatten
@@ -1398,15 +1345,15 @@ const result: E.Either<Error, User> = pipe(
 );
 ```
 
-### Pitfall 4: Losing error information
+### Pitfall 4: Losing error info
 
 ```typescript
-// WRONG: Original error context is lost
+// WRONG: Original error lost
 const fetchData = (): TE.TaskEither<Error, Data> =>
   pipe(
     TE.tryCatch(
       () => fetch('/api/data'),
-      () => new Error('Failed') // Lost the original error!
+      () => new Error('Failed') // Lost original!
     )
   );
 
@@ -1443,17 +1390,17 @@ const fetchData = (): TE.TaskEither<FetchError, Data> =>
 ### Pitfall 5: Overusing fromNullable
 
 ```typescript
-// WRONG: Unnecessary wrapping and unwrapping
+// WRONG: Unnecessary wrap/unwrap
 const getName = (user: User | null): string => {
   const optUser = O.fromNullable(user);
   const name = pipe(optUser, O.map(u => u.name), O.toNullable);
   return name ?? 'Unknown';
 };
 
-// CORRECT: Use Option only when you need its composition benefits
+// CORRECT: Use Option only when needed
 const getName = (user: User | null): string => user?.name ?? 'Unknown';
 
-// BETTER: Use Option when chaining multiple operations
+// BETTER: Use Option for chaining
 const getManagerName = (user: User | null): O.Option<string> =>
   pipe(
     O.fromNullable(user),
@@ -1462,16 +1409,16 @@ const getManagerName = (user: User | null): O.Option<string> =>
   );
 ```
 
-### Pitfall 6: Not handling the left case
+### Pitfall 6: Not handling left case
 
 ```typescript
-// WRONG: Ignoring potential errors
+// WRONG: Ignoring errors
 const processUser = (input: string): User => {
-  const result = parseUser(input); // E.Either<Error, User>
-  return (result as E.Right<User>).right; // Unsafe cast!
+  const result = parseUser(input);
+  return (result as E.Right<User>).right; // Unsafe!
 };
 
-// CORRECT: Always handle both cases
+// CORRECT: Handle both cases
 const processUser = (input: string): User =>
   pipe(
     parseUser(input),
@@ -1484,14 +1431,14 @@ const processUser = (input: string): User =>
 
 ---
 
-## 8. Gradual Adoption Strategies
+## 8. Gradual Adoption <a name="8"></a>
 
-### Strategy 1: Start at the Boundaries
+### Strategy 1: Start at Boundaries
 
-Begin by converting functions at the edges of your system:
+Convert at edges:
 - API response handlers
-- Database query results
-- File system operations
+- DB query results
+- FS operations
 - User input validation
 
 ```typescript
@@ -1504,11 +1451,10 @@ const fetchUserApi = (id: string): TE.TaskEither<ApiError, UserDto> =>
     )
   );
 
-// Internal code can stay imperative initially
+// Internal code stays imperative
 async function handleUserRequest(userId: string) {
   const result = await fetchUserApi(userId)();
   if (E.isRight(result)) {
-    // Process user with existing code
     return processUser(result.right);
   } else {
     throw new Error(`API error: ${result.left.type}`);
@@ -1516,12 +1462,10 @@ async function handleUserRequest(userId: string) {
 }
 ```
 
-### Strategy 2: Create Bridge Functions
-
-Build helpers to convert between fp-ts and imperative code:
+### Strategy 2: Create Bridge Fns
 
 ```typescript
-// Bridge from Either to thrown errors
+// Either → thrown errors
 const unsafeUnwrap = <E, A>(either: E.Either<E, A>): A =>
   pipe(
     either,
@@ -1530,30 +1474,29 @@ const unsafeUnwrap = <E, A>(either: E.Either<E, A>): A =>
     })
   );
 
-// Bridge from thrown errors to Either
+// thrown errors → Either
 const catchSync = <A>(f: () => A): E.Either<Error, A> =>
   E.tryCatch(f, (e) => (e instanceof Error ? e : new Error(String(e))));
 
-// Bridge from Promise to TaskEither
+// Promise → TaskEither
 const fromPromise = <A>(p: Promise<A>): TE.TaskEither<Error, A> =>
   TE.tryCatch(() => p, (e) => (e instanceof Error ? e : new Error(String(e))));
 
-// Bridge from TaskEither to Promise (throws on Left)
+// TaskEither → Promise (throws on Left)
 const toPromise = <E, A>(te: TE.TaskEither<E, A>): Promise<A> =>
   te().then(E.getOrElseW((e) => { throw e; }));
 ```
 
-### Strategy 3: Module-by-Module Migration
+### Strategy 3: Module-by-Module
 
-1. **Pick a module** with clear boundaries
-2. **Add fp-ts types** to internal functions
-3. **Keep external API unchanged** initially
-4. **Test thoroughly** before moving on
-5. **Update external API** once internals are stable
+1. **Pick module** w/ clear boundaries
+2. **Add fp-ts types** to internal fns
+3. **Keep external API** unchanged initially
+4. **Test thoroughly**
+5. **Update external API** once internals stable
 
 ```typescript
-// Phase 1: Internal functions use fp-ts
-// File: user-service.internal.ts
+// Phase 1: Internal uses fp-ts
 export const validateUser = (data: unknown): E.Either<ValidationError, User> => /* ... */;
 export const enrichUser = (user: User): TE.TaskEither<Error, EnrichedUser> => /* ... */;
 
@@ -1572,7 +1515,6 @@ export async function getUser(id: string): Promise<User> {
 }
 
 // Phase 2: Update public API
-// File: user-service.ts
 export const getUser = (id: string): TE.TaskEither<UserError, User> =>
   pipe(
     fetchUser(id),
@@ -1581,30 +1523,25 @@ export const getUser = (id: string): TE.TaskEither<UserError, User> =>
   );
 ```
 
-### Strategy 4: Type-Driven Development
-
-Use TypeScript's type system to guide the migration:
+### Strategy 4: Type-Driven Dev
 
 ```typescript
 // Step 1: Change type signature first
 type OldGetUser = (id: string) => Promise<User | null>;
 type NewGetUser = (id: string) => TE.TaskEither<UserError, User>;
 
-// Step 2: Compiler will show all call sites that need updating
+// Step 2: Compiler shows all call sites
 const getUser: NewGetUser = (id) => /* implement */;
 
 // Step 3: Update call sites one by one
-// The compiler ensures you handle all cases
 ```
 
-### Strategy 5: Testing as Documentation
-
-Write tests that demonstrate the expected behavior:
+### Strategy 5: Tests as Docs
 
 ```typescript
 describe('UserService', () => {
   describe('getUser (fp-ts)', () => {
-    it('returns Right with user on success', async () => {
+    it('returns Right w/ user on success', async () => {
       const result = await getUser('valid-id')();
       expect(E.isRight(result)).toBe(true);
       if (E.isRight(result)) {
@@ -1612,7 +1549,7 @@ describe('UserService', () => {
       }
     });
 
-    it('returns Left with NotFound error for unknown id', async () => {
+    it('returns Left w/ NotFound for unknown id', async () => {
       const result = await getUser('unknown')();
       expect(E.isLeft(result)).toBe(true);
       if (E.isLeft(result)) {
@@ -1625,19 +1562,17 @@ describe('UserService', () => {
 
 ---
 
-## 9. When NOT to Refactor
+## 9. When NOT to Refactor <a name="9"></a>
 
-### Simple Synchronous Code
-
-Don't refactor straightforward code that doesn't benefit from fp-ts:
+### Simple Sync Code
 
 ```typescript
-// This is fine as-is
+// Fine as-is
 function formatName(first: string, last: string): string {
   return `${first} ${last}`;
 }
 
-// Don't do this - it adds complexity without benefit
+// Don't add complexity for no benefit
 const formatName = (first: string, last: string): string =>
   pipe(
     first,
@@ -1647,10 +1582,10 @@ const formatName = (first: string, last: string): string =>
 
 ### Performance-Critical Loops
 
-fp-ts operations create intermediate arrays. For hot paths, keep imperative code:
+fp-ts creates intermediate arrays. Keep imperative for hot paths:
 
 ```typescript
-// Keep this for performance-critical code processing millions of items
+// Keep for performance-critical code
 function sumLargeArray(numbers: number[]): number {
   let sum = 0;
   for (let i = 0; i < numbers.length; i++) {
@@ -1659,19 +1594,16 @@ function sumLargeArray(numbers: number[]): number {
   return sum;
 }
 
-// This creates intermediate arrays
+// Creates intermediate arrays
 const sumWithFpts = (numbers: number[]): number =>
   pipe(numbers, A.reduce(0, (acc, n) => acc + n));
 ```
 
-### Third-Party Library Interfaces
-
-When working with libraries that expect specific patterns:
+### Third-Party Lib Interfaces
 
 ```typescript
-// Express middleware must match Express's interface
+// Express middleware must match Express interface
 app.get('/users/:id', async (req, res) => {
-  // Keep imperative here, convert at boundaries
   const result = await getUser(req.params.id)();
 
   if (E.isLeft(result)) {
@@ -1682,12 +1614,12 @@ app.get('/users/:id', async (req, res) => {
 });
 ```
 
-### Code Touched by Non-FP Team Members
+### Non-FP Team
 
-If your team isn't familiar with fp-ts, forced adoption will hurt productivity:
+Forced adoption hurts productivity if team unfamiliar w/ fp-ts:
 
 ```typescript
-// If team doesn't know fp-ts, this is harder to maintain
+// Harder to maintain if team doesn't know fp-ts
 const processOrder = (order: Order): TE.TaskEither<Error, Result> =>
   pipe(
     validateOrder(order),
@@ -1696,7 +1628,7 @@ const processOrder = (order: Order): TE.TaskEither<Error, Result> =>
     TE.flatMap(submitOrder)
   );
 
-// Familiar to all TypeScript developers
+// Familiar to all TS devs
 async function processOrder(order: Order): Promise<Result> {
   const validated = validateOrder(order);
   if (!validated.success) {
@@ -1709,13 +1641,11 @@ async function processOrder(order: Order): Promise<Result> {
 
 ### Trivial Null Checks
 
-Don't use Option for simple, one-off null checks:
-
 ```typescript
-// This is fine
+// Fine
 const name = user?.name ?? 'Anonymous';
 
-// Overkill for simple cases
+// Overkill
 const name = pipe(
   O.fromNullable(user),
   O.map((u) => u.name),
@@ -1723,12 +1653,12 @@ const name = pipe(
 );
 ```
 
-### When the Error Type Doesn't Matter
+### When Error Type Doesn't Matter
 
-If you're going to throw/log anyway and don't need error composition:
+If throwing/logging anyway:
 
 ```typescript
-// If this is your error handling anyway...
+// If this is error handling anyway...
 try {
   await doSomething();
 } catch (e) {
@@ -1736,7 +1666,7 @@ try {
   throw e;
 }
 
-// ...then Either doesn't add much value
+// ...Either doesn't add much
 const result = await doSomethingTE()();
 if (E.isLeft(result)) {
   logger.error(result.left);
@@ -1746,7 +1676,7 @@ if (E.isLeft(result)) {
 
 ### Test Code
 
-Test code should be readable, not necessarily functional:
+Test code should be readable:
 
 ```typescript
 // Clear test code
@@ -1771,10 +1701,10 @@ describe('UserService', () => {
 
 ---
 
-## Quick Reference: Imperative to fp-ts Mapping
+## Quick Ref: Imperative → fp-ts
 
-| Imperative Pattern | fp-ts Equivalent |
-|-------------------|------------------|
+| Imperative | fp-ts |
+|------------|-------|
 | `try { } catch { }` | `E.tryCatch()`, `TE.tryCatch()` |
 | `throw new Error()` | `E.left()`, `TE.left()` |
 | `return value` | `E.right()`, `TE.right()` |
@@ -1798,13 +1728,13 @@ describe('UserService', () => {
 
 ## Summary
 
-Migrating to fp-ts is a journey, not a destination. Key principles:
+Migration to fp-ts = journey, not destination. Key principles:
 
-1. **Start small**: Convert individual functions, not entire codebases
-2. **Be pragmatic**: Not everything needs to be functional
-3. **Type-driven**: Let the compiler guide your refactoring
-4. **Test thoroughly**: Each conversion should be verified
-5. **Document patterns**: Create team-specific guides for your codebase
-6. **Review benefits**: Ensure the added complexity provides value
+1. **Start small** → individual fns, not entire codebases
+2. **Be pragmatic** → not everything needs to be fp
+3. **Type-driven** → let compiler guide refactoring
+4. **Test thoroughly** → verify each conversion
+5. **Document patterns** → team-specific guides
+6. **Review benefits** → ensure added complexity provides value
 
-The goal is more maintainable, type-safe code—not functional programming for its own sake.
+Goal = more maintainable, type-safe code—not fp for its own sake.

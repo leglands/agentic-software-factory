@@ -444,7 +444,6 @@ class EpicOrchestrator:
         from ..web.routes.epics.internal import (
             _auto_retrospective,
             _build_phase_prompt,
-            _detect_project_platform,
             _extract_features_from_phase,
             _run_post_phase_hooks,
         )
@@ -588,6 +587,44 @@ class EpicOrchestrator:
                     ]
                     logger.warning("ORCH team for %s: %s (fallback)", wf_phase.id, aids)
 
+            # ── Stack-aware agent selection via TeamSelector ──
+            # When agents are generic (lead_dev, dev_fullstack) and project has
+            # a detected technology, consult TeamSelector for best-fit agents.
+            if aids:
+                try:
+                    from ..patterns.team_selector import TeamSelector, normalize_technology
+                    _brief = getattr(mission, "brief", "") or ""
+                    _tech = normalize_technology(_brief)
+                    # If brief doesn't reveal tech, scan workspace manifests
+                    if _tech == "generic" and workspace:
+                        try:
+                            from ..patterns.engine import _generate_project_brief
+                            _pb = _generate_project_brief(workspace)
+                            # Feed raw workspace scan to normalize_technology
+                            _tech = normalize_technology(_pb)
+                        except Exception:
+                            pass
+                    if _tech and _tech != "generic":
+                        _phase_type = wf_phase.id.replace("-", "_")
+                        _ts = TeamSelector()
+                        _generic_roles = {"lead_dev", "dev_fullstack", "dev_backend", "dev_frontend", "lead_backend", "lead_frontend"}
+                        _new_aids = []
+                        for aid in aids:
+                            if aid in _generic_roles:
+                                try:
+                                    _best = _ts.select(skill=aid, pattern_id=pattern_type, technology=_tech, phase_type=_phase_type)
+                                    if _best and _best != aid:
+                                        _new_aids.append(_best)
+                                        logger.warning("ORCH TeamSelector: %s → %s (tech=%s)", aid, _best, _tech)
+                                        continue
+                                except Exception:
+                                    pass
+                            _new_aids.append(aid)
+                        if _new_aids != aids:
+                            aids = _new_aids
+                except Exception as _e:
+                    logger.debug("TeamSelector fallback skipped: %s", _e)
+
             # Dynamic lead/reviewer resolution
             if not aids and cfg.get("dynamic_lead"):
                 wf_graph = (
@@ -612,36 +649,60 @@ class EpicOrchestrator:
                     aids = ["devops"]
                 logger.warning("ORCH deployer for %s: %s", wf_phase.id, aids)
 
-            # Build CDP context: workspace state + previous phase summaries
+            # Build CDP context: workspace structure, key files, stack, git state
             cdp_context = ""
             if mission.workspace_path:
                 try:
                     import subprocess
 
                     ws = mission.workspace_path
+                    # File count
                     file_count = subprocess.run(
                         ["find", ws, "-type", "f", "-not", "-path", "*/.git/*"],
                         capture_output=True,
                         text=True,
                         timeout=5,
                     )
-                    n_files = (
-                        len(file_count.stdout.strip().split("\n"))
-                        if file_count.stdout.strip()
-                        else 0
+                    all_files = [f for f in file_count.stdout.strip().split("\n") if f] if file_count.stdout.strip() else []
+                    n_files = len(all_files)
+
+                    # Directory structure (top 2 levels)
+                    tree = subprocess.run(
+                        ["find", ws, "-maxdepth", "2", "-type", "d", "-not", "-path", "*/.git*", "-not", "-path", "*/node_modules*", "-not", "-path", "*/__pycache__*", "-not", "-path", "*/target*"],
+                        capture_output=True, text=True, timeout=5,
                     )
+                    dirs = [d.replace(ws + "/", "") for d in tree.stdout.strip().split("\n") if d and d != ws][:30]
+
+                    # Key files (build manifests, configs, entry points)
+                    key_patterns = ["Cargo.toml", "package.json", "go.mod", "pyproject.toml",
+                                    "Dockerfile", "docker-compose", "Makefile", ".proto",
+                                    "main.rs", "lib.rs", "mod.rs", "index.ts", "app.ts", "server.ts"]
+                    key_files = [f.replace(ws + "/", "") for f in all_files
+                                 if any(kp in f.split("/")[-1] for kp in key_patterns)][:20]
+
+                    # Language distribution
+                    exts = {}
+                    for f in all_files:
+                        ext = f.rsplit(".", 1)[-1] if "." in f.split("/")[-1] else ""
+                        if ext in ("rs", "ts", "js", "py", "go", "swift", "kt", "java", "proto", "sql", "html", "css", "toml", "yaml", "json"):
+                            exts[ext] = exts.get(ext, 0) + 1
+                    lang_summary = ", ".join(f".{k}:{v}" for k, v in sorted(exts.items(), key=lambda x: -x[1])[:8])
+
+                    # Git
                     git_log = subprocess.run(
                         ["git", "log", "--oneline", "-5"],
-                        cwd=ws,
-                        capture_output=True,
-                        text=True,
-                        timeout=5,
+                        cwd=ws, capture_output=True, text=True, timeout=5,
                     )
-                    cdp_context = f"Workspace: {n_files} fichiers"
+
+                    cdp_context = f"WORKSPACE: {ws}\n"
+                    cdp_context += f"  Files: {n_files} | Languages: {lang_summary}\n"
+                    if dirs:
+                        cdp_context += f"  Structure: {', '.join(dirs[:15])}\n"
+                    if key_files:
+                        cdp_context += f"  Key files: {', '.join(key_files[:15])}\n"
                     if git_log.stdout.strip():
-                        cdp_context += (
-                            f" | Git: {git_log.stdout.strip().split(chr(10))[0]}"
-                        )
+                        cdp_context += f"  Git: {git_log.stdout.strip().split(chr(10))[0]}\n"
+                    cdp_context += f"  IMPORTANT: Use list_files() and code_read() to explore BEFORE writing. Modify EXISTING files, don't recreate from scratch."
                 except Exception:
                     pass
 
@@ -655,18 +716,7 @@ class EpicOrchestrator:
                 )
 
             # CDP announces the phase
-            detected_platform = _detect_project_platform(workspace) if workspace else ""
-            platform_display = {
-                "macos-native": "🖥️ macOS native (Swift/SwiftUI)",
-                "ios-native": "📱 iOS native (Swift/SwiftUI)",
-                "android-native": "🤖 Android native (Kotlin)",
-                "web-docker": "🌐 Web (Docker)",
-                "web-node": "🌐 Web (Node.js)",
-                "web-static": "🌐 Web statique",
-            }.get(detected_platform, "")
             cdp_announce = f"Lancement phase {i + 1}/{len(mission.phases)} : **{wf_phase.name}** (pattern: {pattern_type})"
-            if platform_display:
-                cdp_announce += f"\nPlateforme détectée : {platform_display}"
             if cdp_context:
                 cdp_announce += f"\n{cdp_context}"
             await self._sse_orch_msg(cdp_announce, phase.phase_id)
@@ -812,6 +862,30 @@ class EpicOrchestrator:
                 workspace_path=workspace,
             )
             phase_task += f"\nMISSION_ID: {mission.id}"
+            # Inject enriched workspace context into agent prompt
+            if cdp_context:
+                phase_task += f"\n\n{cdp_context}"
+
+            # Check backlog: if dev/tdd phase and no features exist, tell agent to decompose first
+            _pk = wf_phase.name.lower().replace(" ", "-")
+            if any(kw in _pk for kw in ("tdd", "sprint", "dev")) and mission.id:
+                try:
+                    from ..missions.product import get_product_backlog as _gpb_check
+                    _pb = _gpb_check()
+                    _features = _pb.list_features(epic_id=mission.id)
+                    if not _features:
+                        phase_task += (
+                            "\n\nNO FEATURES IN BACKLOG. Before coding, you MUST decompose the brief into features with acceptance criteria:\n"
+                            "1. Call create_feature(epic_id, name, description) for each feature\n"
+                            "2. Call create_story(feature_id, title, acceptance_criteria) for each story\n"
+                            "3. Then implement the stories with TDD (RED→GREEN→REFACTOR)\n"
+                            "Do NOT write code without features and stories first."
+                        )
+                    else:
+                        _feat_list = "\n".join(f"- {f.name}: {f.description[:80]}" for f in _features[:10])
+                        phase_task += f"\n\nBACKLOG ({len(_features)} features):\n{_feat_list}"
+                except Exception:
+                    pass
 
             # Sprint loop
             phase_key_check = (
@@ -953,6 +1027,9 @@ class EpicOrchestrator:
                         f"\n\n--- {sprint_label} ---\n"
                         f"C'est le sprint {sprint_num} sur {max_sprints} prévus.\n"
                     )
+                    # Inject workspace context into sprint prompt too
+                    if cdp_context:
+                        phase_task += f"\n{cdp_context}"
                     # ── Feature-Queue: scope sprint to pending features ──
                     if _feature_queue:
                         # Refresh feature statuses

@@ -49,15 +49,15 @@ eval_cases:
 
 # Live Support Chat Widget
 
-Build a real-time support chat system with a floating widget for users and an admin dashboard for support staff.
+Build real-time support chat system with floating widget for users + admin dashboard for support staff.
 
 ## When to Use This Skill
 
-Use when the user wants to:
-- Add a live chat widget to their app
+Use when user wants to:
+- Add live chat widget to their app
 - Build customer support chat functionality
-- Create real-time messaging between users and admins
-- Add an in-app support channel
+- Create real-time messaging between users + admins
+- Add in-app support channel
 
 ## Architecture Overview
 
@@ -66,7 +66,7 @@ Use when the user wants to:
 │                        FRONTEND                                 │
 ├─────────────────────────────┬───────────────────────────────────┤
 │   User Widget               │   Admin Dashboard                 │
-│   - Floating chat button    │   - Chat list (active/archived)   │
+│   - Floating chat button   │   - Chat list (active/archived)   │
 │   - Message panel           │   - Conversation view             │
 │   - Unread badge            │   - Archive/restore controls      │
 │   - Connection indicator    │   - User info display             │
@@ -91,7 +91,7 @@ Use when the user wants to:
 
 ### Step 1: Data Models
 
-Create two tables: `support_chats` and `support_messages`.
+Create two tables: `support_chats` + `support_messages`.
 
 **support_chats**
 ```
@@ -278,7 +278,7 @@ function broadcast_message():
 
 ### Step 4: Frontend - User Widget
 
-Create a floating chat widget with these components:
+Create floating chat widget with these components:
 
 **Component structure:**
 ```
@@ -357,7 +357,7 @@ function useSupportChat():
 
 ### Step 5: Frontend - Admin Dashboard
 
-Create two pages: chat list and chat detail.
+Create two pages: chat list + chat detail.
 
 **Chat List Page:**
 ```
@@ -366,7 +366,7 @@ Tabs: [Active] [Archived]
 
 Chat cards (sorted by last_message_at desc):
 ┌─────────────────────────────────────────┐
-│ [Unread indicator] user@example.com     │
+│ [Unread indicator] user@example.com      │
 │ Last message preview text...            │
 │ 5 messages · 2 minutes ago              │
 └─────────────────────────────────────────┘
@@ -404,7 +404,7 @@ Features:
 
 ### Step 6: Email Notifications
 
-Send email to user when admin replies and user hasn't seen it.
+Send email to user when admin replies + user hasn't seen it.
 
 **Job/worker:**
 ```pseudo
@@ -487,9 +487,9 @@ interface AdminNotificationMessage {
 ## Testing Checklist
 
 After implementation:
-- [ ] User can open widget and send message
+- [ ] User can open widget + send message
 - [ ] Admin sees message in real-time on dashboard
-- [ ] Admin can reply and user sees it instantly
+- [ ] Admin can reply + user sees it instantly
 - [ ] Unread badge shows correct count
 - [ ] Badge clears when widget opens
 - [ ] Connection indicator reflects actual status
@@ -504,7 +504,7 @@ After implementation:
 
 1. **Forgetting deduplication** - Messages sent by current user echo back via broadcast
 2. **Race conditions on read status** - Use database transactions
-3. **WebSocket auth** - Verify user can access the specific chat
+3. **WebSocket auth** - Verify user can access specific chat
 4. **Stale connection status** - Handle reconnection gracefully
 5. **Missing indexes** - Add composite index on (chat_id, created_at)
 6. **Email timing** - Use background job, not synchronous send

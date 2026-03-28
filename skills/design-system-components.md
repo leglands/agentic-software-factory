@@ -33,7 +33,7 @@ Methodology: Atomic Design (Brad Frost)
 ## RULE ZERO — NO EMOJI IN UI
 
 **VETO**: Any emoji (😀🔔✅❌⚠️) in UI labels, headings, buttons, notifications.
-**USE**: SVG Feather icons instead (see Icon System section below).
+**USE**: SVG Feather icons instead (see Icon System section).
 **Exception**: user-generated content, emoji pickers only.
 
 ---
@@ -44,8 +44,8 @@ Methodology: Atomic Design (Brad Frost)
 Atoms        → smallest reusable units: Button, Badge, Icon, Label, Input, Spinner
 Molecules    → groups of atoms: FormField (Label + Input + Error), SearchBar (Input + Button)
 Organisms    → groups of molecules: Header (Logo + Nav + SearchBar), Card (Image + Heading + CTA)
-Templates    → page-level wireframes (layout without content)
-Pages        → templates with real content (final rendered state)
+Templates    → page-level wireframes (layout w/out content)
+Pages        → templates w/ real content (final rendered state)
 ```
 
 ### Atom Inventory (SF standard)
@@ -284,7 +284,7 @@ Pages        → templates with real content (final rendered state)
 <!-- Dynamic (appears after action): use role="alert" aria-live="assertive" -->
 <!-- Info/success: use role="status" aria-live="polite" -->
 ```
-Alert variants and icons (Feather):
+Alert variants + icons (Feather):
 - `error` → `alert-circle` (red)
 - `warning` → `alert-triangle` (amber)
 - `success` → `check-circle` (green)
@@ -334,7 +334,7 @@ Alert variants and icons (Feather):
 </div>
 ```
 - CSS: `background: linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%)`
-- Shimmer animation is an exception to the "no gradient" rule (functional, not decorative)
+- Shimmer animation is an exception to "no gradient" rule (functional, not decorative)
 - Set `aria-busy="true"` on parent; remove + add content when loaded
 
 #### Progress Bar
@@ -417,7 +417,7 @@ Alert variants and icons (Feather):
 <span class="badge badge--warning">Pending</span>
 <span class="badge badge--error">Failed</span>
 ```
-- Never use emoji (✅ ⚠️ ❌) — use CSS `::before` with background-color or Feather icon
+- Never use emoji (✅ ⚠️ ❌) — use CSS `::before` w/ background-color or Feather icon
 - Avoid color as only differentiator (WCAG 1.4.1)
 
 #### Avatar
@@ -775,7 +775,7 @@ npm install feather-icons
      lg:  1024px — tablet landscape / small desktop
      xl:  1280px — desktop
      2xl: 1536px — wide desktop
-  */
+   */
 
   /* ── TRANSITIONS ── */
   --duration-75:   75ms;
@@ -870,7 +870,7 @@ Derived from analysis of 95 design systems (component.gallery):
 
 ```
 Component           Height    Padding H    Padding V    Min-width
-─────────────────────────────────────────────────────────────────
+────────────────────────────────────────────────────────────────
 Button (sm)         32px      12px         6px          64px
 Button (md)         40px      16px         10px         80px   ← default
 Button (lg)         48px      20px         14px         96px

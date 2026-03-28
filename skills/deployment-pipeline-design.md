@@ -412,3 +412,10 @@ kubectl rollout undo deployment/my-app --to-revision=3
 - `github-actions-templates` - For GitHub Actions implementation
 - `gitlab-ci-patterns` - For GitLab CI implementation
 - `secrets-management` - For secrets handling
+
+---
+
+## Live Documentation
+
+When working on tasks covered by this skill, use fetch_url to get current docs:
+- Always verify SDK versions against live docs

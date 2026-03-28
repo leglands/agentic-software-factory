@@ -42,6 +42,106 @@ eval_cases:
   tags:
   - kubernetes
   - antipatterns
+- id: kubernetes-gitops-argocd-flux
+  prompt: How do I implement GitOps with ArgoCD or Flux v2 for multi-cluster Kubernetes
+    deployment?
+  checks:
+  - regex: (ArgoCD|Flux|GitOps|declarative)
+    length_min: 120
+    has_keyword: GitOps
+  expectations:
+  - Explains ArgoCD or Flux v2 setup and multi-cluster GitOps patterns
+  - Mentions repository structure and automated synchronization
+- id: kubernetes-pod-security-standards
+  prompt: How should I implement Pod Security Standards (PSS) and migrate from PSP
+    to PSS in Kubernetes?
+  checks:
+  - regex: (Pod Security|PSP|PSS|restricted|baseline)
+    length_min: 100
+    has_keyword: security
+  expectations:
+  - Describes PSS policy levels and migration steps
+- id: kubernetes-service-mesh-istio
+  prompt: Design a service mesh architecture using Istio for traffic management and
+    mTLS across clusters.
+  checks:
+  - regex: (Istio|service mesh|mTLS|traffic management)
+    length_min: 130
+    has_keyword: service mesh
+  expectations:
+  - Covers Istio configuration, traffic policies, and security features
+- id: kubernetes-hpa-keda-autoscaling
+  prompt: How do I implement horizontal and vertical pod autoscaling along with KEDA
+    for event-driven scaling?
+  checks:
+  - regex: (HPA|VPA|KEDA|autoscaling|event-driven)
+    length_min: 100
+    has_keyword: autoscaling
+  expectations:
+  - Explains HPA, VPA, and KEDA use cases and configurations
+- id: kubernetes-gitops-secret-management
+  prompt: What is the best approach for secret management in GitOps workflows without
+    exposing secrets in Git?
+  checks:
+  - regex: (External Secrets|Sealed Secrets|Vault|secrets management)
+    length_min: 90
+    has_keyword: secret
+  expectations:
+  - Describes sealed secrets, ESO, or Vault integration patterns
+- id: kubernetes-multi-cluster-federation
+  prompt: Design a multi-cluster Kubernetes strategy with cluster federation and cross-cluster
+    networking.
+  checks:
+  - regex: (multi-cluster|federation|Cluster API|cross-cluster)
+    length_min: 110
+    has_keyword: multi-cluster
+  expectations:
+  - Covers cluster federation, networking, and management approaches
+- id: kubernetes-velero-backup-dr
+  prompt: How do I implement disaster recovery using Velero with cross-region backup
+    and restore procedures?
+  checks:
+  - regex: (Velero|backup|disaster recovery|RTO|RPO)
+    length_min: 90
+    has_keyword: backup
+  expectations:
+  - Describes Velero setup, backup schedules, and restore procedures
+- id: kubernetes-cilium-ebpf-networking
+  prompt: How do I implement Cilium for eBPF-based networking, network policies, and
+    observability?
+  checks:
+  - regex: (Cilium|eBPF|network policies|CNI)
+    length_min: 100
+    has_keyword: networking
+  expectations:
+  - Explains Cilium deployment, eBPF advantages, and network policy implementation
+- id: kubernetes-cost-optimization-kubecost
+  prompt: How can I optimize Kubernetes costs using KubeCost, right-sizing, and spot
+    instances?
+  checks:
+  - regex: (KubeCost|right-sizing|spot instances|cost optimization|FinOps)
+    length_min: 100
+    has_keyword: cost
+  expectations:
+  - Describes cost monitoring, resource optimization, and savings strategies
+- id: kubernetes-opa-gatekeeper-policy
+  prompt: Implement Policy as Code using OPA Gatekeeper with admission controllers
+    for Kubernetes compliance.
+  checks:
+  - regex: (OPA|Gatekeeper|Policy as Code|admission controller|compliance)
+    length_min: 100
+    has_keyword: policy
+  expectations:
+  - Covers Gatekeeper installation, constraint templates, and policy enforcement
+- id: kubernetes-canary-argo-rollouts
+  prompt: How do I implement progressive delivery with Argo Rollouts for canary deployments
+    and traffic shaping?
+  checks:
+  - regex: (Argo Rollouts|canary|progressive delivery|traffic splitting)
+    length_min: 110
+    has_keyword: progressive delivery
+  expectations:
+  - Explains Argo Rollouts strategy, analysis templates, and traffic routing
 ---
 # kubernetes-architect
 
@@ -203,3 +303,10 @@ Expert Kubernetes architect with comprehensive knowledge of container orchestrat
 - "Implement observability stack with Prometheus, Grafana, and OpenTelemetry for microservices"
 - "Create CI/CD pipeline with GitOps for container applications with security scanning"
 - "Design Kubernetes operator for custom application lifecycle management"
+
+---
+
+## Live Documentation
+
+When working on tasks covered by this skill, use fetch_url to get current docs:
+- Always verify SDK versions against live docs

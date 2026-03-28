@@ -211,3 +211,11 @@ Mission status (done/failed) is binary. Reward scoring captures:
 
 This distinction matters for training: you want to train on *quality success*,
 not just *binary success*.
+
+---
+
+## Live Documentation
+
+When working on tasks covered by this skill, use fetch_url to get current docs:
+- fetch_url(https://github.com/OpenPipe/ART)
+- Always verify SDK versions against live docs
