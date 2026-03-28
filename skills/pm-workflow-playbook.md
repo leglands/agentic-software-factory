@@ -25,6 +25,15 @@ eval_cases:
       - "has_keyword:epic-decompose"
     expectations:
       - "Uses epic-decompose if complex (>5 files), feature-sprint if simple"
+  - id: backend-only-epic
+    prompt: "Epic: Add RBAC interceptor to existing Rust gRPC backend. Which workflow?"
+    checks:
+      - "has_keyword:compose_workflow"
+      - "not_regex:ux.*review|UX|frontend.*e2e"
+    expectations:
+      - "Uses compose_workflow, NOT feature-sprint"
+      - "Picks only backend phases: architecture, tdd-sprint, adversarial-review"
+      - "Does NOT include UX review or frontend E2E"
   - id: release-readiness
     prompt: "We want to release next week. What should we run first?"
     checks:
@@ -36,12 +45,68 @@ eval_cases:
 
 # PM Workflow Playbook — Which Brique, When, Why
 
+## CRITICAL: Compose, Don't Force-Fit
+
+**NEVER use a generic workflow when the epic doesn't match all its phases.**
+
+Example of WRONG decision:
+- Epic: "Add JWT refresh + RBAC interceptor to Rust gRPC backend"
+- PM picks: feature-sprint (design → UX review → TDD → E2E → deploy)
+- Result: 4 wasted phases (UX review, E2E frontend, deploy) for a backend-only task
+
+**CORRECT decision: use compose_workflow() to pick ONLY the phases you need:**
+
+```python
+compose_workflow(
+  name="JWT RBAC Sprint",
+  phases=[
+    {"id": "arch-review", "pattern": "sequential", "agents": ["architecte", "securite"],
+     "description": "Read existing auth.rs + auth.proto. Design RBAC matrix."},
+    {"id": "sprint-contract", "pattern": "adversarial-pair", "agents": ["lead_dev", "code-critic"],
+     "description": "Negotiate deliverables: refresh endpoint + interceptor + tests."},
+    {"id": "tdd-sprint", "pattern": "loop", "agents": ["dev_backend"],
+     "description": "RED-GREEN: write tests first, then implement. Max 10 iterations.",
+     "config": {"max_iter": 10}},
+    {"id": "adversarial-review", "pattern": "adversarial-cascade", "agents": ["code-critic", "securite"],
+     "description": "Review code quality + security. VETO if tests fail."},
+  ]
+)
+```
+
+**Rules for choosing:**
+- Backend-only epic → NO UX review, NO frontend E2E, NO design phase
+- Frontend-only epic → NO backend architecture, NO DB migration
+- Refactoring epic → NO feature design, NO deploy
+- Security audit → NO coding phases, only scan + report
+- If unsure → compose with 3 phases: design + tdd + review (minimal viable sprint)
+
+## Available Phase Briques (pick and compose)
+
+| Phase Brique | Pattern | Agents | Use When |
+|---|---|---|---|
+| `feature-design` | sequential | architect + leads | New feature: analyze scope, write specs |
+| `ux-design-review` | sequential | ux_designer | Frontend feature: UX validation |
+| `sprint-contract` | adversarial-pair | lead_dev + critic | Before TDD: negotiate deliverables |
+| `tdd-sprint` | loop (max 10) | dev_backend/frontend | Core coding: RED→GREEN→REFACTOR |
+| `adversarial-review` | adversarial-cascade | critics | Post-code: quality + security check |
+| `feature-e2e` | parallel | qa + test_automation | Frontend: Playwright E2E tests |
+| `feature-deploy` | sequential | devops | Deploy to staging/prod |
+| `refactor-discovery` | parallel | 4 audit agents | Audit: perf, dead code, arch, deps |
+| `refactor-perf` | adversarial-pair | lead_dev + perf | Benchmark before/after |
+| `refactor-simplify` | hierarchical | lead + devs | Dead code removal, God files |
+| `refactor-deps` | sequential | securite + devops | CVE scan, unused deps |
+| `refactor-tests` | adversarial-pair | testeur + critic | Coverage gaps |
+| `security-scan` | sequential | securite | SAST + dep audit |
+| `doc-generate` | sequential | tech_writer | API docs, ADR, changelog |
+
 ## Decision Tree
 
 ```
 New feature request?
-  → Simple (<5 files) → feature-sprint
-  → Complex (system) → epic-decompose → N x feature-sprint
+  → Backend-only → compose_workflow(arch-review + tdd-sprint + adversarial-review)
+  → Frontend-only → compose_workflow(ux-design + tdd-sprint + feature-e2e)
+  → Full-stack → feature-sprint (all phases)
+  → Complex system → epic-decompose → N x composed sprints
 
 Sprint completed?
   → Every sprint → code-simplify (automatic, diff-based)
