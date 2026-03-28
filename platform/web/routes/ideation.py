@@ -345,6 +345,11 @@ RULES:
 
 For large codebases (>50 files affected): ALWAYS use fractal-decompose to break into atomic tasks per file.
 
+MANDATORY: EVERY workflow MUST end with these 2 phases (non-negotiable):
+1. adversarial-review (adversarial-cascade) — code quality + security check
+2. test-verification (adversarial-pair, testeur + code-critic) — tests MUST pass, coverage gaps filled
+Without tests, the workflow is INCOMPLETE. The adversarial reviewer will VETO.
+
 ## PROJECT STRUCTURE — same rules as before
 - Cut by VALUE STREAM not technical layer
 - WSJF priority: (value + urgency + risk_reduction) / effort
