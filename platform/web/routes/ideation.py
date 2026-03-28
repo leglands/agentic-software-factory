@@ -605,6 +605,27 @@ async def ideation_create_epic(request: Request):
     }
     mission_type = type_map.get(request_type, "epic")
     workflow_id = workflow_map.get(request_type, "feature-request")
+
+    # Smart workflow routing: detect epic type from brief/stack and pick adapted workflow
+    # Prevents force-fitting full-stack workflows on backend-only or refactoring epics
+    _brief_lower = (brief or idea or "").lower()
+    _stack_lower = " ".join(s.lower() for s in stack)
+    _is_backend_only = (
+        any(k in _brief_lower for k in ("backend", "grpc", "api ", "interceptor", "middleware", "migration db", "rust only", "no frontend", "no ui"))
+        and not any(k in _brief_lower for k in ("frontend", "ui ", "ux ", "design", "css", "html", "react", "vue", "next"))
+    )
+    _is_refactoring = any(k in _brief_lower for k in ("refactor", "cleanup", "dead code", "tech debt", "optimize", "performance"))
+    _is_security = any(k in _brief_lower for k in ("security", "audit", "pentest", "vulnerability", "cve"))
+
+    if _is_backend_only and request_type == "new_feature":
+        workflow_id = "review-cycle"  # lightweight: 2 phases (code + review), no UX/deploy
+        logger.info("WORKFLOW ROUTING: backend-only detected → review-cycle (no UX/deploy)")
+    elif _is_refactoring:
+        workflow_id = "refactoring-sprint"
+        logger.info("WORKFLOW ROUTING: refactoring detected → refactoring-sprint")
+    elif _is_security:
+        workflow_id = "sast-continuous"
+        logger.info("WORKFLOW ROUTING: security detected → sast-continuous")
     po = data.get("po_proposal", {})
 
     epic_store = get_epic_store()
