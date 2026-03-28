@@ -715,6 +715,21 @@ def _migrate_pg(conn):
     except Exception:
         pass
 
+    # ── ACE counters on knowledge_objects (arXiv:2505.14852, ICLR 2026) ──
+    # Source: "Agentic Context Engineering" (Zhang et al., Stanford/SambaNova)
+    # Each strategy in the playbook has helpful/harmful counters.
+    # If harmful > helpful * 2 after 5+ feedbacks → prune the entry.
+    # Our choice: applied to knowledge_objects (KO store) which are our
+    # equivalent of ACE playbook entries — deterministic project knowledge.
+    try:
+        conn.execute("ALTER TABLE knowledge_objects ADD COLUMN IF NOT EXISTS helpful_count INTEGER DEFAULT 0")
+    except Exception:
+        pass
+    try:
+        conn.execute("ALTER TABLE knowledge_objects ADD COLUMN IF NOT EXISTS harmful_count INTEGER DEFAULT 0")
+    except Exception:
+        pass
+
     # ── Memory ICM enhancements (decay + dedup + graph) ─────────
     # Inspired by rtk-ai/icm: dual memory (episodic decay + knowledge graph)
 

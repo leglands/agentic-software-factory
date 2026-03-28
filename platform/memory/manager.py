@@ -765,6 +765,56 @@ class MemoryManager:
             logger.debug("Vector store failed: %s", e)
         return rid
 
+    # ── ACE Feedback Counters (arXiv:2505.14852, ICLR 2026) ─────
+    # Source: "Agentic Context Engineering" (Zhang et al., Stanford/SambaNova)
+    # Each KO entry tracks helpful/harmful counters from execution feedback.
+    # Our choice: applied at KO level (project knowledge objects) rather than
+    # at skill level, because KOs are the atomic unit of project-specific
+    # knowledge. Skills use Thompson Sampling (Beta distribution) for selection,
+    # while KOs use ACE counters for individual strategy pruning.
+
+    def ko_record_feedback(
+        self, project_id: str, key: str, kind: str = "", helpful: bool = True
+    ) -> None:
+        """Record helpful/harmful feedback on a knowledge object."""
+        conn = get_db()
+        _ensure_ko_schema(conn)
+        col = "helpful_count" if helpful else "harmful_count"
+        if kind:
+            conn.execute(
+                f"UPDATE knowledge_objects SET {col} = COALESCE({col}, 0) + 1 "
+                "WHERE project_id=? AND kind=? AND key=?",
+                (project_id, kind, key),
+            )
+        else:
+            conn.execute(
+                f"UPDATE knowledge_objects SET {col} = COALESCE({col}, 0) + 1 "
+                "WHERE project_id=? AND key=?",
+                (project_id, key),
+            )
+        conn.commit()
+        conn.close()
+
+    def ko_prune_harmful(self, project_id: str, min_feedback: int = 5) -> int:
+        """Prune KOs where harmful > helpful * 2 (ACE pattern).
+
+        Only prunes entries with enough feedback to be statistically meaningful.
+        """
+        conn = get_db()
+        _ensure_ko_schema(conn)
+        cursor = conn.execute(
+            "DELETE FROM knowledge_objects WHERE project_id=? "
+            "AND (COALESCE(helpful_count,0) + COALESCE(harmful_count,0)) >= ? "
+            "AND COALESCE(harmful_count,0) > COALESCE(helpful_count,0) * 2",
+            (project_id, min_feedback),
+        )
+        deleted = cursor.rowcount
+        conn.commit()
+        conn.close()
+        if deleted:
+            logger.info("ACE prune: removed %d harmful KOs for project %s", deleted, project_id)
+        return deleted
+
     # ── Graph Relations (ICM knowledge graph) ────────────────────
 
     def relate(

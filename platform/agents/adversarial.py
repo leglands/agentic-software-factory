@@ -1528,6 +1528,29 @@ async def run_guard(
         except Exception as _vis_err:
             logger.debug("L2-VISUAL skip: %s", _vis_err)
 
+    # ── ACE feedback: record helpful/harmful on project KOs ─────
+    # Source: "Agentic Context Engineering" (arXiv:2505.14852, ICLR 2026)
+    # Zhang et al., Stanford/SambaNova — each strategy tracks execution feedback.
+    # Our choice: wire into adversarial guard output. Clean pass = helpful,
+    # each L0/L1 issue type = harmful feedback on that pattern.
+    try:
+        import re as _re_ace
+        _ace_proj = ""
+        _m_ace = _re_ace.search(r"MISSION_ID:\s*(\w+)", task or "")
+        if _m_ace:
+            _ace_proj = _m_ace.group(1)
+        if _ace_proj:
+            from .store import get_agent_store as _ace_as
+            _mm_ace = __import__("platform.memory.manager", fromlist=["get_memory_manager"]).get_memory_manager()
+            if l0.issues:
+                for _iss in l0.issues[:5]:
+                    _itype = _iss.split(":")[0].strip() if ":" in _iss else _iss[:30]
+                    _mm_ace.ko_record_feedback(_ace_proj, f"guard_{_itype}", kind="quality", helpful=False)
+            else:
+                _mm_ace.ko_record_feedback(_ace_proj, "guard_clean_pass", kind="quality", helpful=True)
+    except Exception:
+        pass
+
     # Both passed
     return GuardResult(
         passed=True,

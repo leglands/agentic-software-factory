@@ -205,3 +205,36 @@ reason:    {one-line explanation}
 ```
 
 Store this in memory_global under key `skill_improver_last_run`.
+
+## Delta Patch Mode (ACE Pattern)
+
+Source: "Agentic Context Engineering" (arXiv:2505.14852, ICLR 2026, Zhang et al., Stanford/SambaNova).
+Our choice: instead of rewriting skills entirely, produce structured delta patches that prevent context collapse — the progressive erosion of knowledge through iterative rewrites.
+
+### Rules
+1. NEVER rewrite a skill file from scratch. Only ADD, UPDATE, or REMOVE specific sections.
+2. Each change is a delta patch with a reason and execution feedback counters.
+3. After each AC cycle, record feedback: `ko_record_feedback(project_id, skill_name, helpful=True/False)`.
+4. Version bump: patch on ADD/UPDATE, minor on REMOVE.
+5. Preserve all existing eval_cases. Only add new ones, never delete.
+6. Prune threshold: if a strategy has harmful > helpful * 2 after 5+ feedbacks, REMOVE it.
+
+### Delta Patch Format
+```
+DELTA skill_name v1.2.0 -> v1.2.1
+ADD [new-strategy-id] helpful=0 harmful=0
+  Description of the new strategy learned from execution.
+
+UPDATE [existing-strategy-id] helpful=12 harmful=1
+  Refined description based on accumulated feedback.
+
+REMOVE [deprecated-strategy-id] helpful=2 harmful=8
+  Reason: caused repeated adversarial rejections.
+```
+
+### Why delta patches (not rewrites)
+ACE (ICLR 2026) identifies two failure modes in context evolution:
+- **Brevity bias**: rewrites compress away critical detail
+- **Context collapse**: each rewrite erodes 5-15% of original knowledge
+
+Delta patches solve both: they only add/modify what changed, preserving everything else. Combined with helpful/harmful counters, harmful strategies are pruned while helpful ones accumulate.
