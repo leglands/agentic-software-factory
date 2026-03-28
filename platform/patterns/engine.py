@@ -271,32 +271,20 @@ RESPONSIVE (MANDATORY):
 - Loading/error/empty states for EVERY data-dependent component
 
 DEPENDENCY MANIFESTS (MANDATORY — generate BEFORE build):
-- Go: code_write go.mod with module name + deps, then build(command="cd {project} && go mod tidy")
-- Python: code_write requirements.txt with ALL imports (fastapi, uvicorn, pydantic, etc.)
-- Node.js/TS: code_write package.json with scripts + deps, then build(command="npm install")
-- Rust: code_write Cargo.toml with [dependencies] section
-- Docker: code_write Dockerfile with correct base image + COPY + RUN install
-- NEVER leave deps empty. List EVERY import your code uses. Missing deps = build failure.
+- Check the existing manifest (Cargo.toml, package.json, go.mod, pyproject.toml, etc.) with code_read
+- Add ALL imports your code uses. Missing deps = build failure.
 
 BUILD VERIFICATION (MANDATORY — run AFTER writing code):
-- Web/Node.js: build(command="npm install && npm run build")
-- Python: build(command="python3 -m py_compile file.py")
-- Go: build(command="go vet ./...")
-- Rust: build(command="cargo check")
-- Android/Kotlin: android_build() — compiles via Gradle in real SDK container
-- Android tests: android_test() — runs real unit tests
-- Swift/iOS: build(command="swift build") — only for iOS/macOS projects
-- Docker: build(command="docker build -t test .")
-- Do NOT use generic build() for Android — use android_build() instead.
-- CRITICAL: You MUST call the build() tool. Writing a shell script is NOT a build. The build() tool runs the command and returns real compiler output.
+- Read the project's build manifest to determine the correct build command
+- Call build(command="...") with the appropriate command for this project's stack
+- CRITICAL: You MUST call the build() tool. The build() tool runs the command and returns real compiler output.
 - If you skip the build() call, your work will be REJECTED by the adversarial guard.
 
 BUILD-FIX LOOP (CRITICAL — you will be REJECTED if you skip this):
 When build() returns errors, you MUST:
 1. Read the error messages from the build output
 2. code_read the file with the error to see surrounding code
-3. Call code_edit to fix EACH error. Example:
-   code_edit(path="src/GameScene.swift", old_str="let sprite = SKSprite()", new_str="let sprite = SKSpriteNode()")
+3. Call code_edit to fix EACH error
 4. Run build() again to verify the fix
 5. Repeat until build succeeds or errors decrease
 Do NOT stop and describe errors in text. FIX them with code_edit. Text-only responses = REJECTION.
