@@ -185,7 +185,11 @@ class CodeWriteTool(BaseTool):
         try:
             p = Path(path)
             if p.exists():
-                p.with_suffix(p.suffix + ".bak").write_text(p.read_text())
+                return (
+                    f"Error: file '{path}' already exists. "
+                    f"Use code_edit(path, old_str, new_str) to modify existing files. "
+                    f"code_write is for NEW files only."
+                )
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(content)
             # REF: arXiv:2602.20021 — SBD-08: audit destructive file writes
