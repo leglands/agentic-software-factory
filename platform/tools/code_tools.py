@@ -41,12 +41,50 @@ _SENSITIVE_FILE_RE = re.compile(
 
 
 def _is_path_allowed(resolved_path: str) -> bool:
-    """Return True if resolved_path is under one of the allowed write roots."""
+    """Return True if resolved_path is under one of the allowed write roots.
+
+    Checks static roots (data/workspaces, /tmp) + dynamic roots from active
+    epic runs (real project workspaces like /Users/.../popinz-dev).
+    """
     p = Path(resolved_path)
-    return any(
+    # Static roots
+    if any(
         p == root or str(p).startswith(str(root) + os.sep)
         for root in _ALLOWED_WRITE_ROOTS
-    )
+    ):
+        return True
+    # Dynamic roots: workspace_path from running epic_runs
+    # Cached per-request to avoid DB round-trip on every code_write
+    for dynamic_root in _get_dynamic_workspace_roots():
+        if str(p).startswith(dynamic_root + os.sep) or str(p) == dynamic_root:
+            return True
+    return False
+
+
+# Cache dynamic workspace roots (refreshed every 60s)
+_dynamic_roots_cache: list[str] = []
+_dynamic_roots_ts: float = 0.0
+
+
+def _get_dynamic_workspace_roots() -> list[str]:
+    """Get workspace paths from running epic_runs (cached 60s)."""
+    global _dynamic_roots_cache, _dynamic_roots_ts
+    import time
+    now = time.monotonic()
+    if now - _dynamic_roots_ts < 60.0 and _dynamic_roots_cache:
+        return _dynamic_roots_cache
+    try:
+        from ..db.migrations import get_db
+        conn = get_db()
+        rows = conn.execute(
+            "SELECT DISTINCT workspace_path FROM epic_runs WHERE status IN ('running', 'paused') AND workspace_path IS NOT NULL AND workspace_path != ''"
+        ).fetchall()
+        conn.close()
+        _dynamic_roots_cache = [r["workspace_path"] for r in rows if r["workspace_path"]]
+        _dynamic_roots_ts = now
+    except Exception:
+        pass
+    return _dynamic_roots_cache
 
 
 class CodeReadTool(BaseTool):
