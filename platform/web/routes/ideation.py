@@ -619,9 +619,10 @@ async def ideation_create_epic(request: Request):
     _is_refactoring = any(k in _brief_lower for k in ("refactor", "cleanup", "dead code", "tech debt", "optimize", "performance"))
     _is_security = any(k in _brief_lower for k in ("security", "audit", "pentest", "vulnerability", "cve"))
 
+    logger.warning("WORKFLOW ROUTING CHECK: idea=%s backend=%s refacto=%s secu=%s", idea[:50], _is_backend_only, _is_refactoring, _is_security)
     if _is_backend_only and request_type == "new_feature":
-        workflow_id = "review-cycle"  # lightweight: 2 phases (code + review), no UX/deploy
-        logger.info("WORKFLOW ROUTING: backend-only detected → review-cycle (no UX/deploy)")
+        workflow_id = "review-cycle"
+        logger.warning("WORKFLOW ROUTING: backend-only → review-cycle")
     elif _is_refactoring:
         workflow_id = "refactoring-sprint"
         logger.info("WORKFLOW ROUTING: refactoring detected → refactoring-sprint")
