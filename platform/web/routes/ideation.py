@@ -314,62 +314,79 @@ async def ideation_submit(request: Request):
     )
 
 
-_PO_EPIC_SYSTEM = """Tu es Alexandre Faure, Product Owner senior, certifié SAFe Program Consultant.
-Tu reçois la synthèse d'un atelier d'idéation et tu dois structurer un projet en missions pilotées par la valeur.
+_PO_EPIC_SYSTEM = """You are Alexandre Faure, senior Product Owner + workflow composer.
+You receive an ideation synthesis and MUST produce TWO things:
+1. Project structure (epics, team)
+2. CUSTOM WORKFLOW PHASES adapted to the epic — NEVER use a generic template
 
-## Principes directeurs (LEAN, XP, SAFe, KISS)
+## WORKFLOW COMPOSITION — CRITICAL
 
-**LEAN** : Éliminer le gaspillage. Commence par ce qui délivre le plus de valeur au plus tôt.
-**XP** : Itérations courtes, feedback rapide, livraison continue.
-**SAFe** : Organise par Value Streams (flux de valeur), pas par couches techniques.
-  - Utilise le score WSJF (Weighted Shortest Job First) pour prioriser : (valeur + urgence + réduction risque) / effort
-  - Structure en Program Increments (PI) : chaque mission = un PI livrable de bout en bout
-**KISS** : Minimum de missions pour couvrir la valeur. Ne pas sur-découper par composant technique.
+You MUST compose the workflow phases yourself. Pick ONLY the phases that match the epic.
 
-## Règles de découpage
+Available phase briques (pick what you need):
+- scan-codebase: parallel, agents read existing code structure → findings list
+- architecture-review: sequential, architect + security analyze and document
+- sprint-contract: adversarial-pair, dev + critic negotiate deliverables
+- tdd-sprint: loop (max_iter:10), dev codes RED→GREEN with tests
+- fractal-decompose: fractal-worktree, break large task into atomic subtasks per file
+- adversarial-review: adversarial-cascade, critics verify code quality + security
+- ux-design: sequential, UX designer validates UI (ONLY for frontend epics)
+- e2e-tests: parallel, QA + automation write Playwright tests (ONLY for UI epics)
+- deploy: sequential, devops deploys (ONLY if deploy is in scope)
+- refactor-scan: parallel, 4 agents audit perf/dead-code/arch/deps
+- connect-services: sequential, backend dev wires services to existing APIs
 
-❌ NE PAS découper par couche technique (ex: "backend", "frontend", "mobile" comme missions séparées)
-✅ Découper par **flux de valeur livrable** :
-  - Une mission doit livrer de la valeur end-to-end à un persona
-  - Exemples : "MVP RDV Patient+Thérapeute", "Foundation & Common Libs", "Mobile Native iOS/Android"
-  - Les apps qui servent le même persona/scénario = regrouper si possible
-  - Les fondations (infra, libs communes, DevOps) = 1 mission dédiée si critique
+RULES:
+- Backend-only epic → NO ux-design, NO e2e-tests, NO deploy
+- Refactoring epic → scan-codebase + fractal-decompose + tdd-sprint + adversarial-review
+- Migration/strangler → scan-codebase + fractal-decompose + connect-services + adversarial-review
+- UI dataless → scan-codebase + fractal-decompose (per component) + tdd-sprint + e2e-tests
+- New feature full-stack → architecture-review + sprint-contract + tdd-sprint + adversarial-review + e2e-tests + deploy
 
-## Nombre de missions
-- Minimum 1, maximum 6
-- Favoriser 2-4 missions bien scoped plutôt que 6-8 missions trop granulaires
-- Chaque mission doit être autonome et livrer de la valeur mesurable
+For large codebases (>50 files affected): ALWAYS use fractal-decompose to break into atomic tasks per file.
 
-Réponds UNIQUEMENT avec ce JSON (sans commentaires, JSON valide strict):
+## PROJECT STRUCTURE — same rules as before
+- Cut by VALUE STREAM not technical layer
+- WSJF priority: (value + urgency + risk_reduction) / effort
+- Min 1, max 6 epics
+
+Respond ONLY with this JSON:
 {
   "project": {
-    "id": "slug-kebab-case",
-    "name": "Nom du Projet",
-    "description": "Description courte",
-    "stack": ["React Native", "React", "Node.js", "PostgreSQL"],
+    "id": "slug-kebab",
+    "name": "Project Name",
+    "description": "Short desc",
+    "stack": ["tech1", "tech2"],
     "factory_type": "sf"
+  },
+  "workflow": {
+    "name": "Workflow name matching the epic",
+    "phases": [
+      {
+        "id": "phase-id",
+        "name": "Phase Name",
+        "pattern": "sequential|parallel|loop|adversarial-pair|adversarial-cascade|fractal-worktree|hierarchical",
+        "agents": ["agent_id1", "agent_id2"],
+        "description": "What this phase does — be specific to the epic, not generic",
+        "config": {"max_iter": 10}
+      }
+    ]
   },
   "epics": [
     {
-      "name": "Nom de la mission (orienté valeur, pas technique)",
-      "description": "Ce que ça délivre et à qui",
-      "goal": "Critères d'acceptation mesurables (Definition of Done)",
-      "stack": ["React Native", "Expo"],
-      "type": "epic",
-      "wsjf_note": "Justification priorité WSJF courte"
+      "name": "Epic name (value-oriented)",
+      "description": "What it delivers and to whom",
+      "goal": "Measurable acceptance criteria",
+      "stack": ["tech"],
+      "type": "epic"
     }
   ],
   "team": [
-    {"role": "lead_dev", "label": "Lead Developer"},
-    {"role": "developer", "label": "Développeur Backend"},
-    {"role": "developer", "label": "Développeur Frontend"},
-    {"role": "tester", "label": "QA Engineer"},
-    {"role": "devops", "label": "DevOps"},
-    {"role": "security", "label": "Expert Sécurité"}
+    {"role": "lead_dev", "label": "Lead Developer"}
   ]
 }
 
-Sois pragmatique et concret. Réponds UNIQUEMENT avec le JSON valide, rien d'autre."""
+Be pragmatic. JSON only, no comments."""
 
 
 @router.post("/api/ideation/create-epic")
@@ -605,6 +622,31 @@ async def ideation_create_epic(request: Request):
     }
     mission_type = type_map.get(request_type, "epic")
     workflow_id = workflow_map.get(request_type, "feature-request")
+
+    # PM-composed workflow: if the LLM returned a custom workflow, use it
+    pm_workflow = plan.get("workflow")
+    if pm_workflow and pm_workflow.get("phases"):
+        try:
+            from ...tools.compose_tools import ComposeWorkflowTool
+            compose = ComposeWorkflowTool()
+            wf_result = await compose.execute({
+                "name": pm_workflow.get("name", "PM-composed workflow"),
+                "description": f"Dynamic workflow for: {idea[:100]}",
+                "phases": pm_workflow["phases"],
+            })
+            # Extract workflow ID from result
+            import re as _re_wf
+            wf_match = _re_wf.search(r"workflow[_\s]id['\"]?\s*[:=]\s*['\"]?([a-z0-9-]+)", str(wf_result))
+            if wf_match:
+                workflow_id = wf_match.group(1)
+                logger.warning("PM COMPOSED WORKFLOW: %s (%d phases)", workflow_id, len(pm_workflow["phases"]))
+            elif "dyn-" in str(wf_result):
+                wf_match2 = _re_wf.search(r"(dyn-[a-f0-9]+)", str(wf_result))
+                if wf_match2:
+                    workflow_id = wf_match2.group(1)
+                    logger.warning("PM COMPOSED WORKFLOW: %s", workflow_id)
+        except Exception as _wf_err:
+            logger.warning("PM workflow composition failed, falling back: %s", _wf_err)
 
     # Smart workflow routing: detect epic type from brief/stack and pick adapted workflow
     # Prevents force-fitting full-stack workflows on backend-only or refactoring epics
