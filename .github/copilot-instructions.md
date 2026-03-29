@@ -65,26 +65,44 @@ psql: PGPASSWORD=macaron /opt/homebrew/bin/psql -h localhost -U macaron -d macar
 - NodeStatus: PENDING · RUNNING · COMPLETED · VETOED · FAILED (no DONE)
 - PG advisory lock conn-scoped · dedicated conn per mission
 
-## Quality Gates (17)
+## Quality Gates (17+)
 HARD: guardrails · veto · prompt_inject · tool_acl · adv-L0(25-det) · AC-reward · RBAC · CI
-SOFT: adv-L1(LLM) · L2-visual(Playwright screenshots) · convergence · complexity
+SOFT: adv-L1(LLM) · L2-visual(Playwright) · convergence · complexity
+NEW: STACK_MISMATCH=absolute VETO · trivial-test detect · parasitic-file · phase-aware NO_TOOLS
 
 ## Adversarial (Swiss Cheese)
-L0: deterministic (25 rules, 0ms) → VETO ABSOLU
+L0: deterministic (25+ rules, 0ms) → VETO ABSOLU
+  + STACK_MISMATCH absolute VETO (L0+L1, not overridable by write tools)
+  + Trivial test detection (assert_eq!(2+2,4), tautology, literal compare)
+  + Parasitic file detection (.bak, .tmp, .orig)
+  + Phase-aware: NO_TOOLS_USED skipped for non-coding phases (contract/committee/review)
 L1: LLM semantic (SLOP, hallucination, logic) → VETO ABSOLU
-L2: visual screenshot eval (Playwright, UI phases only, non-blocking)
-"Code writers cannot declare their own success"
+L2: visual screenshot eval (Playwright, UI phases only)
+ACE feedback: each L0 issue → harmful on KO · clean pass → helpful
 
-## Harness Patterns (Anthropic 2026)
-- context_reset: true → clean context per phase (prevents context anxiety)
-- max_iterations auto-boost 5→12 for design/UI phases
-- Sprint contract negotiation (adversarial-pair) before TDD
-- compare_models() for upgrade/rollback decisions
+## Memory (ICM + ACE + napkin inspired)
+- ICM (rtk-ai/icm): exponential decay · Jaccard dedup >85% · graph relations
+- ACE (arXiv:2505.14852 ICLR 2026): helpful/harmful counters · delta patch mode
+- napkin (Michaelliv/napkin): PROJECT_BRIEF L0 → SPECS.md L1 progressive disclosure
+- Knowledge Bootstrap: auto at run start, refreshed after archi phases
+- Doc agents = "sachants" — maintain SPECS.md in memory_project
 
-## ToolCall-15 Bench
-- 15 scenarios · 5 categories · deterministic scoring · per-provider
-- API: /api/toolcall-bench/{list,run,job,key}
-- Watchdog: daily auto-bench + regression alerts
+## Workspace Isolation
+- code_write: blocked on existing files (forces code_edit)
+- code_write: dynamic roots from active epic_runs (real project paths)
+- code_read: sensitive file regex (.env, .ssh, credentials)
+- Landlock: Linux-only (disabled macOS) · Docker sandbox: opt-in
+- Post-phase cleanup: auto-delete .bak/.tmp before git commit
+
+## Build Detection (centralized)
+- tools/build_tools.py: _BUILD_MANIFEST_MAP (15 build systems, data-driven)
+- detect_build_commands(ws) → {build, test, run, manifests}
+- Zero hardcoded per-language commands in prompts
+
+## Skills (9 new domain)
+sveltekit-dataless-ui · nextjs-server-components-dataless · grpc-protobuf-client
+jwt-rbac-grpc-interceptor · skeleton-loading-pattern · redis-queue-async-worker
+redis-cache-layer · postgres-binary-entity-storage · entity-domain-modeling
 
 ## Key Decisions
 | Decision | Rationale |
@@ -96,7 +114,11 @@ L2: visual screenshot eval (Playwright, UI phases only, non-blocking)
 | Infisical vault | .env = bootstrap only |
 | Thompson Sampling | skill selection Beta per skill |
 | Darwin GA | team fitness evolution nightly |
-| MiniMax primary | 93% TC-15, free, fast |
+| MiniMax primary | 93% TC-15, free, fallback=Mistral |
+| No hardcode prompts | agents read manifests, LLM reasons about stack |
+| code_write=new only | existing files → code_edit (prevents Cargo.toml destruction) |
+| Knowledge Bootstrap | SPECS.md auto-generated, doc agents maintain it |
+| ACE feedback | helpful/harmful per KO, prune harmful>helpful*2 after 5 feedbacks |
 | Mistral fallback | 87% TC-15, free experiment, tool_call_id quirk handled |
 
 ## Deployments

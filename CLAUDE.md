@@ -47,7 +47,7 @@ projects/ — per-proj config + git_url
 
 ## AUTH (SF)
 - JWT+bcrypt · access=15min · refresh=7d · rate=5/60s/IP
-- `SF_DEMO_PASSWORD=admin123!` in .env · `SF_LOCAL=1` → `local-dev-skip`
+- `SF_DEMO_PASSWORD` in .env · `SF_LOCAL=1` → local-dev auth bypass
 
 ## LLM — 6 PROVIDERS
 ```
@@ -68,14 +68,40 @@ Fallback: mistral/devstral-latest  (87% ToolCall-15, free experiment tier)
 ## EPIC/WORKFLOW ENGINE
 - Epic → wf(YAML) → epic_runs(PG) → PM-LLM → next|loop|done|skip|phase(dyn)
 - `on_complete`: 41 wf auto-chain; MAX_RELOOPS=5; cap=20
-- Resume via `POST /api/missions/runs/{run_id}/resume`
-- context_reset: true in phase YAML → clean context per phase (no history carry-over)
-- Design/UI phases: max_iterations auto-boosted to 12 (Anthropic harness pattern)
-- Sprint contract negotiation phase (adversarial-pair) before TDD
+- Resume via `POST /api/missions/runs/{run_id}/resume` or `/run` (reset+start)
+- context_reset: true in phase YAML → clean context per phase
+- Knowledge Bootstrap: auto at run start → LLM scans workspace → SPECS.md in memory
+- Post-archi hook: SPECS.md refreshed after architecture/design/setup phases
+- Real workspace: uses project.path (not blank data/workspaces/) if exists
+- code_write blocked on existing files → forces code_edit (prevents overwrite)
+- Dynamic workspace roots: code_write allowed in active run workspace_path
 
-## QUALITY GATES (17)
+## QUALITY GATES (17+)
 - HARD: guardrails · veto · prompt_inject · tool_acl · adv-L0(25-det) · AC-reward · RBAC · CI
-- SOFT: adv-L1(LLM) · L2-visual(Playwright screenshot for UI phases) · convergence · complexity
+- SOFT: adv-L1(LLM) · L2-visual(Playwright) · convergence · complexity
+- L0 additions: STACK_MISMATCH=absolute VETO · trivial-test detection · parasitic-file (.bak)
+- Phase-aware: NO_TOOLS_USED skipped for non-coding phases (contract/committee/review)
+- ACE counters: helpful/harmful per KO entry (arXiv:2505.14852) → prune if harmful>helpful*2
+
+## MEMORY (ICM + ACE + napkin)
+- 4-layer: session → pattern → project → global (PG tsvector FTS)
+- ICM (rtk-ai/icm): exponential decay · Jaccard dedup >85% · knowledge graph relations
+- ACE (arXiv:2505.14852): helpful/harmful counters per KO · delta patch skill updates
+- napkin (Michaelliv/napkin): PROJECT_BRIEF progressive disclosure L0 → SPECS.md L1
+- Knowledge Bootstrap: doc agents scan workspace → SPECS.md → all agents inherit
+- Decay sweep: on boot + post-phase (access-aware, pinned items never <0.5)
+
+## BUILD DETECTION
+- Centralized: tools/build_tools.py _BUILD_MANIFEST_MAP (15 build systems)
+- detect_build_commands(ws) → {build, test, run, manifests}
+- No hardcoded per-language commands in prompts — agents read manifests
+
+## SKILLS (9 new domain skills)
+- sveltekit-dataless-ui · nextjs-server-components-dataless
+- grpc-protobuf-client · jwt-rbac-grpc-interceptor
+- skeleton-loading-pattern · redis-queue-async-worker
+- redis-cache-layer · postgres-binary-entity-storage · entity-domain-modeling
+- 36 skills enriched to 10+ eval_cases (batch MiniMax enrichment)
 
 ## TOOLCALL-15 BENCH
 - Port of stevibe/ToolCall-15 (MIT): 15 scenarios, 5 categories, deterministic scoring
