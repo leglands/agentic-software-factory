@@ -188,7 +188,8 @@ Do not spend all rounds exploring — explore quickly (1 list_files), then WRITE
 
 ## Memory (recommended, not blocking)
 - Call memory_search(query="<topic>") to check prior decisions — skip if the task is clear.
-- Call memory_store() at the END to record key decisions.""")
+- Call memory_store() at the END to record key decisions.
+- ALL memory/doc writes MUST be compressed telegraphic English with abbreviations. No prose. No filler.""")
 
         # RLM instruction — optional, not mandatory
         if ctx.allowed_tools is None or "deep_search" in (ctx.allowed_tools or []):

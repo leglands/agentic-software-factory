@@ -484,12 +484,18 @@ class EpicOrchestrator:
         )
 
         try:
-            resp = await client.chat(
-                messages=[LLMMessage(role="user", content=prompt)],
-                system_prompt="Tech doc architect. Telegraphic compressed English. Abbreviations. No filler. Facts only.",
+            # Stream (not chat) — prevents MiniMax think-token explosion
+            _chunks = []
+            async for chunk in client.stream(
+                messages=[LLMMessage(role="user", content="/no_think\n" + prompt)],
+                system_prompt="Tech doc architect. Telegraphic compressed English. Abbreviations. No filler. Facts only. Output SPECS.md directly, no shell commands.",
                 max_tokens=800,
-                temperature=0.2,
-            )
+            ):
+                if chunk.content:
+                    _chunks.append(chunk.content)
+            class _FakeResp:
+                content = "".join(_chunks)
+            resp = _FakeResp()
             specs = resp.content.strip() if resp and resp.content else ""
         except Exception as e:
             logger.warning("Knowledge bootstrap LLM failed: %s", e)
