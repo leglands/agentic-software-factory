@@ -554,9 +554,16 @@ class EpicOrchestrator:
             if _ko_count:
                 logger.info("Knowledge bootstrap: %d KOs created for project %s", _ko_count, project_id)
 
+            # ── Initial traceability scan (populate artifacts from existing code) ──
+            _trace_count = 0
+            try:
+                from ..web.routes.epics.internal import _auto_trace_scan
+                _trace_count = _auto_trace_scan(workspace, mission)
+            except Exception:
+                pass
+
             await self._sse_orch_msg(
-                f"**Knowledge Bootstrap** — SPECS.md ({len(specs)} chars) + {_ko_count} KOs créés.\n"
-                f"Stack détecté, architecture documentée, conventions inférées.",
+                f"**Knowledge Bootstrap** — SPECS.md ({len(specs)} chars) + {_ko_count} KOs + {_trace_count} trace artifacts.",
             )
 
     async def _sse_orch_msg(self, content: str, phase_id: str = ""):

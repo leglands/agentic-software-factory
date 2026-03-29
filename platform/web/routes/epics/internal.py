@@ -198,6 +198,16 @@ async def _run_post_phase_hooks(
     # After EVERY phase: update Architecture.md + docs via LLM (architect + tech writer)
     await _update_docs_post_phase(phase_id, phase_name, mission, session_id, push_sse)
 
+    # After dev/tdd/test phases: scan workspace for traceability artifacts
+    _pk_lower = phase_key.lower()
+    if any(kw in _pk_lower for kw in ("tdd", "sprint", "dev", "test", "e2e", "qa")):
+        try:
+            _trace_count = _auto_trace_scan(workspace, mission)
+            if _trace_count:
+                logger.info("Trace scan: %d artifacts/links updated for %s", _trace_count, phase_id)
+        except Exception as _te:
+            logger.debug("Trace scan skipped: %s", _te)
+
     # After ideation/architecture/dev: extract features for PO kanban
     if any(
         k in phase_key for k in ("ideation", "architecture", "sprint", "dev", "setup")
@@ -958,6 +968,117 @@ asyncio.run(main())
         logger.warning("Confluence sync failed: %s", e)
 
     return result
+
+
+def _auto_trace_scan(workspace: str, mission) -> int:
+    """Scan workspace for traceability artifacts and auto-link to features.
+
+    Scans:
+    - Source files → artifacts (layer=code)
+    - Test files → artifacts (layer=test_tu or test_e2e)
+    - // Ref: feat-XXXX comments → traceability_links (code→feature)
+    - Route/page files → artifacts (layer=ihm)
+    - RBAC/auth files → artifacts (layer=rbac)
+
+    Then recomputes coverage_pct for all features.
+    """
+    import re as _re_trace
+    import subprocess as _sp_trace
+
+    from ....db.migrations import get_db as _gdb_trace
+
+    project_id = getattr(mission, "project_id", "") or getattr(mission, "id", "")
+    epic_id = getattr(mission, "id", "")
+    if not workspace or not project_id:
+        return 0
+
+    conn = _gdb_trace()
+    count = 0
+
+    # Scan all source files (max depth 5, exclude node_modules/target/.git)
+    try:
+        result = _sp_trace.run(
+            ["find", workspace, "-maxdepth", "5", "-type", "f",
+             "-not", "-path", "*/.git/*", "-not", "-path", "*/node_modules/*",
+             "-not", "-path", "*/target/*", "-not", "-path", "*/__pycache__/*"],
+            capture_output=True, text=True, timeout=10,
+        )
+        files = [f for f in result.stdout.strip().split("\n") if f]
+    except Exception:
+        conn.close()
+        return 0
+
+    for fpath in files:
+        fname = fpath.split("/")[-1]
+        rel_path = fpath.replace(workspace + "/", "")
+
+        # Classify layer
+        layer = None
+        if any(kw in rel_path.lower() for kw in ("/test", "_test.", ".spec.", ".test.", "tests/")):
+            if any(kw in rel_path.lower() for kw in ("e2e", "spec", "playwright", "cypress")):
+                layer = "test_e2e"
+            else:
+                layer = "test_tu"
+        elif any(rel_path.endswith(ext) for ext in (".rs", ".ts", ".tsx", ".py", ".go", ".swift", ".kt", ".java", ".php")):
+            if any(kw in rel_path.lower() for kw in ("route", "page", "view", "screen", "component")):
+                layer = "ihm"
+            elif any(kw in rel_path.lower() for kw in ("auth", "rbac", "permission", "guard", "interceptor")):
+                layer = "rbac"
+            elif any(kw in rel_path.lower() for kw in ("crud", "repository", "store", "dao")):
+                layer = "crud"
+            else:
+                layer = "code"
+        elif rel_path.endswith(".proto"):
+            layer = "code"
+
+        if not layer:
+            continue
+
+        # Upsert artifact
+        art_id = f"art-{project_id[:8]}-{rel_path.replace('/', '-')[:60]}"
+        try:
+            conn.execute(
+                "INSERT INTO traceability_artifacts (id, project_id, epic_id, layer, artifact_key, artifact_name) "
+                "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (project_id, feature_id, layer, artifact_key) DO NOTHING",
+                (art_id, project_id, epic_id, layer, rel_path, fname),
+            )
+            count += 1
+        except Exception:
+            pass
+
+        # Scan for // Ref: feat-XXXX in source files (link code→feature)
+        if layer in ("code", "test_tu", "test_e2e", "ihm", "rbac", "crud"):
+            try:
+                content = open(fpath).read(5000)
+                refs = _re_trace.findall(r"Ref:\s*(feat-[a-z0-9]+)", content)
+                for feat_ref in refs:
+                    try:
+                        conn.execute(
+                            "INSERT INTO traceability_links (source_id, source_type, target_id, target_type, link_type, project_id) "
+                            "VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (source_id, target_id, link_type) DO NOTHING",
+                            (art_id, "artifact", feat_ref, "feature", f"implements_{layer}", project_id),
+                        )
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+
+    conn.commit()
+
+    # Recompute coverage for all features in this project
+    try:
+        from ....traceability.chain import update_feature_coverage
+        features = conn.execute(
+            "SELECT id FROM features WHERE epic_id IN (SELECT id FROM epics WHERE project_id=?)",
+            (project_id,),
+        ).fetchall()
+        for f in features:
+            update_feature_coverage(f["id"])
+    except Exception:
+        pass
+
+    conn.close()
+    return count
 
 
 async def _update_docs_post_phase(
