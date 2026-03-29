@@ -453,25 +453,42 @@ class EpicOrchestrator:
         from ..llm.client import LLMMessage, get_llm_client
 
         client = get_llm_client()
+        # Include phase decisions if available (post-archi refresh)
+        _phase_decisions = ""
+        try:
+            from ..sessions.store import get_session_store as _gss_kb
+            _ss_kb = _gss_kb()
+            _recent = _ss_kb.get_messages(session_id, limit=20)
+            for m in _recent:
+                if getattr(m, "from_agent", "") not in ("system", "phase_memory", "release_train_engineer"):
+                    _phase_decisions += f"[{getattr(m, 'from_agent', '?')}]: {getattr(m, 'content', '')[:200]}\n"
+        except Exception:
+            pass
+
         prompt = (
-            f"You are a documentation architect. Analyze this workspace scan and produce a structured SPECS.md.\n\n"
-            f"WORKSPACE SCAN:\n{brief}\n\n"
-            f"MISSION: {getattr(mission, 'brief', '')[:300]}\n\n"
-            f"Produce a concise SPECS.md (max 500 words) with these sections:\n"
-            f"## Stack\nList each language/framework detected with its directory.\n"
-            f"## Architecture\nDescribe the project structure (monorepo? microservices? monolith?).\n"
-            f"## Key Files\nList the 10 most important files to read before coding.\n"
-            f"## Conventions\nInfer coding conventions from the codebase (naming, error handling, testing).\n"
-            f"## Skills Required\nList which SF skills are relevant based on the stack.\n\n"
-            f"Be factual. Only describe what EXISTS in the scan. No speculation."
+            f"Produce a SPECS.md for this project. COMPRESSED telegraphic English, abbreviations OK.\n"
+            f"Max 300 words. No filler. No 'Not determinable'. Only facts.\n\n"
+            f"SCAN:\n{brief}\n\n"
+            f"MISSION: {getattr(mission, 'brief', '')[:200]}\n\n"
+        )
+        if _phase_decisions:
+            prompt += f"AGENT DECISIONS (from previous phases):\n{_phase_decisions[:1500]}\n\n"
+        prompt += (
+            f"Sections (telegraphic, no prose):\n"
+            f"## Stack\n- lang — dir (manifest)\n"
+            f"## Arch\nmonorepo|micro|mono. Key services. Data flow.\n"
+            f"## Key Files\n1-10, path only + 3-word purpose\n"
+            f"## Conventions\nnaming, err handling, test pattern, import style\n"
+            f"## Skills\nlist matching SF skill names\n"
+            f"## Decisions\narch decisions from agents (if any)\n"
         )
 
         try:
             resp = await client.chat(
                 messages=[LLMMessage(role="user", content=prompt)],
-                system_prompt="Technical documentation architect. Concise, factual, structured.",
-                max_tokens=1500,
-                temperature=0.3,
+                system_prompt="Tech doc architect. Telegraphic compressed English. Abbreviations. No filler. Facts only.",
+                max_tokens=800,
+                temperature=0.2,
             )
             specs = resp.content.strip() if resp and resp.content else ""
         except Exception as e:
@@ -2424,12 +2441,19 @@ class EpicOrchestrator:
 
                 await _safe_hooks()  # AWAIT — don't fire-and-forget
 
-                # Knowledge update: after architecture phases, re-generate SPECS.md
+                # Knowledge update: after architecture phases, FORCE re-generate SPECS.md
+                # with architecture decisions from this phase's agent outputs.
                 _phase_lower = (wf_phase.name or "").lower()
                 if any(kw in _phase_lower for kw in ("archit", "design", "setup")) and workspace:
                     try:
+                        # Delete cached SPECS.md to force regeneration with new decisions
+                        from ..memory.manager import get_memory_manager as _gmm_upd
+                        _gmm_upd().project_prune(
+                            getattr(mission, "project_id", "") or mission.id,
+                            key="specs_md",
+                        )
                         await self._knowledge_bootstrap(workspace, session_id, mission)
-                        logger.info("Knowledge update: SPECS.md refreshed after %s", wf_phase.name)
+                        logger.info("Knowledge update: SPECS.md REFRESHED after %s", wf_phase.name)
                     except Exception:
                         pass
 
