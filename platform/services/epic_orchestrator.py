@@ -495,8 +495,44 @@ class EpicOrchestrator:
                 "Knowledge bootstrap: SPECS.md generated (%d chars) for project %s",
                 len(specs), project_id,
             )
+
+            # ── Populate Knowledge Objects from SPECS.md sections ──
+            # Each section becomes a KO with ACE counters for feedback tracking.
+            _ko_count = 0
+            for line in specs.split("\n"):
+                line = line.strip()
+                if line.startswith("- **") and "—" in line:
+                    # Extract "Rust — popinz-v2-rust/" → KO(kind=stack, key=rust, value=...)
+                    parts = line.lstrip("- ").split("—", 1)
+                    key = parts[0].strip().strip("*").strip().lower().replace(" ", "_")
+                    val = parts[1].strip() if len(parts) > 1 else line
+                    mm.ko_store(project_id, key, val, kind="stack", source="knowledge-bootstrap")
+                    _ko_count += 1
+                elif line.startswith(("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "9.", "10.")) and "`" in line:
+                    # Key files → KO(kind=key_file)
+                    val = line.split(".", 1)[1].strip() if "." in line else line
+                    key = val.split("`")[1] if "`" in val else val[:40]
+                    mm.ko_store(project_id, key, val, kind="key_file", source="knowledge-bootstrap")
+                    _ko_count += 1
+
+            # ── Graph relations: link SPECS.md → project_brief (depends_on) ──
+            try:
+                _specs_entry = mm.project_retrieve(project_id, "specs_md")
+                _brief_entry = mm.project_retrieve(project_id, "project_brief")
+                if _specs_entry and _brief_entry:
+                    mm.relate(
+                        "memory_project", _specs_entry["id"],
+                        "memory_project", _brief_entry["id"],
+                        "depends_on", {"reason": "specs generated from brief scan"},
+                    )
+            except Exception:
+                pass
+
+            if _ko_count:
+                logger.info("Knowledge bootstrap: %d KOs created for project %s", _ko_count, project_id)
+
             await self._sse_orch_msg(
-                f"**Knowledge Bootstrap** — SPECS.md généré ({len(specs)} chars)\n"
+                f"**Knowledge Bootstrap** — SPECS.md ({len(specs)} chars) + {_ko_count} KOs créés.\n"
                 f"Stack détecté, architecture documentée, conventions inférées.",
             )
 
@@ -2389,7 +2425,6 @@ class EpicOrchestrator:
                 await _safe_hooks()  # AWAIT — don't fire-and-forget
 
                 # Knowledge update: after architecture phases, re-generate SPECS.md
-                # with the decisions made by the architecture agents.
                 _phase_lower = (wf_phase.name or "").lower()
                 if any(kw in _phase_lower for kw in ("archit", "design", "setup")) and workspace:
                     try:
@@ -2397,6 +2432,26 @@ class EpicOrchestrator:
                         logger.info("Knowledge update: SPECS.md refreshed after %s", wf_phase.name)
                     except Exception:
                         pass
+
+                # Graph relations: link phase summaries sequentially
+                try:
+                    from ..memory.manager import get_memory_manager as _gmm_rel
+                    _mm_rel = _gmm_rel()
+                    _proj_id = getattr(mission, "project_id", "") or mission.id
+                    _cur = _mm_rel.project_retrieve(_proj_id, f"phase:{wf_phase.name}")
+                    if _cur and i > 0:
+                        _prev_name = mission.phases[i - 1].phase_id if i > 0 else ""
+                        _prev_wf = wf.phases[i - 1] if i > 0 and i - 1 < len(wf.phases) else None
+                        if _prev_wf:
+                            _prev = _mm_rel.project_retrieve(_proj_id, f"phase:{_prev_wf.name}")
+                            if _prev:
+                                _mm_rel.relate(
+                                    "memory_project", _cur["id"],
+                                    "memory_project", _prev["id"],
+                                    "depends_on",
+                                )
+                except Exception:
+                    pass
 
                 # Create incidents for build/test/deploy failures in hooks
                 if (

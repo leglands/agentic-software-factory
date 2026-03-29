@@ -2257,11 +2257,35 @@ async def _build_node_context(agent: AgentDef, run: PatternRun) -> ExecutionCont
         project_path = run.project_path
 
     skills_prompt = ""
-    if agent.skills:
+    # Merge agent's static skills + dynamic skills from SPECS.md
+    _all_skills = list(agent.skills or [])
+
+    # Dynamic skill assignment: match SPECS.md keywords against skill library names
+    # No hardcoded mapping — search the actual skill catalogue by name similarity
+    if _specs_md and run.project_id:
+        try:
+            _lib = get_skill_library()
+            _specs_lower = _specs_md.lower()
+            _seen_skills = set(_all_skills)
+            for _s in _lib.scan_all():
+                _sname = _s.name
+                if _sname in _seen_skills:
+                    continue
+                _parts = _sname.replace("-", " ").replace("_", " ").split()
+                _significant = [p for p in _parts if len(p) > 3 and p not in ("the", "and", "for", "with", "best", "practices", "pattern", "patterns")]
+                if _significant and all(p in _specs_lower for p in _significant[:2]):
+                    _all_skills.append(_sname)
+                    _seen_skills.add(_sname)
+                    if len(_all_skills) >= 15:
+                        break
+        except Exception:
+            pass
+
+    if _all_skills:
         try:
             lib = get_skill_library()
             skill_dicts = []
-            for sid in agent.skills[:10]:
+            for sid in _all_skills[:15]:
                 skill = lib.get(sid)
                 if skill and skill.get("content"):
                     skill_dicts.append({
