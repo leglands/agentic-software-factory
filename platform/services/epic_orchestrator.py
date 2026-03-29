@@ -413,6 +413,93 @@ class EpicOrchestrator:
 
     # ── helpers re-used by the phase loop ──
 
+    async def _knowledge_bootstrap(self, workspace: str, session_id: str, mission) -> None:
+        """Knowledge Bootstrap: documentation agents scan workspace and maintain SPECS.md.
+
+        Runs ONCE at run start. Creates/updates project knowledge in memory_project:
+        - SPECS.md: stack, architecture, conventions, key files
+        - Skill assignment: maps detected stack to relevant skills for agents
+        - Architecture decisions: persisted for subsequent phases
+
+        Documentation agents are the "sachants" — they maintain the living knowledge
+        that coding agents consume. When architecture changes, they update the docs.
+        """
+        from ..memory.manager import get_memory_manager
+        from ..patterns.engine import _generate_project_brief
+
+        mm = get_memory_manager()
+        project_id = getattr(mission, "project_id", "") or mission.id
+
+        # Check if SPECS.md already exists and is recent (< 1 hour)
+        existing = mm.project_retrieve(project_id, "specs_md")
+        if existing and existing.get("value"):
+            import time
+            try:
+                from datetime import datetime
+                updated = datetime.fromisoformat(str(existing.get("updated_at", ""))[:19])
+                age_hours = (datetime.utcnow() - updated).total_seconds() / 3600
+                if age_hours < 1.0:
+                    logger.info("Knowledge bootstrap: SPECS.md fresh (%.0fmin), skipping", age_hours * 60)
+                    return
+            except Exception:
+                pass
+
+        # Generate workspace scan
+        brief = _generate_project_brief(workspace)
+        if not brief:
+            return
+
+        # Ask LLM to produce structured SPECS.md from the raw scan
+        from ..llm.client import LLMMessage, get_llm_client
+
+        client = get_llm_client()
+        prompt = (
+            f"You are a documentation architect. Analyze this workspace scan and produce a structured SPECS.md.\n\n"
+            f"WORKSPACE SCAN:\n{brief}\n\n"
+            f"MISSION: {getattr(mission, 'brief', '')[:300]}\n\n"
+            f"Produce a concise SPECS.md (max 500 words) with these sections:\n"
+            f"## Stack\nList each language/framework detected with its directory.\n"
+            f"## Architecture\nDescribe the project structure (monorepo? microservices? monolith?).\n"
+            f"## Key Files\nList the 10 most important files to read before coding.\n"
+            f"## Conventions\nInfer coding conventions from the codebase (naming, error handling, testing).\n"
+            f"## Skills Required\nList which SF skills are relevant based on the stack.\n\n"
+            f"Be factual. Only describe what EXISTS in the scan. No speculation."
+        )
+
+        try:
+            resp = await client.chat(
+                messages=[LLMMessage(role="user", content=prompt)],
+                system_prompt="Technical documentation architect. Concise, factual, structured.",
+                max_tokens=1500,
+                temperature=0.3,
+            )
+            specs = resp.content.strip() if resp and resp.content else ""
+        except Exception as e:
+            logger.warning("Knowledge bootstrap LLM failed: %s", e)
+            specs = f"# SPECS (auto-scan)\n\n{brief}"
+
+        if specs:
+            # Store in project memory (pinned = never decays)
+            mm.project_store(
+                project_id, "specs_md", specs,
+                category="architecture", source="knowledge-bootstrap",
+                confidence=0.9, is_pinned=True,
+            )
+            # Also store the raw brief
+            mm.project_store(
+                project_id, "project_brief", brief,
+                category="context", source="system",
+                confidence=0.9, is_pinned=True,
+            )
+            logger.warning(
+                "Knowledge bootstrap: SPECS.md generated (%d chars) for project %s",
+                len(specs), project_id,
+            )
+            await self._sse_orch_msg(
+                f"**Knowledge Bootstrap** — SPECS.md généré ({len(specs)} chars)\n"
+                f"Stack détecté, architecture documentée, conventions inférées.",
+            )
+
     async def _sse_orch_msg(self, content: str, phase_id: str = ""):
         await self._push_sse(
             self.session_id,
@@ -513,6 +600,16 @@ class EpicOrchestrator:
                 )
         except Exception as _bf_err:
             logger.error("PHASE_MEMORY backfill error: %s", _bf_err)
+
+        # ── Knowledge Bootstrap: scan workspace → SPECS.md in project memory ──
+        # Documentation agents maintain project knowledge (specs, archi, conventions).
+        # This runs ONCE at the start of a run. On subsequent phases, agents read
+        # the SPECS.md from memory instead of re-scanning.
+        if workspace:
+            try:
+                await self._knowledge_bootstrap(workspace, session_id, mission)
+            except Exception as _kb_err:
+                logger.warning("Knowledge bootstrap failed (non-blocking): %s", _kb_err)
 
         # Evidence gate: acceptance criteria for dev phases
         from ..services.evidence import (
@@ -2290,6 +2387,16 @@ class EpicOrchestrator:
                         )
 
                 await _safe_hooks()  # AWAIT — don't fire-and-forget
+
+                # Knowledge update: after architecture phases, re-generate SPECS.md
+                # with the decisions made by the architecture agents.
+                _phase_lower = (wf_phase.name or "").lower()
+                if any(kw in _phase_lower for kw in ("archit", "design", "setup")) and workspace:
+                    try:
+                        await self._knowledge_bootstrap(workspace, session_id, mission)
+                        logger.info("Knowledge update: SPECS.md refreshed after %s", wf_phase.name)
+                    except Exception:
+                        pass
 
                 # Create incidents for build/test/deploy failures in hooks
                 if (
