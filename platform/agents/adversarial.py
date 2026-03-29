@@ -729,11 +729,15 @@ def check_l0(
     _exec_roles = ("dev", "fullstack", "backend", "frontend", "worker", "coder",
                    "implementer", "lead", "test", "automation", "devops", "engineer")
     _non_coding_phases = ("contract", "committee", "ideation", "review", "planning",
-                          "retrospective", "ceremony", "negotiat", "go/nogo", "gonogo")
+                          "retrospective", "ceremony", "negotiat", "go/nogo", "gonogo",
+                          "trac", "audit", "valid", "monitor", "coverage", "sweep")
+    # Non-coding roles: trace/audit/monitor agents use reporting tools, not code_write
+    _non_coding_roles = ("trace", "auditor", "monitor", "ciso", "portfolio", "coach")
     _role_lower_adv = (agent_role or "").lower()
     _task_lower = (task or "").lower()
     _is_non_coding_phase = any(p in _task_lower for p in _non_coding_phases)
-    if any(r in _role_lower_adv for r in _exec_roles) and not tool_calls and not _is_non_coding_phase:
+    _is_non_coding_role = any(r in _role_lower_adv for r in _non_coding_roles)
+    if any(r in _role_lower_adv for r in _exec_roles) and not tool_calls and not _is_non_coding_phase and not _is_non_coding_role:
         issues.append(
             "NO_TOOLS_USED: Agent performed zero tool calls despite having access to tools. "
             "Execution agents MUST use tools (code_read, code_write, build, test) — "
@@ -745,7 +749,7 @@ def check_l0(
     # If agent only read/listed/built but never wrote code, it's a failure
     # EXCEPTION: non-coding phases (same as NO_TOOLS_USED)
     _dev_roles = ("dev", "fullstack", "backend", "frontend", "worker", "coder", "implementer", "lead")
-    if any(r in _role_lower_adv for r in _dev_roles) and not has_write_tool and tool_calls and not _is_non_coding_phase:
+    if any(r in _role_lower_adv for r in _dev_roles) and not has_write_tool and tool_calls and not _is_non_coding_phase and not _is_non_coding_role:
         read_only_tools = {tc.get("name") for tc in tool_calls}
         if read_only_tools <= {"code_read", "list_files", "file_read", "code_search", "build", "test", "memory_search", "deep_search"}:
             issues.append(
