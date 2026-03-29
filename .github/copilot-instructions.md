@@ -75,10 +75,12 @@ L0: deterministic (25+ rules, 0ms) → VETO ABSOLU
   + STACK_MISMATCH absolute VETO (L0+L1, not overridable by write tools)
   + Trivial test detection (assert_eq!(2+2,4), tautology, literal compare)
   + Parasitic file detection (.bak, .tmp, .orig)
-  + Phase-aware: NO_TOOLS_USED skipped for non-coding phases (contract/committee/review)
+  + Phase-aware: NO_TOOLS_USED skipped for non-coding phases (contract/committee/review/trace/audit)
+  + Role-aware: trace/auditor/monitor/ciso/portfolio/coach exempt from NO_CODE_WRITE
 L1: LLM semantic (SLOP, hallucination, logic) → VETO ABSOLU
 L2: visual screenshot eval (Playwright, UI phases only)
 ACE feedback: each L0 issue → harmful on KO · clean pass → helpful
+SBD: 25/25 controls (Yems221/securebydesign-llmskill MIT v1.1)
 
 ## Memory (ICM + ACE + napkin inspired)
 - ICM (rtk-ai/icm): exponential decay · Jaccard dedup >85% · graph relations
@@ -99,10 +101,13 @@ ACE feedback: each L0 issue → harmful on KO · clean pass → helpful
 - detect_build_commands(ws) → {build, test, run, manifests}
 - Zero hardcoded per-language commands in prompts
 
-## Skills (9 new domain)
-sveltekit-dataless-ui · nextjs-server-components-dataless · grpc-protobuf-client
-jwt-rbac-grpc-interceptor · skeleton-loading-pattern · redis-queue-async-worker
-redis-cache-layer · postgres-binary-entity-storage · entity-domain-modeling
+## Skills (1133 total, 0 missing refs)
+Domain: sveltekit-dataless-ui · nextjs-server-components-dataless · grpc-protobuf-client
+  jwt-rbac-grpc-interceptor · skeleton-loading-pattern · redis-queue/cache · pg-binary-entity
+Security: secure-by-design-full (25 SBD, 5-layer, source: Yems221 MIT) · owasp-top-10 · secure-code-review
+Testing: business-testing-saas (CRUD/RBAC/billing/GDPR) · e2e-testing-patterns (POM/fixtures/a11y)
+Teams: traceability-{audit,writing,e2e-check} · tma-{incident,autoheal} · design-patterns · code-reading
+Assignment: dynamic from SPECS.md keywords → skill library scan (no hardcode)
 
 ## Key Decisions
 | Decision | Rationale |

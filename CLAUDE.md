@@ -80,8 +80,10 @@ Fallback: mistral/devstral-latest  (87% ToolCall-15, free experiment tier)
 - HARD: guardrails · veto · prompt_inject · tool_acl · adv-L0(25-det) · AC-reward · RBAC · CI
 - SOFT: adv-L1(LLM) · L2-visual(Playwright) · convergence · complexity
 - L0 additions: STACK_MISMATCH=absolute VETO · trivial-test detection · parasitic-file (.bak)
-- Phase-aware: NO_TOOLS_USED skipped for non-coding phases (contract/committee/review)
+- Phase-aware: NO_TOOLS_USED skipped for non-coding phases (contract/committee/review/trace/audit)
+- Role-aware: trace/auditor/monitor/ciso/portfolio/coach exempt from NO_CODE_WRITE
 - ACE counters: helpful/harmful per KO entry (arXiv:2505.14852) → prune if harmful>helpful*2
+- SBD: 25/25 SecureByDesign controls (source: Yems221/securebydesign-llmskill MIT v1.1)
 
 ## MEMORY (ICM + ACE + napkin)
 - 4-layer: session → pattern → project → global (PG tsvector FTS)
@@ -96,12 +98,27 @@ Fallback: mistral/devstral-latest  (87% ToolCall-15, free experiment tier)
 - detect_build_commands(ws) → {build, test, run, manifests}
 - No hardcoded per-language commands in prompts — agents read manifests
 
-## SKILLS (9 new domain skills)
-- sveltekit-dataless-ui · nextjs-server-components-dataless
-- grpc-protobuf-client · jwt-rbac-grpc-interceptor
-- skeleton-loading-pattern · redis-queue-async-worker
+## SKILLS (1133 on disk, 0 missing refs)
+Domain (UI/data separation):
+- sveltekit-dataless-ui · nextjs-server-components-dataless · skeleton-loading-pattern
+- grpc-protobuf-client · jwt-rbac-grpc-interceptor · redis-queue-async-worker
 - redis-cache-layer · postgres-binary-entity-storage · entity-domain-modeling
+
+Security (SBD full 25 controls):
+- secure-by-design-full (31KB, 5-layer audit, source: Yems221/securebydesign-llmskill MIT)
+- secure-code-review · owasp-top-10 · testing-strategy
+
+Business testing:
+- business-testing-saas (multi-tenant CRUD/RBAC/billing/GDPR patterns)
+- e2e-testing-patterns (POM, fixtures, API-first, visual regression, a11y)
+
+Teams fixed:
+- trace: traceability-audit · traceability-writing · traceability-e2e-check
+- TMA: tma-incident-resolution · tma-monitoring-autoheal
+- design: design-patterns · design_system_enforcer
+- code: code-reading · testing-strategy · specs-maintenance · swift-development
 - 36 skills enriched to 10+ eval_cases (batch MiniMax enrichment)
+- Dynamic skill assignment: SPECS.md keywords → skill library scan (no hardcode)
 
 ## TOOLCALL-15 BENCH
 - Port of stevibe/ToolCall-15 (MIT): 15 scenarios, 5 categories, deterministic scoring
