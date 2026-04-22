@@ -2825,7 +2825,7 @@ def _platform_schemas() -> list[dict]:
                         },
                         "space": {
                             "type": "string",
-                            "description": "Confluence space key (default: VELIGO)",
+                            "description": "Confluence space key (default: DOCS)",
                         },
                         "parent_title": {
                             "type": "string",
