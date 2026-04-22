@@ -72,7 +72,7 @@ class Project:
     git_url: str = ""  # GitHub/GitLab remote URL for PR creation
     current_phase: str = ""  # ex: "discovery", "mvp", "v1", "run", "maintenance"
     arch_domain: str = (
-        ""  # Architectural domain (e.g. "bscc") — loads domain-level guidelines
+        ""  # Architectural domain (e.g. "acme") — loads domain-level guidelines
     )
     phases: list[dict] = field(
         default_factory=list
