@@ -119,22 +119,22 @@ test.describe("Domain default pattern", () => {
     const domains = d.domains || d || [];
     if (!domains.length) { test.skip(); return; }
     // At least one domain should have compliance_blocking or default_pattern
-    const bscc = domains.find((d: any) => d.id === "bscc" || d.id === "la-poste");
-    if (bscc) {
-      // bscc domain should have compliance_blocking
-      expect(typeof bscc.compliance_blocking).toBe("boolean");
+    const acme = domains.find((d: any) => d.id === "acme");
+    if (acme) {
+      // acme domain should have compliance_blocking
+      expect(typeof acme.compliance_blocking).toBe("boolean");
     }
   });
 
-  test("bscc domain has adversarial-cascade as default_pattern", async ({ page }) => {
+  test("acme domain has adversarial-cascade as default_pattern", async ({ page }) => {
     const r = await page.request.get("/api/domains");
     if (!r.ok()) { test.skip(); return; }
     const d = await r.json();
     const domains = d.domains || d || [];
-    const bscc = domains.find((x: any) => x.id === "bscc");
-    if (!bscc) { test.skip(); return; }
-    expect(bscc.default_pattern).toBe("adversarial-cascade");
-    expect(bscc.compliance_blocking).toBe(true);
+    const acme = domains.find((x: any) => x.id === "acme");
+    if (!acme) { test.skip(); return; }
+    expect(acme.default_pattern).toBe("adversarial-cascade");
+    expect(acme.compliance_blocking).toBe(true);
   });
 });
 
