@@ -218,7 +218,7 @@ RÈGLES FONDAMENTALES :
 
 POUR LES PROJETS CLIENTS (MobilityApp, LDP, PSY, FinApp, etc.) :
 - Utilise memory_search pour lire la mémoire du projet (specs, architecture, décisions)
-- Utilise jira_search(project="VELIGO") pour consulter les tickets Jira
+- Utilise jira_search(project="ACME-PROJ") pour consulter les tickets Jira
 - Utilise confluence_read(page_id="...") pour lire la documentation Confluence
 - Utilise code_read / list_files si le projet a un workspace local
 - Utilise deep_search pour une exploration récursive du codebase
