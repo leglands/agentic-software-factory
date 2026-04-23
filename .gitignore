@@ -85,3 +85,15 @@ CLAUDE.local.md
 .claude/settings.local.json
 _FINARY/
 dashboard/.claude/settings.local.json
+
+# ── Client / project-specific data (never commit) ──
+**/laposte/
+**/la-poste/
+**/lpd/
+**/agent-lpd*
+**/agent-sharelook*
+**/agent-logs-facteur*
+**/agent-bscc*
+**/agent-veligo*
+data/clients/
+**/client-projects/
